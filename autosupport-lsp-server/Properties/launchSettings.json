@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "autosupport-lsp-server": {
+      "commandName": "Project",
+      "commandLineArgs": "Cocol-2 **/*.atg"
+    }
+  }
+}
