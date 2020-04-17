@@ -1,5 +1,6 @@
 ﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
+using System.Collections.Generic;
 
 namespace autosupport_lsp_server
 {
@@ -11,11 +12,47 @@ namespace autosupport_lsp_server
         }
 
         internal string Uri { get; }
-        internal string[] Text { get; private set; } = new string[0];
+        internal IList<string> Text { get; private set; } = new List<string>();
 
         internal void ApplyChange(TextDocumentContentChangeEvent change)
         {
-            throw new NotImplementedException();
+            if (change.Range == null)
+            {
+                // When no range is given, then the change includes the entire text of the file 
+                Text = ConvertTextToList(change.Text);
+            } else
+            {
+                // Else the range specifies the part that should be replaced
+                ApplyPartialChange(change);
+            }
+        }
+
+        private void ApplyPartialChange(TextDocumentContentChangeEvent change)
+        {
+            var start = change.Range.Start;
+            var end = change.Range.End;
+            var newText = ConvertTextToList(change.Text);
+
+            if (start.Line == end.Line)
+            {
+                int line = (int)start.Line;
+                Text[line] = Text[line].Substring(0, (int)start.Character + 1)
+                    + newText[0]
+                    + Text[(int)end.Line].Substring((int)start.Character);
+            }
+            else
+            {
+                Text[(int)start.Line] = Text[(int)start.Character].Substring(0, (int)start.Line + 1) + newText[0];
+                Text[(int)end.Line] = newText[newText.Count - 1] + Text[(int)end.Line].Substring((int)start.Character);
+
+                for (int i = (int)start.Line + 1; i < (int)end.Line; ++i) {
+                    Text.RemoveAt(i);
+                }
+                for (int i = newText.Count - 2; i > 0; --i)
+                {
+                    Text.Insert((int)start.Line + 1, Text[i]);
+                }
+            }
         }
 
         internal static Document CreateEmptyDocument(string uri)
@@ -27,8 +64,13 @@ namespace autosupport_lsp_server
         {
             return new Document(uri)
             {
-                Text = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None)
+                Text = ConvertTextToList(text)
             };
+        }
+
+        private static IList<string> ConvertTextToList(string text)
+        {
+            return new List<string>(text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None));
         }
     }
 }
