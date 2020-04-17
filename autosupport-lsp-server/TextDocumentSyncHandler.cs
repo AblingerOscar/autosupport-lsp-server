@@ -14,6 +14,7 @@ namespace autosupport_lsp_server
     {
         private DocumentSelector? documentSelector;
         private readonly TextDocumentSyncKind syncKind = TextDocumentSyncKind.Full;
+        private SynchronizationCapability? capability;
 
         public TextDocumentChangeRegistrationOptions GetRegistrationOptions()
         {
@@ -94,7 +95,7 @@ namespace autosupport_lsp_server
 
         public void SetCapability(SynchronizationCapability capability)
         {
-            throw new NotImplementedException();
+            this.capability = capability;
         }
 
         TextDocumentRegistrationOptions IRegistration<TextDocumentRegistrationOptions>.GetRegistrationOptions()
