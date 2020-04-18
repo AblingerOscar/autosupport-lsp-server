@@ -33,24 +33,42 @@ namespace autosupport_lsp_server
             var end = change.Range.End;
             var newText = ConvertTextToList(change.Text);
 
-            if (start.Line == end.Line)
-            {
-                int line = (int)start.Line;
-                Text[line] = Text[line].Substring(0, (int)start.Character + 1)
-                    + newText[0]
-                    + Text[(int)end.Line].Substring((int)start.Character);
-            }
-            else
-            {
-                Text[(int)start.Line] = Text[(int)start.Character].Substring(0, (int)start.Line + 1) + newText[0];
-                Text[(int)end.Line] = newText[newText.Count - 1] + Text[(int)end.Line].Substring((int)start.Character);
+            RemoveTextInRange(start, end);
+            InsertText(start, newText);
+        }
 
-                for (int i = (int)start.Line + 1; i < (int)end.Line; ++i) {
-                    Text.RemoveAt(i);
-                }
-                for (int i = newText.Count - 2; i > 0; --i)
+        private void RemoveTextInRange(Position start, Position end)
+        {
+            // Merge first and last line
+            string restStrOnEndLine = Text[(int)end.Line].Substring((int)end.Character);
+            Text[(int)start.Line] = Text[(int)start.Line].Substring(0, (int)start.Character) + restStrOnEndLine;
+
+            // Remove all lines in between and the last line
+            for (int i = (int)end.Line; i > (int)start.Line; --i) {
+                Text.RemoveAt(i);
+            }
+        }
+
+        private void InsertText(Position pos, IList<string> text)
+        {
+            if (text.Count == 0)
+            {
+                return;
+            }
+
+            string restStrOnEndLine = Text[(int)pos.Line].Substring((int)pos.Character);
+
+            if (text.Count == 1)
+            {
+                Text[(int)pos.Line] = Text[(int)pos.Line].Substring(0, (int)pos.Character) + text[0] + restStrOnEndLine;
+            } else
+            {
+                Text.Insert((int)pos.Line + 1, text[text.Count - 1] + Text[(int)pos.Line].Substring((int)pos.Character));
+                Text[(int)pos.Line] = Text[(int)pos.Line].Substring(0, (int)pos.Character) + text[0];
+
+                for(int i = text.Count - 2; i > 0; ++i)
                 {
-                    Text.Insert((int)start.Line + 1, Text[i]);
+                    Text.Insert((int)pos.Line + 1, text[i]);
                 }
             }
         }
