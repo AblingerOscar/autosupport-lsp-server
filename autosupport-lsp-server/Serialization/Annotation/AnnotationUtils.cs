@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Xml.Linq;
 
-namespace autosupport_lsp_server.Annotation
+namespace autosupport_lsp_server.Serialization.Annotation
 {
     internal static class AnnotationUtils
     {
@@ -46,6 +47,15 @@ namespace autosupport_lsp_server.Annotation
                         ?.ValuesName,
                     $"Property '{propertyName}' of type '{type.FullName}' not found or {nameof(XLinqValueAttribute)} not found on it"
                     );
+            }
+
+            internal string ClassName()
+            {
+                return ThrowIfNull(
+                    type.GetCustomAttribute<XLinqNameAttribute>()
+                        ?.Name,
+                    $"{nameof(XLinqValueAttribute)} not found on '{type.FullName}'");
+
             }
 
             public string KeysName(string propertyName)

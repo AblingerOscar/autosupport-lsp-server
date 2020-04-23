@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace autosupport_lsp_server.Annotation
+namespace autosupport_lsp_server.Serialization.Annotation
 {
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    internal class XLinqKeysAttribute: Attribute
+    internal class XLinqKeysAttribute : Attribute
     {
         public string KeysName { get; }
 
