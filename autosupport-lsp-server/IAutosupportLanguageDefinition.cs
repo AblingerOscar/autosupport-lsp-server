@@ -1,4 +1,4 @@
-﻿using autosupport_lsp_server.SyntaxTree;
+﻿using autosupport_lsp_server.Terminals;
 using System.Collections.Generic;
 
 namespace autosupport_lsp_server
@@ -8,7 +8,8 @@ namespace autosupport_lsp_server
         string LanguageId { get; }
         string LanguageFilePattern { get; }
 
-        string[] SyntaxStartingNodes { get; } 
-        IDictionary<string, ISyntaxTreeNode> SyntaxNodes { get; }
+        string[] StartingSymbols { get; } 
+        public IDictionary<string, ITerminal> TerminalSymbols { get; }
+        public IDictionary<string, INonTerminal> NonTerminalSymbols { get; }
     }
 }

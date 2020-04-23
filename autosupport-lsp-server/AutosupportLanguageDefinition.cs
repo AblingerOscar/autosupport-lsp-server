@@ -1,5 +1,6 @@
-﻿using autosupport_lsp_server.Annotation;
-using autosupport_lsp_server.SyntaxTree;
+﻿using autosupport_lsp_server.Serialization;
+using autosupport_lsp_server.Serialization.Annotation;
+using autosupport_lsp_server.Terminals;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,14 +11,16 @@ using System.Xml.Serialization;
 
 namespace autosupport_lsp_server
 {
+    [XLinqName("LanguageDefinition")]
     internal class AutosupportLanguageDefinition : IAutosupportLanguageDefinition
     {
         private AutosupportLanguageDefinition()
         {
             LanguageId = "";
             LanguageFilePattern = "";
-            SyntaxStartingNodes = new string[0];
-            SyntaxNodes = new Dictionary<string, ISyntaxTreeNode>();
+            StartingSymbols = new string[0];
+            TerminalSymbols = new Dictionary<string, ITerminal>();
+            NonTerminalSymbols = new Dictionary<string, INonTerminal>();
         }
 
         [XLinqName("name")]
@@ -25,14 +28,15 @@ namespace autosupport_lsp_server
         [XLinqName("filePattern")]
         public string LanguageFilePattern  { get; private set; }
 
-        [XLinqName("startingNodes")]
-        [XLinqValue("startingNode")]
-        public string[] SyntaxStartingNodes { get; private set; }
+        [XLinqName("startingSymbols")]
+        [XLinqValue("startingSymbol")]
+        public string[] StartingSymbols { get; private set; }
 
-        [XLinqName("syntaxNodes")]
-        [XLinqKeys("name")]
-        [XLinqValue("syntaxNode")]
-        public IDictionary<string, ISyntaxTreeNode> SyntaxNodes { get; private set; }
+        [XLinqName("terminalSymbols")]
+        public IDictionary<string, ITerminal> TerminalSymbols { get; private set; }
+
+        [XLinqName("nonterminalSymbols")]
+        public IDictionary<string, INonTerminal> NonTerminalSymbols { get; private set; }
 
         public void SerializeToFile(string fileName)
         {
@@ -48,41 +52,44 @@ namespace autosupport_lsp_server
 
         public XElement SerializeToXLinq()
         {
-            return new XElement("LanguageDefinition",
+            return new XElement(annotation.ClassName(),
                 new XAttribute(annotation.PropertyName(nameof(LanguageId)), LanguageId),
                 new XAttribute(annotation.PropertyName(nameof(LanguageFilePattern)), LanguageFilePattern),
-                new XElement(annotation.PropertyName(nameof(SyntaxStartingNodes)),
-                    from node in SyntaxStartingNodes
-                    select new XElement(annotation.ValuesName(nameof(SyntaxStartingNodes)), node)),
-                new XElement(annotation.PropertyName(nameof(SyntaxNodes)),
-                    from node in SyntaxNodes
-                    select new XElement(annotation.ValuesName(nameof(SyntaxNodes)),
-                        new XAttribute(annotation.KeysName(nameof(SyntaxNodes)), node.Key),
-                        node.Value.SerializeToXLinq()
-                    )
+                new XElement(annotation.PropertyName(nameof(StartingSymbols)),
+                    from node in StartingSymbols
+                    select new XElement(annotation.ValuesName(nameof(StartingSymbols)), node)),
+                new XElement(annotation.PropertyName(nameof(TerminalSymbols)),
+                    from term in TerminalSymbols
+                    select term.Value.SerializeToXLinq()),
+                new XElement(annotation.PropertyName(nameof(NonTerminalSymbols)),
+                    from term in NonTerminalSymbols
+                    select term.Value.SerializeToXLinq())
                 );
         }
 
         private readonly static AnnotationUtils.XLinqClassAnnotationUtil annotation = AnnotationUtils.XLinqOf(typeof(AutosupportLanguageDefinition));
 
-        public static AutosupportLanguageDefinition FromXLinq(XElement element)
+        public static AutosupportLanguageDefinition FromXLinq(XElement element, IInterfaceDeserializer interfaceDeserializer)
         {
             return new AutosupportLanguageDefinition()
             {
                 LanguageId = element.Attribute(annotation.PropertyName(nameof(LanguageId))).Value,
                 LanguageFilePattern = element.Attribute(annotation.PropertyName(nameof(LanguageFilePattern))).Value,
-                SyntaxStartingNodes = (from node in element
-                                        .Element(annotation.PropertyName(nameof(SyntaxStartingNodes)))
-                                        .Elements(annotation.ValuesName(nameof(SyntaxStartingNodes)))
+                StartingSymbols = (from node in element
+                                        .Element(annotation.PropertyName(nameof(StartingSymbols)))
+                                        .Elements(annotation.ValuesName(nameof(StartingSymbols)))
                                       select node.Value)
                                       .ToArray(),
-                SyntaxNodes = (from node in element
-                                    .Element(annotation.PropertyName(nameof(SyntaxNodes)))
-                                    .Elements(annotation.ValuesName(nameof(SyntaxNodes)))
-                               select node)
-                               .ToDictionary(
-                                    node => node.Attribute(annotation.KeysName(nameof(SyntaxNodes))).Value,
-                                    node => ISyntaxTreeNode.FromXLinq(node))
+                TerminalSymbols = (from node in element
+                                    .Element(annotation.PropertyName(nameof(TerminalSymbols)))
+                                    .Elements()
+                                  select interfaceDeserializer.DeserializeTerminalSymbol(node))
+                                  .ToDictionary(term => term.Id),
+                NonTerminalSymbols = (from node in element
+                                    .Element(annotation.PropertyName(nameof(NonTerminalSymbols)))
+                                    .Elements()
+                                  select interfaceDeserializer.DeserializeNonTerminalSymbol(node))
+                                  .ToDictionary(term => term.Id)
             };
         }
     }
