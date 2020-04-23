@@ -1,6 +1,6 @@
 ﻿using autosupport_lsp_server.Serialization;
 using autosupport_lsp_server.Serialization.Annotation;
-using autosupport_lsp_server.Terminals;
+using autosupport_lsp_server.Symbols;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,7 +11,7 @@ using System.Xml.Serialization;
 
 namespace autosupport_lsp_server
 {
-    [XLinqName("LanguageDefinition")]
+    [XLinqName("languageDefinition")]
     internal class AutosupportLanguageDefinition : IAutosupportLanguageDefinition
     {
         private AutosupportLanguageDefinition()
@@ -35,20 +35,8 @@ namespace autosupport_lsp_server
         [XLinqName("terminalSymbols")]
         public IDictionary<string, ITerminal> TerminalSymbols { get; private set; }
 
-        [XLinqName("nonterminalSymbols")]
+        [XLinqName("nonTerminalSymbols")]
         public IDictionary<string, INonTerminal> NonTerminalSymbols { get; private set; }
-
-        public void SerializeToFile(string fileName)
-        {
-            using TextWriter writer = new StreamWriter(fileName);
-            SerializeToStream(writer);
-        }
-
-        public void SerializeToStream(TextWriter writer)
-        {
-            XmlSerializer serializer = new XmlSerializer(typeof(AutosupportLanguageDefinition));
-            serializer.Serialize(writer, this);
-        }
 
         public XElement SerializeToXLinq()
         {

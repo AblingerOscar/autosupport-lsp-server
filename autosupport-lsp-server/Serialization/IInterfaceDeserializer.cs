@@ -1,4 +1,4 @@
-﻿using autosupport_lsp_server.Terminals;
+﻿using autosupport_lsp_server.Symbols;
 using System;
 using System.Collections.Generic;
 using System.Text;

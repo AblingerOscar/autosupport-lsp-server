@@ -1,6 +1,9 @@
-﻿using OmniSharp.Extensions.LanguageServer.Server;
+﻿using autosupport_lsp_server.Serialization;
+using OmniSharp.Extensions.LanguageServer.Server;
 using System;
+using System.IO;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace autosupport_lsp_server
 {
@@ -23,8 +26,9 @@ namespace autosupport_lsp_server
 
         static private void SetupDocumentStore(string[] args)
         {
-            // TODO: instead have a path to the file that will be deserialized
-            DocumentStore.LanguageDefinition = new AutosupportLanguageDefinition(args[0], args[1]);
+            string xml = File.ReadAllText(args[0]);
+            XElement element = XElement.Parse(xml);
+            DocumentStore.LanguageDefinition = AutosupportLanguageDefinition.FromXLinq(element, InterfaceDeserializer.Instance);
         }
     }
 }

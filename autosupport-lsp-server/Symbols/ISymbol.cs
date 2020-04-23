@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Linq;
 
-namespace autosupport_lsp_server.Terminals
+namespace autosupport_lsp_server.Symbols
 {
     interface ISymbol
     {

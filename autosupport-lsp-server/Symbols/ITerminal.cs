@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace autosupport_lsp_server.Terminals
+namespace autosupport_lsp_server.Symbols
 {
     interface ITerminal: ISymbol
     {

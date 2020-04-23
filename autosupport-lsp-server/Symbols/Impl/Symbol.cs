@@ -4,7 +4,7 @@ using System;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace autosupport_lsp_server.Terminals.Impl
+namespace autosupport_lsp_server.Symbols.Impl
 {
     [XLinqName("symbol")]
     internal abstract class Symbol : ISymbol

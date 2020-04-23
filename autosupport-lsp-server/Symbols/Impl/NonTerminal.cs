@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 
-namespace autosupport_lsp_server.Terminals.Impl
+namespace autosupport_lsp_server.Symbols.Impl
 {
     internal class NonTerminal : Symbol, INonTerminal
     {

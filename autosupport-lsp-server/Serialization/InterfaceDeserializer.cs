@@ -1,5 +1,5 @@
-﻿using autosupport_lsp_server.Terminals;
-using autosupport_lsp_server.Terminals.Impl;
+﻿using autosupport_lsp_server.Symbols;
+using autosupport_lsp_server.Symbols.Impl;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,6 +9,20 @@ namespace autosupport_lsp_server.Serialization
 {
     internal class InterfaceDeserializer : IInterfaceDeserializer
     {
+        private InterfaceDeserializer() { }
+
+        private static IInterfaceDeserializer? instance = null;
+        public static IInterfaceDeserializer Instance
+        {
+            get {
+                if (instance == null)
+                {
+                    instance = new InterfaceDeserializer();
+                }
+                return instance;
+            }
+        }
+
         public IAutosupportLanguageDefinition DeserializeAutosupportLanguageDefinition(XElement element)
         {
             return AutosupportLanguageDefinition.FromXLinq(element, this);
