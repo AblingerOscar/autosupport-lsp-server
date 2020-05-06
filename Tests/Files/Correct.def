@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<languageDefinition name="cocol-2" filePattern="**/*.atg">
+	<startingSymbols>
+		<startingSymbol>S</startingSymbol>
+	</startingSymbols>
+	<terminalSymbols>
+		
+	</terminalSymbols>
+	<nonTerminalSymbols>
+		
+	</nonTerminalSymbols>
+</languageDefinition>
