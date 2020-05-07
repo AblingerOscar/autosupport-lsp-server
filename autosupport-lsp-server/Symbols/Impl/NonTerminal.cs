@@ -18,12 +18,12 @@ namespace autosupport_lsp_server.Symbols.Impl
         [XLinqName("referencedRule")]
         public string ReferencedRule { get; private set; } = "";
 
-        public override void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal)
+        public override void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal, Action<IAction> action, Action<IOperation> operation)
         {
             nonTerminal.Invoke(this);
         }
 
-        public override R Match<R>(Func<ITerminal, R> terminal, Func<INonTerminal, R> nonTerminal)
+        public override R Match<R>(Func<ITerminal, R> terminal, Func<INonTerminal, R> nonTerminal, Func<IAction, R> action, Func<IOperation, R> operation)
         {
             return nonTerminal.Invoke(this);
         }
