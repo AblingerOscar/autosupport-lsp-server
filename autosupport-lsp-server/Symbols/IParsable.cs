@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using autosupport_lsp_server.Parser;
 
 namespace autosupport_lsp_server.Symbols
 {
     interface IParsable
     {
-
+        ParseState TryParseNext(ParseState state);
     }
 }
