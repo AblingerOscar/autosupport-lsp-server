@@ -8,7 +8,7 @@ namespace autosupport_lsp_server.Symbols.Impl
 {
     internal class Terminal: Symbol, ITerminal
     {
-        private Terminal() { /* do nothing */ }
+        protected Terminal() { /* do nothing */ }
 
         public override bool IsTerminal {
             get => true;
