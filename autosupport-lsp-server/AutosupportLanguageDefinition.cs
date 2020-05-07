@@ -32,7 +32,7 @@ namespace autosupport_lsp_server
         public string[] StartingRules { get; private set; }
 
         [XLinqName("rules")]
-        public IList<IRule> Rules { get; private set; }
+        public IDictionary<string, IRule> Rules { get; private set; }
 
         public XElement SerializeToXLinq()
         {
@@ -44,7 +44,7 @@ namespace autosupport_lsp_server
                     select new XElement(annotation.ValuesName(nameof(StartingRules)), node)),
                 new XElement(annotation.PropertyName(nameof(Rules)),
                     (from rule in Rules
-                    select rule.SerializeToXLinq()))
+                    select rule.Value.SerializeToXLinq()))
                 );
         }
 
