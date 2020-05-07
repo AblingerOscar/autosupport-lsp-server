@@ -1,12 +1,9 @@
 ﻿using autosupport_lsp_server.Serialization;
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Symbols
 {
-    interface ISymbol
+    interface ISymbol : IXLinqSerializable
     {
         string Id { get; }
         Uri Source { get; } // prob. remove
@@ -23,7 +20,5 @@ namespace autosupport_lsp_server.Symbols
             Func<INonTerminal, R> nonTerminal,
             Func<IAction, R> action,
             Func<IOperation, R> operation);
-
-        XElement SerializeToXLinq();
     }
 }
