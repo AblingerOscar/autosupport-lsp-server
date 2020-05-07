@@ -19,7 +19,7 @@ namespace autosupport_lsp_server
         {
             LanguageId = "";
             LanguageFilePattern = "";
-            StartingRules = new string[0];
+            StartRules = new string[0];
         }
 
         [XLinqName("name")]
@@ -27,9 +27,9 @@ namespace autosupport_lsp_server
         [XLinqName("filePattern")]
         public string LanguageFilePattern  { get; private set; }
 
-        [XLinqName("startingRules")]
-        [XLinqValue("startingRule")]
-        public string[] StartingRules { get; private set; }
+        [XLinqName("startRules")]
+        [XLinqValue("startRule")]
+        public string[] StartRules { get; private set; }
 
         [XLinqName("rules")]
         public IDictionary<string, IRule> Rules { get; private set; }
@@ -39,9 +39,9 @@ namespace autosupport_lsp_server
             return new XElement(annotation.ClassName(),
                 new XAttribute(annotation.PropertyName(nameof(LanguageId)), LanguageId),
                 new XAttribute(annotation.PropertyName(nameof(LanguageFilePattern)), LanguageFilePattern),
-                new XElement(annotation.PropertyName(nameof(StartingRules)),
-                    from node in StartingRules
-                    select new XElement(annotation.ValuesName(nameof(StartingRules)), node)),
+                new XElement(annotation.PropertyName(nameof(StartRules)),
+                    from node in StartRules
+                    select new XElement(annotation.ValuesName(nameof(StartRules)), node)),
                 new XElement(annotation.PropertyName(nameof(Rules)),
                     (from rule in Rules
                     select rule.Value.SerializeToXLinq()))
@@ -56,9 +56,9 @@ namespace autosupport_lsp_server
             {
                 LanguageId = element.Attribute(annotation.PropertyName(nameof(LanguageId))).Value,
                 LanguageFilePattern = element.Attribute(annotation.PropertyName(nameof(LanguageFilePattern))).Value,
-                StartingRules = (from node in element
-                                        .Element(annotation.PropertyName(nameof(StartingRules)))
-                                        .Elements(annotation.ValuesName(nameof(StartingRules)))
+                StartRules = (from node in element
+                                        .Element(annotation.PropertyName(nameof(StartRules)))
+                                        .Elements(annotation.ValuesName(nameof(StartRules)))
                                       select node.Value)
                                       .ToArray(),
                 // TODO: Deserialize Rules

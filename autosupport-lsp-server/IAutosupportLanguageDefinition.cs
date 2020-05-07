@@ -8,7 +8,7 @@ namespace autosupport_lsp_server
         string LanguageId { get; }
         string LanguageFilePattern { get; }
 
-        string[] StartingRules { get; } 
+        string[] StartRules { get; } 
         public IDictionary<string, IRule> Rules { get; }
     }
 }
