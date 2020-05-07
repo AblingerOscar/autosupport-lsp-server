@@ -3,7 +3,7 @@ using System;
 
 namespace autosupport_lsp_server.Symbols
 {
-    interface ISymbol : IXLinqSerializable
+    interface ISymbol : IParsable, IXLinqSerializable
     {
         string Id { get; }
         Uri Source { get; } // prob. remove

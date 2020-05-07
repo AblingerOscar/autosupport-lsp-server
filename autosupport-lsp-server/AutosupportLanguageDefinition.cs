@@ -1,6 +1,7 @@
 ﻿using autosupport_lsp_server.Serialization;
 using autosupport_lsp_server.Serialization.Annotation;
 using autosupport_lsp_server.Symbols;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,9 +19,7 @@ namespace autosupport_lsp_server
         {
             LanguageId = "";
             LanguageFilePattern = "";
-            StartingSymbols = new string[0];
-            TerminalSymbols = new Dictionary<string, ITerminal>();
-            NonTerminalSymbols = new Dictionary<string, INonTerminal>();
+            StartingRules = new string[0];
         }
 
         [XLinqName("name")]
@@ -28,30 +27,24 @@ namespace autosupport_lsp_server
         [XLinqName("filePattern")]
         public string LanguageFilePattern  { get; private set; }
 
-        [XLinqName("startingSymbols")]
-        [XLinqValue("startingSymbol")]
-        public string[] StartingSymbols { get; private set; }
+        [XLinqName("startingRules")]
+        [XLinqValue("startingRule")]
+        public string[] StartingRules { get; private set; }
 
-        [XLinqName("terminalSymbols")]
-        public IDictionary<string, ITerminal> TerminalSymbols { get; private set; }
-
-        [XLinqName("nonTerminalSymbols")]
-        public IDictionary<string, INonTerminal> NonTerminalSymbols { get; private set; }
+        [XLinqName("rules")]
+        public IList<IRule> Rules { get; private set; }
 
         public XElement SerializeToXLinq()
         {
             return new XElement(annotation.ClassName(),
                 new XAttribute(annotation.PropertyName(nameof(LanguageId)), LanguageId),
                 new XAttribute(annotation.PropertyName(nameof(LanguageFilePattern)), LanguageFilePattern),
-                new XElement(annotation.PropertyName(nameof(StartingSymbols)),
-                    from node in StartingSymbols
-                    select new XElement(annotation.ValuesName(nameof(StartingSymbols)), node)),
-                new XElement(annotation.PropertyName(nameof(TerminalSymbols)),
-                    from term in TerminalSymbols
-                    select term.Value.SerializeToXLinq()),
-                new XElement(annotation.PropertyName(nameof(NonTerminalSymbols)),
-                    from term in NonTerminalSymbols
-                    select term.Value.SerializeToXLinq())
+                new XElement(annotation.PropertyName(nameof(StartingRules)),
+                    from node in StartingRules
+                    select new XElement(annotation.ValuesName(nameof(StartingRules)), node)),
+                new XElement(annotation.PropertyName(nameof(Rules)),
+                    (from rule in Rules
+                    select rule.SerializeToXLinq()))
                 );
         }
 
@@ -63,21 +56,12 @@ namespace autosupport_lsp_server
             {
                 LanguageId = element.Attribute(annotation.PropertyName(nameof(LanguageId))).Value,
                 LanguageFilePattern = element.Attribute(annotation.PropertyName(nameof(LanguageFilePattern))).Value,
-                StartingSymbols = (from node in element
-                                        .Element(annotation.PropertyName(nameof(StartingSymbols)))
-                                        .Elements(annotation.ValuesName(nameof(StartingSymbols)))
+                StartingRules = (from node in element
+                                        .Element(annotation.PropertyName(nameof(StartingRules)))
+                                        .Elements(annotation.ValuesName(nameof(StartingRules)))
                                       select node.Value)
                                       .ToArray(),
-                TerminalSymbols = (from node in element
-                                    .Element(annotation.PropertyName(nameof(TerminalSymbols)))
-                                    .Elements()
-                                  select interfaceDeserializer.DeserializeTerminalSymbol(node))
-                                  .ToDictionary(term => term.Id),
-                NonTerminalSymbols = (from node in element
-                                    .Element(annotation.PropertyName(nameof(NonTerminalSymbols)))
-                                    .Elements()
-                                  select interfaceDeserializer.DeserializeNonTerminalSymbol(node))
-                                  .ToDictionary(term => term.Id)
+                // TODO: Deserialize Rules
             };
         }
     }

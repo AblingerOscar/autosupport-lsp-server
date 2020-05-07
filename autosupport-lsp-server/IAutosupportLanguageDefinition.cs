@@ -8,8 +8,7 @@ namespace autosupport_lsp_server
         string LanguageId { get; }
         string LanguageFilePattern { get; }
 
-        string[] StartingSymbols { get; } 
-        public IDictionary<string, ITerminal> TerminalSymbols { get; }
-        public IDictionary<string, INonTerminal> NonTerminalSymbols { get; }
+        string[] StartingRules { get; } 
+        public IList<IRule> Rules { get; }
     }
 }
