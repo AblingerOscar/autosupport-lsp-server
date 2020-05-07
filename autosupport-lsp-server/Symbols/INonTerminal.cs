@@ -6,6 +6,6 @@ namespace autosupport_lsp_server.Symbols
 {
     interface INonTerminal: ISymbol
     {
-        string[] PossibleNextSymbols { get; }
+        string ReferencedRule { get; }
     }
 }

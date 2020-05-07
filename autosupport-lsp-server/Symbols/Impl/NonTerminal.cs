@@ -1,9 +1,6 @@
 ﻿using autosupport_lsp_server.Serialization;
 using autosupport_lsp_server.Serialization.Annotation;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Symbols.Impl
@@ -18,9 +15,8 @@ namespace autosupport_lsp_server.Symbols.Impl
             }
         }
 
-        [XLinqName("nextSymbols")]
-        [XLinqValue("symbol")]
-        public string[] PossibleNextSymbols { get; private set; } = new string[0];
+        [XLinqName("referencedRule")]
+        public string ReferencedRule { get; private set; } = "";
 
         public override void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal)
         {
@@ -38,10 +34,10 @@ namespace autosupport_lsp_server.Symbols.Impl
         {
             var element = base.SerializeToXLinq();
 
-            element.Add(
-                new XElement(annotation.PropertyName(nameof(PossibleNextSymbols)),
-                    from symbol in PossibleNextSymbols
-                    select new XElement(annotation.ValuesName(nameof(PossibleNextSymbols)))));
+            element.SetAttributeValue(
+                    annotation.PropertyName(nameof(ReferencedRule)),
+                    ReferencedRule
+                );
 
             return element;
         }
@@ -50,11 +46,7 @@ namespace autosupport_lsp_server.Symbols.Impl
         {
             var symbol = new NonTerminal()
             {
-                PossibleNextSymbols = element
-                    .Element(annotation.PropertyName(nameof(PossibleNextSymbols)))
-                    .Elements(annotation.ValuesName(nameof(PossibleNextSymbols)))
-                    .Select(el => el.Value)
-                    .ToArray()
+                ReferencedRule = element.Attribute(annotation.PropertyName(nameof(ReferencedRule))).Value
             };
 
             AddSymbolValuesFromXLinq(symbol, element, interfaceDeserializer);
