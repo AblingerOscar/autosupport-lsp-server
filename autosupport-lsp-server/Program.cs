@@ -11,7 +11,10 @@ namespace autosupport_lsp_server
     {
         static async Task Main(string[] args)
         {
-            SetupDocumentStore(args);
+            if(!TrySetupDocumentStore(args))
+            {
+                return; // TODO: somehow tell client that it failed and will always fail
+            }
 
             var server = await LanguageServer.From(options =>
             {
@@ -24,11 +27,18 @@ namespace autosupport_lsp_server
             await server.WaitForExit;
         }
 
-        static private void SetupDocumentStore(string[] args)
+        static private bool TrySetupDocumentStore(string[] args)
         {
-            string xml = File.ReadAllText(args[0]);
-            XElement element = XElement.Parse(xml);
-            DocumentStore.LanguageDefinition = AutosupportLanguageDefinition.FromXLinq(element, InterfaceDeserializer.Instance);
+            try
+            {
+                string xml = File.ReadAllText(args[0]);
+                XElement element = XElement.Parse(xml);
+                DocumentStore.LanguageDefinition = AutosupportLanguageDefinition.FromXLinq(element, InterfaceDeserializer.Instance);
+                return true;
+            } catch (Exception)
+            {
+                return false;
+            }
         }
     }
 }

@@ -2,7 +2,7 @@
   "profiles": {
     "autosupport-lsp-server": {
       "commandName": "Project",
-      "commandLineArgs": "Cocol-2 **/*.atg"
+      "commandLineArgs": "C:\\Users\\Oscar\\Projects\\master-thesis\\autosupport-lsp-vscode\\examples\\Cocol-2.def"
     }
   }
 }
