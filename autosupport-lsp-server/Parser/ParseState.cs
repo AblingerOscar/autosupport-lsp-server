@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.Primitives;
+﻿using autosupport_lsp_server.Symbols;
+using Microsoft.Extensions.Primitives;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -10,15 +12,17 @@ namespace autosupport_lsp_server.Parser
 {
     internal class ParseState
     {
-        private ParseState(Document document, Position position, bool failed)
+        private ParseState(Document document, Position position, RuleState ruleState, bool failed)
         {
             Document = document;
             Position = position;
+            RuleState = ruleState;
             Failed = failed;
         }
 
         internal Document Document { get; }
         internal Position Position { get; }
+        internal RuleState RuleState { get; }
 
         internal bool Failed { get; }
 
@@ -32,13 +36,14 @@ namespace autosupport_lsp_server.Parser
         }
 
         internal ParseStateBuilder Clone() => new ParseStateBuilder(this);
-        internal ParseStateBuilder FromDocument(Document document) => new ParseStateBuilder(document);
+        internal static ParseStateBuilder FromDocumentAndRuleState(Document document, RuleState ruleState) => new ParseStateBuilder(document, ruleState);
 
         internal class ParseStateBuilder
         {
             private ParseState? state;
             private Position? position;
             private Document? document;
+            private RuleState? ruleState;
 
             private bool? failed;
             private int? positionOffset;
@@ -48,9 +53,10 @@ namespace autosupport_lsp_server.Parser
                 this.state = state;
             }
 
-            public ParseStateBuilder(Document document)
+            public ParseStateBuilder(Document document, RuleState ruleState)
             {
                 this.document = document;
+                this.ruleState = ruleState;
             }
             
             public ParseStateBuilder WithPositionOffsetBy(int numberOfCharacters)
@@ -91,6 +97,7 @@ namespace autosupport_lsp_server.Parser
                 return new ParseState(
                     document,
                     position,
+                    ruleState: ruleState ?? state?.RuleState ?? throw new ArgumentException("RuleState cannot be null"),
                     failed: failed ?? state?.Failed ?? false
                     );
             }
