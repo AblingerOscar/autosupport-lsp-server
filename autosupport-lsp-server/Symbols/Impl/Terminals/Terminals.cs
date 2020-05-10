@@ -1,73 +1,68 @@
-﻿using autosupport_lsp_server.Parser;
+﻿using autosupport_lsp_server.Parsing;
 using Sprache;
 using System;
 using System.Linq;
 
 namespace autosupport_lsp_server.Symbols.Impl.Terminals
 {
-    internal class StringTerminal : Terminal<string>
+    internal class StringTerminal : Terminal
     {
         public string String { get; private set; } = "";
 
+        public override int MinimumNumberOfCharactersToParse => String.Length;
+
         protected override Parser<string> Parser =>
-            Parse.Ref(() => Parse.String(String)).Select(s => s.ToString() ?? "");
-
-        protected override int LengthOfParseResult(string parseResult) => parseResult.Length;
+            Parse.Ref(() => Parse.String(String)).Text();
     }
 
-    internal class AnyLetterTerminal : Terminal<char>
+    internal abstract class CharTerminal : Terminal
     {
-        protected override Parser<char> Parser => Parse.Letter;
+        public override int MinimumNumberOfCharactersToParse => 1;
 
-        protected override int LengthOfParseResult(char parseResult) => 1;
+        protected abstract Parser<char> CharParser { get; }
+
+        protected override Parser<string> Parser => CharParser.Select(ch => ch.ToString());
     }
 
-    internal class AnyLetterOrDigitTerminal : Terminal<char>
+    internal class AnyLineEndTerminal : CharTerminal
     {
-        protected override Parser<char> Parser => Parse.LetterOrDigit;
-
-        protected override int LengthOfParseResult(char parseResult) => 1;
+        // note that when adding Text together all newline will be converted to
+        // Constants.Newline
+        protected override Parser<char> CharParser => Parse.Char(Constants.NewLine);
     }
 
-    internal class AnyLowercaseLetterTerminal : Terminal<char>
+    internal class AnyLetterTerminal : CharTerminal
     {
-        protected override Parser<char> Parser => Parse.Lower;
-
-        protected override int LengthOfParseResult(char parseResult) => 1;
+        protected override Parser<char> CharParser => Parse.Letter;
     }
 
-    internal class AnyUppercaseLetterTerminal : Terminal<char>
+    internal class AnyLetterOrDigitTerminal : CharTerminal
     {
-        protected override Parser<char> Parser => Parse.Upper;
-
-        protected override int LengthOfParseResult(char parseResult) => 1;
+        protected override Parser<char> CharParser => Parse.LetterOrDigit;
     }
 
-    internal class AnyCharacterTerminal : Terminal<char>
+    internal class AnyLowercaseLetterTerminal : CharTerminal
     {
-        protected override Parser<char> Parser => Parse.AnyChar;
-
-        protected override int LengthOfParseResult(char parseResult) => 1;
+        protected override Parser<char> CharParser => Parse.Lower;
     }
 
-    internal class AnyDigitTerminal : Terminal<char>
+    internal class AnyUppercaseLetterTerminal : CharTerminal
     {
-        protected override Parser<char> Parser => Parse.Digit;
-
-        protected override int LengthOfParseResult(char parseResult) => 1;
+        protected override Parser<char> CharParser => Parse.Upper;
     }
 
-    internal class AnyWhitespaceTerminal : Terminal<char>
+    internal class AnyCharacterTerminal : CharTerminal
     {
-        protected override Parser<char> Parser => Parse.WhiteSpace;
-
-        protected override int LengthOfParseResult(char parseResult) => 1;
+        protected override Parser<char> CharParser => Parse.AnyChar;
     }
 
-    internal class AnyLineEndTerminal : Terminal<string>
+    internal class AnyDigitTerminal : CharTerminal
     {
-        protected override Parser<string> Parser => Parse.LineEnd;
+        protected override Parser<char> CharParser => Parse.Digit;
+    }
 
-        protected override int LengthOfParseResult(string parseResult) => parseResult.Length;
+    internal class AnyWhitespaceTerminal : CharTerminal
+    {
+        protected override Parser<char> CharParser => Parse.WhiteSpace;
     }
 }

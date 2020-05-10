@@ -1,9 +1,9 @@
-﻿using autosupport_lsp_server.Parser;
-
-namespace autosupport_lsp_server.Symbols
+﻿namespace autosupport_lsp_server.Symbols
 {
     interface IParsable
     {
-        ParseState TryParseNext(ParseState state);
+        int MinimumNumberOfCharactersToParse { get; }
+
+        bool TryParse(string str);
     }
 }

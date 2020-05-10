@@ -1,19 +1,17 @@
-﻿using autosupport_lsp_server.Parser;
-using autosupport_lsp_server.Serialization;
+﻿using autosupport_lsp_server.Serialization;
 using Sprache;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Symbols.Impl
 {
-    internal abstract class Terminal<T> : Symbol, ITerminal
+    internal abstract class Terminal : Symbol, ITerminal
     {
         protected Terminal() { /* do nothing */ }
 
-        protected abstract Parser<T> Parser { get; }
-        protected abstract int LengthOfParseResult(T parseResult);
+        protected abstract Parser<string> Parser { get; }
+
+        public abstract int MinimumNumberOfCharactersToParse { get; }
 
         public override bool IsTerminal {
             get => true;
@@ -40,20 +38,21 @@ namespace autosupport_lsp_server.Symbols.Impl
 
         public static new ITerminal FromXLinq(XElement element, IInterfaceDeserializer interfaceDeserializer)
         {
+            throw new NotImplementedException("FromXLinq not yet implement");
+
+            /*
             var symbol = new Terminal(); // TODO
 
             AddSymbolValuesFromXLinq(symbol, element, interfaceDeserializer);
 
             return symbol;
+            */
         }
 
-        public ParseState TryParseNext(ParseState state)
+        public bool TryParse(string str)
         {
-            var parseResult = Parser.TryParse(state.GetNextTextFromPosition());
-            return state.Clone()
-                .WithPositionOffsetBy(LengthOfParseResult(parseResult.Value))
-                .WithFailed(!parseResult.WasSuccessful)
-                .Build();
+            var parseResult = Parser.TryParse(str);
+            return parseResult.WasSuccessful;
         }
     }
 }
