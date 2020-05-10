@@ -20,7 +20,8 @@ namespace autosupport_lsp_server
             {
                 // When no range is given, then the change includes the entire text of the file 
                 Text = ConvertTextToList(change.Text);
-            } else
+            }
+            else
             {
                 // Else the range specifies the part that should be replaced
                 ApplyPartialChange(change);
@@ -44,7 +45,8 @@ namespace autosupport_lsp_server
             Text[(int)start.Line] = Text[(int)start.Line].Substring(0, (int)start.Character) + restStrOnEndLine;
 
             // Remove all lines in between and the last line
-            for (int i = (int)end.Line; i > (int)start.Line; --i) {
+            for (int i = (int)end.Line; i > (int)start.Line; --i)
+            {
                 Text.RemoveAt(i);
             }
         }
@@ -61,12 +63,13 @@ namespace autosupport_lsp_server
             if (text.Count == 1)
             {
                 Text[(int)pos.Line] = Text[(int)pos.Line].Substring(0, (int)pos.Character) + text[0] + restStrOnEndLine;
-            } else
+            }
+            else
             {
                 Text.Insert((int)pos.Line + 1, text[text.Count - 1] + Text[(int)pos.Line].Substring((int)pos.Character));
                 Text[(int)pos.Line] = Text[(int)pos.Line].Substring(0, (int)pos.Character) + text[0];
 
-                for(int i = text.Count - 2; i > 0; ++i)
+                for (int i = text.Count - 2; i > 0; ++i)
                 {
                     Text.Insert((int)pos.Line + 1, text[i]);
                 }

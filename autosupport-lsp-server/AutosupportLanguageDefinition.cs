@@ -25,7 +25,7 @@ namespace autosupport_lsp_server
         [XLinqName("name")]
         public string LanguageId { get; private set; }
         [XLinqName("filePattern")]
-        public string LanguageFilePattern  { get; private set; }
+        public string LanguageFilePattern { get; private set; }
 
         [XLinqName("startRules")]
         [XLinqValue("startRule")]
@@ -44,7 +44,7 @@ namespace autosupport_lsp_server
                     select new XElement(annotation.ValuesName(nameof(StartRules)), node)),
                 new XElement(annotation.PropertyName(nameof(Rules)),
                     (from rule in Rules
-                    select rule.Value.SerializeToXLinq()))
+                     select rule.Value.SerializeToXLinq()))
                 );
         }
 
@@ -59,7 +59,7 @@ namespace autosupport_lsp_server
                 StartRules = (from node in element
                                         .Element(annotation.PropertyName(nameof(StartRules)))
                                         .Elements(annotation.ValuesName(nameof(StartRules)))
-                                      select node.Value)
+                              select node.Value)
                                       .ToArray(),
                 // TODO: Deserialize Rules
             };

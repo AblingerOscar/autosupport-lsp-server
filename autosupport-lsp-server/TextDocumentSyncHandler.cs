@@ -20,7 +20,7 @@ namespace autosupport_lsp_server
         {
             if (DocumentStore.LanguageDefinition == null)
                 throw new InvalidOperationException("Server not yet properly set up");
-                
+
             return new TextDocumentChangeRegistrationOptions()
             {
                 DocumentSelector = documentSelector,
@@ -33,7 +33,8 @@ namespace autosupport_lsp_server
             if (DocumentStore.LanguageDefinition == null)
                 throw new InvalidOperationException("Server not yet properly set up");
 
-            if (documentSelector == null) {
+            if (documentSelector == null)
+            {
                 documentSelector = new DocumentSelector(
                             DocumentFilter.ForPattern("**/*.atg"),
                             DocumentFilter.ForLanguage("Cocol-2")

@@ -46,7 +46,8 @@ namespace autosupport_lsp_server.Symbols.Impl
             if (XmlConvert.ToBoolean(element.Attribute(annotation.PropertyName(nameof(IsTerminal))).Value))
             {
                 return interfaceDeserializer.DeserializeTerminalSymbol(element);
-            } else
+            }
+            else
             {
                 return interfaceDeserializer.DeserializeNonTerminalSymbol(element);
             }

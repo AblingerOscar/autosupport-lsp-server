@@ -10,7 +10,7 @@ namespace autosupport_lsp_server
             Documents = new ConcurrentDictionary<string, Document>();
         }
 
-        public static IDictionary<string, Document> Documents { get;  }
+        public static IDictionary<string, Document> Documents { get; }
 
         public static IAutosupportLanguageDefinition? LanguageDefinition;
     }

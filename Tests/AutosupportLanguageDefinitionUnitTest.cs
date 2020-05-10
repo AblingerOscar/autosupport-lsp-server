@@ -10,7 +10,7 @@ namespace Tests
         [Fact]
         public void Serialization()
         {
-            
+
         }
     }
 }

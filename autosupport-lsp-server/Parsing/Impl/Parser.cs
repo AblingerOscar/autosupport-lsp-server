@@ -88,7 +88,8 @@ namespace autosupport_lsp_server.Parsing.Impl
                 return new Dictionary<int, IEnumerable<RuleState>>(1)
                 {
                     {
-                        terminal.MinimumNumberOfCharactersToParse, new RuleState[1]
+                        terminal.MinimumNumberOfCharactersToParse,
+                        new RuleState[1]
                         {
                             ruleState.Clone().WithNextSymbol().TryBuild() ?? RuleState.FinishedRuleState
                         }

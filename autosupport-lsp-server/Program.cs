@@ -11,7 +11,7 @@ namespace autosupport_lsp_server
     {
         static async Task Main(string[] args)
         {
-            if(!TrySetupDocumentStore(args))
+            if (!TrySetupDocumentStore(args))
             {
                 return; // TODO: somehow tell client that it failed and will always fail
             }
@@ -35,7 +35,8 @@ namespace autosupport_lsp_server
                 XElement element = XElement.Parse(xml);
                 DocumentStore.LanguageDefinition = AutosupportLanguageDefinition.FromXLinq(element, InterfaceDeserializer.Instance);
                 return true;
-            } catch (Exception)
+            }
+            catch (Exception)
             {
                 return false;
             }

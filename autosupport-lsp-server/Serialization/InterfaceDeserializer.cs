@@ -12,8 +12,7 @@ namespace autosupport_lsp_server.Serialization
         private InterfaceDeserializer() { }
 
         private static IInterfaceDeserializer? instance = null;
-        public static IInterfaceDeserializer Instance
-        {
+        public static IInterfaceDeserializer Instance {
             get {
                 if (instance == null)
                 {

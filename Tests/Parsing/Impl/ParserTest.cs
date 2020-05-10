@@ -41,7 +41,7 @@ namespace Tests.Parsing.Impl
             var result = Parser.Parse(
                 languageDefinition.Object,
                 Document.FromText("uri", "stringToken"));
-                
+
             // then
             Assert.Equal(shouldParse, result.FinishedSuccessfully);
         }

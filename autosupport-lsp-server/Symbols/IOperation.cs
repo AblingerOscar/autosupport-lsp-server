@@ -4,7 +4,7 @@ using System.Text;
 
 namespace autosupport_lsp_server.Symbols
 {
-    interface IOperation: ISymbol
+    interface IOperation : ISymbol
     {
     }
 }
