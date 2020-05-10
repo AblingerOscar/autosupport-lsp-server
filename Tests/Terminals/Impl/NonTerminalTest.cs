@@ -25,9 +25,6 @@ namespace Tests.Terminals.Impl
             Assert.False(nonTerminal.IsTerminal);
             Assert.Equal("file:///c:/user/groot/defs/nonTerminal.atg", nonTerminal.Source.AbsoluteUri);
             Assert.Equal("This is just a NonTerminal documentation", nonTerminal.Documentation);
-            Assert.Equal(
-                new string[] { "sym1", "sym2", "sym3" }.OrderBy(s => s),
-                nonTerminal.PossibleNextSymbols.OrderBy(s => s));
         }
     }
 }
