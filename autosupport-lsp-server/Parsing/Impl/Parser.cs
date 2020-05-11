@@ -9,8 +9,8 @@ namespace autosupport_lsp_server.Parsing.Impl
 {
     internal class Parser
     {
-        private ParseState parseState;
-        private IAutosupportLanguageDefinition languageDefinition;
+        private readonly ParseState parseState;
+        private readonly IAutosupportLanguageDefinition languageDefinition;
 
         private Parser(IAutosupportLanguageDefinition autosupportLanguageDefinition, Document document)
         {
@@ -49,14 +49,14 @@ namespace autosupport_lsp_server.Parsing.Impl
             {
                 foreach (var ruleState in parseState.RuleStates)
                 {
-                    ParseRule(ruleState);
+                    ParseRuleState(ruleState);
                 }
 
                 parseState.NextStep();
             }
         }
 
-        private void ParseRule(RuleState ruleState)
+        private void ParseRuleState(RuleState ruleState)
         {
             if (parseState == null)
                 throw new ArgumentException(nameof(parseState) + " may not be null when running " + nameof(ParseUntilEndOrFailed));
@@ -104,7 +104,11 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IDictionary<int, IEnumerable<RuleState>>? ParseNonTerminal(RuleState ruleState, INonTerminal nonTerminal)
         {
-            throw new NotImplementedException();
+            ParseRuleState(
+                ruleState.Clone()
+                .WithNewRule(languageDefinition.Rules[nonTerminal.ReferencedRule])
+                .Build());
+            return null;
         }
 
         private IDictionary<int, IEnumerable<RuleState>>? ParseAction(RuleState ruleState, IAction action)

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace autosupport_lsp_server.Symbols
 {
-    interface IRule : IParsable, IXLinqSerializable
+    interface IRule : IXLinqSerializable
     {
         string Name { get; }
 

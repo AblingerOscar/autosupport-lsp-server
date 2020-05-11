@@ -1,6 +1,7 @@
 ﻿using autosupport_lsp_server.Symbols;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 
 namespace autosupport_lsp_server.Parsing
@@ -47,18 +48,34 @@ namespace autosupport_lsp_server.Parsing
             ruleStates = ruleState.ruleStates.Clone();
         }
 
-        public RuleStateBuilder Clone() => new RuleStateBuilder(this);
+        public IConcreteRuleStateBuilder Clone() => new RuleStateBuilder(this);
 
-        internal class RuleStateBuilder
+        internal interface IRuleStateBuilder {
+            INullableRuleStateBuilder WithNextSymbol();
+        }
+
+        internal interface IConcreteRuleStateBuilder : IRuleStateBuilder
+        {
+            RuleState Build();
+            IConcreteRuleStateBuilder WithNewRule(IRule rule);
+        }
+
+        internal interface INullableRuleStateBuilder : IRuleStateBuilder
+        {
+            RuleState? TryBuild();
+            INullableRuleStateBuilder WithNewRule(IRule rule);
+        }
+
+        internal class RuleStateBuilder : IConcreteRuleStateBuilder, INullableRuleStateBuilder
         {
             private RuleState? ruleState;
 
-            internal RuleStateBuilder(RuleState ruleState)
+            public RuleStateBuilder(RuleState ruleState)
             {
                 this.ruleState = new RuleState(ruleState);
             }
 
-            internal RuleStateBuilder WithNextSymbol()
+            public INullableRuleStateBuilder WithNextSymbol()
             {
                 if (ruleState == null)
                     return this;
@@ -85,10 +102,30 @@ namespace autosupport_lsp_server.Parsing
                 return this;
             }
 
-            internal RuleState? TryBuild()
+            public RuleState Build()
+            {
+                if (ruleState == null)
+                    throw new ArgumentException("When using Build() ruleState may never be null… use TryBuild instead");
+
+                return ruleState;
+            }
+
+            public RuleState? TryBuild()
             {
                 return ruleState;
             }
+
+            public RuleStateBuilder WithNewRule(IRule rule)
+            {
+                if (ruleState == null)
+                    return this;
+
+                ruleState.ruleStates.Push(new Tuple<IRule, int>(rule, 0));
+                return this;
+            }
+
+            IConcreteRuleStateBuilder IConcreteRuleStateBuilder.WithNewRule(IRule rule) => WithNewRule(rule);
+            INullableRuleStateBuilder INullableRuleStateBuilder.WithNewRule(IRule rule) => WithNewRule(rule);
         }
     }
 }
