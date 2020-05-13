@@ -5,11 +5,6 @@ namespace autosupport_lsp_server.Symbols
 {
     interface ISymbol : IXLinqSerializable
     {
-        string Id { get; }
-        Uri Source { get; } // prob. remove
-        string Documentation { get; } // prob. remove
-
-        bool IsTerminal { get; }
         void Match(
             Action<ITerminal> terminal,
             Action<INonTerminal> nonTerminal,

@@ -1,8 +1,8 @@
-﻿using System;
+﻿using autosupport_lsp_server.Symbols;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Serialization.Annotation
 {
@@ -11,6 +11,20 @@ namespace autosupport_lsp_server.Serialization.Annotation
         internal static XLinqClassAnnotationUtil XLinqOf(Type type)
         {
             return new XLinqClassAnnotationUtil(type);
+        }
+
+        private static readonly IDictionary<string, Type> annotatedTypes =
+                (from type in Assembly.GetExecutingAssembly().GetTypes()
+                 where type.IsClass
+                 select new Tuple<XLinqNameAttribute?, Type>(type.GetCustomAttribute<XLinqNameAttribute>(true), type))
+                 .Where(tuple => tuple.Item1 != null && tuple.Item2 != null)
+                .ToDictionary(tuple => tuple.Item1.Name, tuple => tuple.Item2);
+
+        internal static Type? FindTypeWithName(string annotationName)
+        {
+            return annotatedTypes.ContainsKey(annotationName)
+                ? annotatedTypes[annotationName]
+                : null;
         }
 
         private static string ThrowIfNull(string? str, string errorMsg)

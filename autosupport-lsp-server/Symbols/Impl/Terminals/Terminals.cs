@@ -7,7 +7,12 @@ namespace autosupport_lsp_server.Symbols.Impl.Terminals
 {
     internal class StringTerminal : Terminal
     {
-        public string String { get; private set; } = "";
+        public StringTerminal(string str)
+        {
+            String = str;
+        }
+
+        public string String { get; } = "";
 
         public override int MinimumNumberOfCharactersToParse => String.Length;
 

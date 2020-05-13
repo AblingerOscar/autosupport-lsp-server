@@ -7,14 +7,6 @@ namespace autosupport_lsp_server.Symbols.Impl
 {
     internal class NonTerminal : Symbol, INonTerminal
     {
-        public override bool IsTerminal {
-            get => false;
-            protected set {
-                if (!value)
-                    throw new InvalidOperationException($"Cannot change {nameof(IsTerminal)} of a NonTerminal class to true");
-            }
-        }
-
         [XLinqName("referencedRule")]
         public string ReferencedRule { get; private set; } = "";
 
@@ -42,7 +34,7 @@ namespace autosupport_lsp_server.Symbols.Impl
             return element;
         }
 
-        public static new NonTerminal FromXLinq(XElement element, IInterfaceDeserializer interfaceDeserializer)
+        public static NonTerminal FromXLinq(XElement element, IInterfaceDeserializer interfaceDeserializer)
         {
             var symbol = new NonTerminal()
             {

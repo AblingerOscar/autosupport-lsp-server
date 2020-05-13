@@ -27,7 +27,7 @@ namespace autosupport_lsp_server.Parsing
         }
 
         private long currentCharacterCount;
-        private IDictionary<long, List<RuleState>> scheduledRuleStates;
+        private readonly IDictionary<long, List<RuleState>> scheduledRuleStates;
 
         internal Document Document { get; }
         internal Position Position { get; }

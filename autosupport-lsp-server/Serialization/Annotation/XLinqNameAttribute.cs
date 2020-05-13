@@ -4,7 +4,7 @@ using System.Text;
 
 namespace autosupport_lsp_server.Serialization.Annotation
 {
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Interface)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Interface, Inherited = true)]
     internal class XLinqNameAttribute : Attribute
     {
         public string Name { get; }

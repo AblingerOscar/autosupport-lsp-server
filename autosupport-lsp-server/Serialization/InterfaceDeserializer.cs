@@ -1,8 +1,10 @@
-﻿using autosupport_lsp_server.Symbols;
+﻿using autosupport_lsp_server.Serialization.Annotation;
+using autosupport_lsp_server.Symbols;
 using autosupport_lsp_server.Symbols.Impl;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
+using System.Reflection;
 using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Serialization
@@ -29,7 +31,21 @@ namespace autosupport_lsp_server.Serialization
 
         public ISymbol DeserializeSymbol(XElement element)
         {
-            return Symbol.FromXLinq(element, this);
+            var symbol = AnnotationUtils.FindTypeWithName(element.Name.ToString());
+
+            if (symbol != null)
+            {
+                if (typeof(ITerminal).IsAssignableFrom(symbol))
+                {
+                    return DeserializeTerminalSymbol(element);
+                }
+                else if (typeof(INonTerminal).IsAssignableFrom(symbol))
+                {
+                    return DeserializeNonTerminalSymbol(element);
+                } // TODO: operations & Actions
+            }
+
+            throw new ArgumentException($"The given Element '{element.Name}' does not exist or is not a symbol");
         }
 
         public INonTerminal DeserializeNonTerminalSymbol(XElement element)

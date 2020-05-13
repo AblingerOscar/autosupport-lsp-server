@@ -19,13 +19,6 @@ namespace Tests
                 .Single(str => str.EndsWith("YourFileName.txt"));
 
             return resourceName;
-
-            //return relativePath;
-
-            var codeBaseUrl = new Uri(Assembly.GetExecutingAssembly().CodeBase);
-            var codeBasePath = Uri.UnescapeDataString(codeBaseUrl.AbsolutePath);
-            var dirPath = Path.GetDirectoryName(codeBasePath);
-            return Path.Combine(dirPath, relativePath);
         }
 
         public static string ReadFile(string relativePath)

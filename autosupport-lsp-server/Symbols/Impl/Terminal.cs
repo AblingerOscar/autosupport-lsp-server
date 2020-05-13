@@ -1,6 +1,9 @@
 ﻿using autosupport_lsp_server.Serialization;
+using autosupport_lsp_server.Serialization.Annotation;
+using autosupport_lsp_server.Symbols.Impl.Terminals;
 using Sprache;
 using System;
+using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Symbols.Impl
@@ -12,14 +15,6 @@ namespace autosupport_lsp_server.Symbols.Impl
         protected abstract Parser<string> Parser { get; }
 
         public abstract int MinimumNumberOfCharactersToParse { get; }
-
-        public override bool IsTerminal {
-            get => true;
-            protected set {
-                if (value)
-                    throw new InvalidOperationException($"Cannot change {nameof(IsTerminal)} of a Terminal class to false");
-            }
-        }
 
         public override void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal, Action<IAction> action, Action<IOperation> operation)
         {
@@ -36,17 +31,30 @@ namespace autosupport_lsp_server.Symbols.Impl
             return base.SerializeToXLinq();
         }
 
-        public static new ITerminal FromXLinq(XElement element, IInterfaceDeserializer interfaceDeserializer)
+        public static ITerminal FromXLinq(XElement element, IInterfaceDeserializer interfaceDeserializer)
         {
-            throw new NotImplementedException("FromXLinq not yet implement");
+            var name = element.Name.ToString();
 
-            /*
-            var symbol = new Terminal(); // TODO
+            if (name == AnnotationUtils.XLinqOf(typeof(StringTerminal)).ClassName())
+            {
+                var result = new StringTerminal(element.Value);
+                AddSymbolValuesFromXLinq(result, element, interfaceDeserializer);
+                return result;
+            } else
+            {
+                var elementType = AnnotationUtils.FindTypeWithName(name);
 
-            AddSymbolValuesFromXLinq(symbol, element, interfaceDeserializer);
+                if (elementType != null && typeof(Terminal).IsAssignableFrom(elementType))
+                {
+                    if (elementType.GetConstructor(new Type[0])?.Invoke(null) is Terminal result)
+                    {
+                        AddSymbolValuesFromXLinq(result, element, interfaceDeserializer);
+                        return result;
+                    }
+                }
+            }
 
-            return symbol;
-            */
+            throw new ArgumentException($"Type '{name}' does not exist, is not an ITerminal or does not have a default constructor");
         }
 
         public bool TryParse(string str)
