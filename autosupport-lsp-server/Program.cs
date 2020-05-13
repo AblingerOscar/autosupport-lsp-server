@@ -1,4 +1,5 @@
-﻿using autosupport_lsp_server.Serialization;
+﻿using autosupport_lsp_server.LSP;
+using autosupport_lsp_server.Serialization;
 using OmniSharp.Extensions.LanguageServer.Server;
 using System;
 using System.IO;

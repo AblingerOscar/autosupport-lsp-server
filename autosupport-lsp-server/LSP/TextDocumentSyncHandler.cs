@@ -8,7 +8,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace autosupport_lsp_server
+namespace autosupport_lsp_server.LSP
 {
     internal class TextDocumentSyncHandler : ITextDocumentSyncHandler
     {
