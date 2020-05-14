@@ -8,6 +8,8 @@
     <SignAssembly>true</SignAssembly>
 
     <AssemblyOriginatorKeyFile>autosupport-lsp-server-tests.pfx</AssemblyOriginatorKeyFile>
+
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
