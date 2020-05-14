@@ -2,6 +2,7 @@
 using autosupport_lsp_server.Parsing;
 using autosupport_lsp_server.Parsing.Impl;
 using autosupport_lsp_server.Symbols;
+using autosupport_lsp_server.Symbols.Impl;
 using Moq;
 using Sprache;
 using System.Collections.Generic;
@@ -82,6 +83,53 @@ namespace Tests.Parsing.Impl
             // then
             Assert.True(result.FinishedSuccessfully);
             terminal.Verify(t => t.TryParse(It.IsAny<string>()), Times.Once());
+        }
+
+        [Fact]
+        void When_RuleWithOneOf_WithOneCorrect_ThenReturnsSuccessfully()
+        {
+            // given
+            var terminalSucceedsName = "terminalSucceeds";
+            var terminalFailsName = "terminalFails";
+
+            var terminalSucceeds = Terminal(
+                minimumNumberOfCharactersToParse: 1,
+                shouldParse: true);
+
+            var terminalFails = Terminal(
+                minimumNumberOfCharactersToParse: 1,
+                shouldParse: false);
+
+            var oneOf = OneOf(terminalFailsName, terminalSucceedsName);
+
+            var terminalSucceedsRule = Rule(symbols: terminalSucceeds.Object);
+            var terminalFailsRule = Rule(symbols: terminalFails.Object);
+
+            var rule = Rule(
+                    name: "S",
+                    symbols: oneOf.Object
+                );
+
+            var languageDefinition = AutosupportLanguageDefinition(
+                    startRule: "S",
+                    rules: new Dictionary<string, IRule>()
+                    {
+                        { "S", rule.Object },
+                        { terminalFailsName, terminalFailsRule.Object },
+                        { terminalSucceedsName, terminalSucceedsRule.Object }
+                    }
+                );
+
+            // when
+            var result = Parser.Parse(
+                    languageDefinition.Object,
+                    Document.FromText("uri", " ")
+                );
+
+            // then
+            Assert.True(result.FinishedSuccessfully);
+            terminalSucceeds.Verify(t => t.TryParse(It.IsAny<string>()), Times.Once());
+            terminalFails.Verify(t => t.TryParse(It.IsAny<string>()), Times.Once());
         }
     }
 }

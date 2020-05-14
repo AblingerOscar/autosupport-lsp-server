@@ -16,7 +16,7 @@ namespace Tests
         {
             var mock = new Mock<MockTerminal>
             {
-                CallBase = true // for both Match functions & IsTerminal
+                CallBase = true // for both Match functions
             };
 
             if (minimumNumberOfCharactersToParse.HasValue)
@@ -38,12 +38,28 @@ namespace Tests
         {
             var mock = new Mock<MockNonTerminal>
             {
-                CallBase = true // for both Match functions & IsTerminal
+                CallBase = true // for both Match functions
             };
 
             if (referencedRuleName != null)
             {
                 mock.SetupGet(nt => nt.ReferencedRule).Returns(referencedRuleName);
+            }
+
+            return mock;
+        }
+
+        protected Mock<MockOneOf> OneOf(
+                params string[] options
+            )
+        {
+            var mock = new Mock<MockOneOf>()
+            {
+                CallBase = true // for both Match functions
+            };
+
+            if (options.Length != 0) {
+                mock.SetupGet(oo => oo.Options).Returns(options);
             }
 
             return mock;
