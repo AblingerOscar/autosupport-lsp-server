@@ -1,14 +1,16 @@
 ﻿using autosupport_lsp_server;
+using autosupport_lsp_server.Parsing;
 using autosupport_lsp_server.Parsing.Impl;
 using autosupport_lsp_server.Symbols;
 using Moq;
+using Sprache;
 using System.Collections.Generic;
 using Tests.Terminals.Impl.Mocks;
 using Xunit;
 
 namespace Tests.Parsing.Impl
 {
-    public class ParserTest
+    public class ParserTest : SymbolsBaseTest
     {
         [Theory]
         [InlineData(true)]
@@ -18,23 +20,19 @@ namespace Tests.Parsing.Impl
             // given
             string parseString = "terminalString";
 
-            var terminal = new Mock<MockTerminal>
-            {
-                CallBase = true // for both Match functions & IsTerminal
-            };
-            terminal.SetupGet(t => t.MinimumNumberOfCharactersToParse).Returns(parseString.Length);
+            var terminal = Terminal(
+                minimumNumberOfCharactersToParse: parseString.Length,
+                shouldParse: shouldParse
+                );
 
-            terminal.Setup(t => t.TryParse(It.IsAny<string>())).Returns(shouldParse);
+            var rule = Rule(
+                symbols: terminal.Object
+                );
 
-            var rule = new Mock<IRule>();
-            rule.SetupGet(r => r.Symbols).Returns(new List<ISymbol>() { terminal.Object });
-
-            var languageDefinition = new Mock<IAutosupportLanguageDefinition>();
-            languageDefinition.SetupGet(el => el.StartRules).Returns(new string[] { "S" });
-            languageDefinition.SetupGet(el => el.Rules).Returns(new Dictionary<string, IRule>()
-            {
-                { "S", rule.Object }
-            });
+            var languageDefinition = AutosupportLanguageDefinition(
+                startRule: "S",
+                rules: new KeyValuePair<string, IRule>("S", rule.Object)
+                );
 
             // when
             var result = Parser.Parse(
@@ -52,34 +50,29 @@ namespace Tests.Parsing.Impl
             string referencedRuleName = "ReferencedRule";
             string parseString = "terminalString";
 
-            var nonTerminal = new Mock<MockNonTerminal>
-            {
-                CallBase = true // for both Match functions & IsTerminal
-            };
-            nonTerminal.SetupGet(nt => nt.ReferencedRule).Returns(referencedRuleName);
+            var nonTerminal = NonTerminal(referencedRuleName);
 
-            var terminal = new Mock<MockTerminal>
-            {
-                CallBase = true // for both Match functions & IsTerminal
-            };
-            terminal.SetupGet(t => t.MinimumNumberOfCharactersToParse).Returns(parseString.Length);
+            var terminal = Terminal(
+                    minimumNumberOfCharactersToParse: parseString.Length,
+                    shouldParse: true
+                );
 
-            terminal.Setup(t => t.TryParse(It.IsAny<string>())).Returns(true);
+            var baseRule = Rule(
+                    symbols: nonTerminal.Object
+                );
+            var referencedRule = Rule(
+                    name: referencedRuleName,
+                    symbols: terminal.Object
+                );
 
-            var baseRule = new Mock<IRule>();
-            baseRule.SetupGet(r => r.Symbols).Returns(new List<ISymbol>() { nonTerminal.Object });
-
-            var referencedRule = new Mock<IRule>();
-            referencedRule.SetupGet(r => r.Symbols).Returns(new List<ISymbol>() { terminal.Object });
-
-
-            var languageDefinition = new Mock<IAutosupportLanguageDefinition>();
-            languageDefinition.SetupGet(el => el.StartRules).Returns(new string[] { "S" });
-            languageDefinition.SetupGet(el => el.Rules).Returns(new Dictionary<string, IRule>()
-            {
-                { "S", baseRule.Object },
-                { referencedRuleName, referencedRule.Object }
-            });
+            var languageDefinition = AutosupportLanguageDefinition(
+                    startRule: "S",
+                    rules: new Dictionary<string, IRule>()
+                    {
+                        { "S", baseRule.Object },
+                        { referencedRuleName, referencedRule.Object }
+                    }
+                );
 
             // when
             var result = Parser.Parse(
