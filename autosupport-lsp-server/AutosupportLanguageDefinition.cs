@@ -20,6 +20,7 @@ namespace autosupport_lsp_server
             LanguageId = "";
             LanguageFilePattern = "";
             StartRules = new string[0];
+            Rules = new Dictionary<string, IRule>();
         }
 
         [XLinqName("name")]

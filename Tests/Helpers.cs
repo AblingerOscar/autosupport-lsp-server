@@ -25,11 +25,16 @@ namespace Tests
         {
             var resourceName = GetEmbeddedResourcePathOf(relativePath);
 
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
-            using (StreamReader reader = new StreamReader(stream))
+            using Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
+
+            if (stream == null)
             {
-                return reader.ReadToEnd();
+                throw new NullReferenceException($"Could not read resource '{resourceName}': It probably doesn't exist");
             }
+
+            using StreamReader reader = new StreamReader(stream);
+
+            return reader.ReadToEnd();
         }
 
         private static string GetEmbeddedResourcePathOf(string relativePath)
