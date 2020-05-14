@@ -7,7 +7,7 @@ using Tests.Terminals.Impl.Mocks;
 
 namespace Tests
 {
-    internal abstract class SymbolsBaseTest
+    public abstract class SymbolsBaseTest
     {
         protected Mock<MockTerminal> Terminal(
                 int? minimumNumberOfCharactersToParse = null,

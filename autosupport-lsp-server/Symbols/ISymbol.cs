@@ -3,7 +3,7 @@ using System;
 
 namespace autosupport_lsp_server.Symbols
 {
-    interface ISymbol : IXLinqSerializable
+    public interface ISymbol : IXLinqSerializable
     {
         void Match(
             Action<ITerminal> terminal,

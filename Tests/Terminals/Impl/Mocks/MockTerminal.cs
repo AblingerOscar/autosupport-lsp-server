@@ -4,7 +4,7 @@ using System;
 
 namespace Tests.Terminals.Impl.Mocks
 {
-    internal abstract class MockTerminal : Symbol, ITerminal
+    public abstract class MockTerminal : Symbol, ITerminal
     {
         public abstract int MinimumNumberOfCharactersToParse { get; }
 

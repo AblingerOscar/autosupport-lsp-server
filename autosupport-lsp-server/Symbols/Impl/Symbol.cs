@@ -6,7 +6,7 @@ using System.Xml.Linq;
 namespace autosupport_lsp_server.Symbols.Impl
 {
     [XLinqName("symbol")]
-    internal abstract class Symbol : ISymbol
+    public abstract class Symbol : ISymbol
     {
         public abstract void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal, Action<IAction> action, Action<IOperation> operation);
 

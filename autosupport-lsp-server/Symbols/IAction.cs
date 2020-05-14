@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace autosupport_lsp_server.Symbols
+﻿namespace autosupport_lsp_server.Symbols
 {
-    interface IAction : ISymbol
+    public interface IAction : ISymbol
     {
     }
 }

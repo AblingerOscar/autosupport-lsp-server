@@ -1,6 +1,6 @@
 ﻿namespace autosupport_lsp_server.Symbols
 {
-    interface IParsable
+    public interface IParsable
     {
         int MinimumNumberOfCharactersToParse { get; }
 

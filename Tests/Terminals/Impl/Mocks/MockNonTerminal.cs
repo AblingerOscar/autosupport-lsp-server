@@ -4,7 +4,7 @@ using System;
 
 namespace Tests.Terminals.Impl.Mocks
 {
-    internal abstract class MockNonTerminal : Symbol, INonTerminal
+    public abstract class MockNonTerminal : Symbol, INonTerminal
     {
         public abstract string ReferencedRule { get; }
 

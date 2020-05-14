@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace autosupport_lsp_server
 {
-    interface IAutosupportLanguageDefinition
+    public interface IAutosupportLanguageDefinition
     {
         string LanguageId { get; }
         string LanguageFilePattern { get; }

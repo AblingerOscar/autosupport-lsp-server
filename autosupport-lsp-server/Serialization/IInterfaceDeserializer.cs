@@ -1,12 +1,9 @@
 ﻿using autosupport_lsp_server.Symbols;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Serialization
 {
-    internal interface IInterfaceDeserializer
+    public interface IInterfaceDeserializer
     {
         public ISymbol DeserializeSymbol(XElement element);
         public ITerminal DeserializeTerminalSymbol(XElement element);

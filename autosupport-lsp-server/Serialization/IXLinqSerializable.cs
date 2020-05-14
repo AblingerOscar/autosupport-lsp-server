@@ -5,7 +5,7 @@ using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Serialization
 {
-    interface IXLinqSerializable
+    public interface IXLinqSerializable
     {
         XElement SerializeToXLinq();
     }
