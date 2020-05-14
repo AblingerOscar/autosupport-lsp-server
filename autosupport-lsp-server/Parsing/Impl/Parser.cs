@@ -61,24 +61,29 @@ namespace autosupport_lsp_server.Parsing.Impl
             if (parseState == null)
                 throw new ArgumentException(nameof(parseState) + " may not be null when running " + nameof(ParseUntilEndOrFailed));
 
+            var newParseStates = GetPossibleNextStatesOfSymbol(ruleState);
+            ScheduleNextParseStates(newParseStates);
+        }
+
+        private IDictionary<int, IEnumerable<RuleState>>? GetPossibleNextStatesOfSymbol(RuleState ruleState)
+        {
             var currentSymbol = ruleState.CurrentSymbol;
             if (currentSymbol == null)
-            {
                 throw new Exception("Current Symbol is null");
-            }
-            else
-            {
-                IDictionary<int, IEnumerable<RuleState>>? newParseStates = currentSymbol.Match(
+
+            return currentSymbol.Match(
                         terminal => ParseTerminal(ruleState, terminal),
                         nonTerminal => ParseNonTerminal(ruleState, nonTerminal),
                         action => ParseAction(ruleState, action),
-                        operation => ParseOperation(ruleState, operation)
+                        oneOf => ParseOneOf(ruleState, oneOf)
                     );
+        }
 
-                newParseStates?.ForEach(parseStateKvp =>
-                    parseState.ScheduleNewRuleStatesIn(parseStateKvp.Key, parseStateKvp.Value)
-                );
-            }
+        private void ScheduleNextParseStates(IDictionary<int, IEnumerable<RuleState>>? nextParseStates)
+        {
+            nextParseStates?.ForEach(parseStateKvp =>
+                parseState.ScheduleNewRuleStatesIn(parseStateKvp.Key, parseStateKvp.Value)
+            );
         }
 
         private IDictionary<int, IEnumerable<RuleState>>? ParseTerminal(RuleState ruleState, ITerminal terminal)
@@ -104,11 +109,10 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IDictionary<int, IEnumerable<RuleState>>? ParseNonTerminal(RuleState ruleState, INonTerminal nonTerminal)
         {
-            ParseRuleState(
+            return GetPossibleNextStatesOfSymbol(
                 ruleState.Clone()
                 .WithNewRule(languageDefinition.Rules[nonTerminal.ReferencedRule])
                 .Build());
-            return null;
         }
 
         private IDictionary<int, IEnumerable<RuleState>>? ParseAction(RuleState ruleState, IAction action)
@@ -116,9 +120,33 @@ namespace autosupport_lsp_server.Parsing.Impl
             throw new NotImplementedException();
         }
 
-        private IDictionary<int, IEnumerable<RuleState>>? ParseOperation(RuleState ruleState, IOperation operation)
+        private IDictionary<int, IEnumerable<RuleState>>? ParseOneOf(RuleState ruleState, IOneOf oneOf)
         {
-            throw new NotImplementedException();
+            return oneOf.Options
+                .Select(ruleName => ruleState.Clone()
+                    .WithNewRule(languageDefinition.Rules[ruleName])
+                    .Build())
+                .Select(GetPossibleNextStatesOfSymbol)
+                .Aggregate<IDictionary<int, IEnumerable<RuleState>>?, IDictionary<int, IEnumerable<RuleState>>>(new Dictionary<int, IEnumerable<RuleState>>(), MergeDictionaries);
+        }
+
+        private IDictionary<int, IEnumerable<RuleState>> MergeDictionaries(IDictionary<int, IEnumerable<RuleState>> dict1, IDictionary<int, IEnumerable<RuleState>>? dict2)
+        {
+            if (dict2 == null)
+            {
+                return dict1;
+            }
+
+            dict2.Keys.ForEach(key =>
+            {
+                if (!dict1.ContainsKey(key))
+                {
+                    dict1.Add(key, new RuleState[0]);
+                }
+                dict1[key] = dict2[key].Aggregate(dict1[key], (acc, ruleState) => acc.Append(ruleState));
+            });
+
+            return dict2;
         }
 
         private IParseResult MakeParseResult()

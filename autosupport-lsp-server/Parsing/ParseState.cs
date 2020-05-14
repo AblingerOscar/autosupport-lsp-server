@@ -79,7 +79,7 @@ namespace autosupport_lsp_server.Parsing
             currentCharacterCount += numberOfCharacters;
             Position.Character += numberOfCharacters;
 
-            while (Position.Character > Document.Text[(int)Position.Line].Length)
+            while (Position.Character >= Document.Text[(int)Position.Line].Length)
             {
                 if (PositionIsAfterEndOfDocument())
                 {

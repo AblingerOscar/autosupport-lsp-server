@@ -8,9 +8,9 @@ namespace autosupport_lsp_server.Symbols.Impl
     [XLinqName("symbol")]
     public abstract class Symbol : ISymbol
     {
-        public abstract void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal, Action<IAction> action, Action<IOperation> operation);
+        public abstract void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal, Action<IAction> action, Action<IOneOf> oneOf);
 
-        public abstract R Match<R>(Func<ITerminal, R> terminal, Func<INonTerminal, R> nonTerminal, Func<IAction, R> action, Func<IOperation, R> operation);
+        public abstract R Match<R>(Func<ITerminal, R> terminal, Func<INonTerminal, R> nonTerminal, Func<IAction, R> action, Func<IOneOf, R> oneOf);
 
         public virtual XElement SerializeToXLinq()
         {

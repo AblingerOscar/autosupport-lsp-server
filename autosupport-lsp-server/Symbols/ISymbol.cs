@@ -9,11 +9,11 @@ namespace autosupport_lsp_server.Symbols
             Action<ITerminal> terminal,
             Action<INonTerminal> nonTerminal,
             Action<IAction> action,
-            Action<IOperation> operation);
+            Action<IOneOf> oneOf);
         R Match<R>(
             Func<ITerminal, R> terminal,
             Func<INonTerminal, R> nonTerminal,
             Func<IAction, R> action,
-            Func<IOperation, R> operation);
+            Func<IOneOf, R> oneOf);
     }
 }

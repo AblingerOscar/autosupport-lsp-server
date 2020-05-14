@@ -86,7 +86,7 @@ namespace autosupport_lsp_server.Parsing
 
                 do
                 {
-                    isEmpty = ruleState.ruleStates.TryPop(out current);
+                    isEmpty = !ruleState.ruleStates.TryPop(out current);
                     newIndex = current == null
                         ? 0
                         : current.Item2 + 1;

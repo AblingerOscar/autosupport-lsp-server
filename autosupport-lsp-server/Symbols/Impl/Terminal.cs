@@ -16,12 +16,12 @@ namespace autosupport_lsp_server.Symbols.Impl
 
         public abstract int MinimumNumberOfCharactersToParse { get; }
 
-        public override void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal, Action<IAction> action, Action<IOperation> operation)
+        public override void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal, Action<IAction> action, Action<IOneOf> oneOf)
         {
             terminal.Invoke(this);
         }
 
-        public override R Match<R>(Func<ITerminal, R> terminal, Func<INonTerminal, R> nonTerminal, Func<IAction, R> action, Func<IOperation, R> operation)
+        public override R Match<R>(Func<ITerminal, R> terminal, Func<INonTerminal, R> nonTerminal, Func<IAction, R> action, Func<IOneOf, R> oneOf)
         {
             return terminal.Invoke(this);
         }
