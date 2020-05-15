@@ -1,6 +1,8 @@
-﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+﻿using autosupport_lsp_server.Parsing.Impl;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace autosupport_lsp_server
 {
@@ -25,6 +27,16 @@ namespace autosupport_lsp_server
             {
                 // Else the range specifies the part that should be replaced
                 ApplyPartialChange(change);
+            }
+
+            Reparse();
+        }
+
+        private void Reparse()
+        {
+            if (DocumentStore.LanguageDefinition != null)
+            {
+                Parser.Parse(DocumentStore.LanguageDefinition, Text.ToArray());
             }
         }
 

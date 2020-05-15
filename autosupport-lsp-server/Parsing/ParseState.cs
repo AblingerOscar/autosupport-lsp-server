@@ -13,23 +13,23 @@ namespace autosupport_lsp_server.Parsing
 {
     internal class ParseState
     {
-        internal ParseState(Document document, Position position, IList<RuleState> ruleStates)
+        internal ParseState(string[] text, Position position, IList<RuleState> ruleStates)
         {
-            Document = document;
+            Text = text;
             Position = position;
             RuleStates = ruleStates;
 
             currentCharacterCount = 0;
             scheduledRuleStates = new Dictionary<long, List<RuleState>>();
 
-            IsAtEndOfDocument = Document.Text.Count == 0
+            IsAtEndOfDocument = Text.Length == 0
                 || PositionIsAfterEndOfDocument();
         }
 
         private long currentCharacterCount;
         private readonly IDictionary<long, List<RuleState>> scheduledRuleStates;
 
-        internal Document Document { get; }
+        internal string[] Text { get; }
         internal Position Position { get; }
         internal IList<RuleState> RuleStates { get; private set; }
         internal bool Failed { get; private set; } = false;
@@ -38,7 +38,7 @@ namespace autosupport_lsp_server.Parsing
 
         internal string GetNextTextFromPosition(int minimumNumberOfCharacters)
         {
-            return Document.Text
+            return Text
                 .Skip((int)Position.Line)
                 .AggregateWhile(
                     new StringBuilder(),
@@ -79,7 +79,7 @@ namespace autosupport_lsp_server.Parsing
             currentCharacterCount += numberOfCharacters;
             Position.Character += numberOfCharacters;
 
-            while (Position.Character >= Document.Text[(int)Position.Line].Length)
+            while (Position.Character >= Text[(int)Position.Line].Length)
             {
                 if (PositionIsAfterEndOfDocument())
                 {
@@ -88,14 +88,14 @@ namespace autosupport_lsp_server.Parsing
                 }
 
                 // +1 for the line termination character
-                Position.Character -= Document.Text[(int)Position.Line].Length + 1;
+                Position.Character -= Text[(int)Position.Line].Length + 1;
                 Position.Line++;
             }
         }
 
         private bool PositionIsAfterEndOfDocument() =>
-            (Position.Line >= Document.Text.Count
-                || (Position.Line == Document.Text.Count - 1
-                    && Position.Character >= Document.Text[Document.Text.Count - 1].Length));
+            (Position.Line >= Text.Length
+                || (Position.Line == Text.Length - 1
+                    && Position.Character >= Text[^1].Length));
     }
 }

@@ -12,16 +12,16 @@ namespace autosupport_lsp_server.Parsing.Impl
         private readonly ParseState parseState;
         private readonly IAutosupportLanguageDefinition languageDefinition;
 
-        private Parser(IAutosupportLanguageDefinition autosupportLanguageDefinition, Document document)
+        private Parser(IAutosupportLanguageDefinition autosupportLanguageDefinition, string[] text)
         {
             languageDefinition = autosupportLanguageDefinition;
 
-            parseState = GetInitializedParseState(document);
+            parseState = GetInitializedParseState(text);
         }
 
-        public static IParseResult Parse(IAutosupportLanguageDefinition autosupportLanguageDefinition, Document document)
+        public static IParseResult Parse(IAutosupportLanguageDefinition autosupportLanguageDefinition, string[] text)
         {
-            return new Parser(autosupportLanguageDefinition, document).Parse();
+            return new Parser(autosupportLanguageDefinition, text).Parse();
         }
 
         private IParseResult Parse()
@@ -30,14 +30,14 @@ namespace autosupport_lsp_server.Parsing.Impl
             return MakeParseResult();
         }
 
-        private ParseState GetInitializedParseState(Document document)
+        private ParseState GetInitializedParseState(string[] text)
         {
             var ruleStates =
                 (from startRuleName in languageDefinition.StartRules
                  select new RuleState(languageDefinition.Rules[startRuleName]))
                  .ToList();
 
-            return new ParseState(document, new Position(0, 0), ruleStates);
+            return new ParseState(text, new Position(0, 0), ruleStates);
         }
 
         private void ParseUntilEndOrFailed()

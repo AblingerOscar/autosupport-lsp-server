@@ -39,7 +39,7 @@ namespace Tests.Parsing.Impl
             // when
             var result = Parser.Parse(
                 languageDefinition.Object,
-                Document.FromText("uri", "stringToken"));
+                new string[] { "stringToken" });
 
             // then
             Assert.Equal(shouldParse, result.FinishedSuccessfully);
@@ -79,7 +79,7 @@ namespace Tests.Parsing.Impl
             // when
             var result = Parser.Parse(
                 languageDefinition.Object,
-                Document.FromText("uri", "stringToken"));
+                new string[] { "stringToken" });
 
             // then
             Assert.True(result.FinishedSuccessfully);
@@ -126,7 +126,7 @@ namespace Tests.Parsing.Impl
             // when
             var result = Parser.Parse(
                     languageDefinition.Object,
-                    Document.FromText("uri", " ")
+                    new string[] { " " }
                 );
 
             // then
@@ -175,7 +175,7 @@ namespace Tests.Parsing.Impl
             // when
             var result = Parser.Parse(
                     languageDefinition.Object,
-                    Document.FromText("uri", "12")
+                    new string[] { "12" }
                 );
 
             // then
