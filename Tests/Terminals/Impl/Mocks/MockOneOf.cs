@@ -8,6 +8,8 @@ namespace Tests.Terminals.Impl.Mocks
     {
         public abstract string[] Options { get; }
 
+        public abstract bool AllowNone { get; }
+
         public void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal, Action<IAction> action, Action<IOneOf> oneOf)
         {
             oneOf.Invoke(this);

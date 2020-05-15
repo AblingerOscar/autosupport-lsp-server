@@ -6,6 +6,7 @@ using autosupport_lsp_server.Symbols.Impl;
 using Moq;
 using Sprache;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.ComTypes;
 using Tests.Terminals.Impl.Mocks;
 using Xunit;
 
@@ -100,7 +101,9 @@ namespace Tests.Parsing.Impl
                 minimumNumberOfCharactersToParse: 1,
                 shouldParse: false);
 
-            var oneOf = OneOf(terminalFailsName, terminalSucceedsName);
+            var oneOf = OneOf(
+                false,
+                terminalFailsName, terminalSucceedsName);
 
             var terminalSucceedsRule = Rule(symbols: terminalSucceeds.Object);
             var terminalFailsRule = Rule(symbols: terminalFails.Object);
@@ -130,6 +133,53 @@ namespace Tests.Parsing.Impl
             Assert.True(result.FinishedSuccessfully);
             terminalSucceeds.Verify(t => t.TryParse(It.IsAny<string>()), Times.Once());
             terminalFails.Verify(t => t.TryParse(It.IsAny<string>()), Times.Once());
+        }
+
+        [Fact]
+        void When_RuleWithOneOf_WithAllowNone_ThenIgnoringItIsAllowed()
+        {
+            // given
+            var terminalRuleName = "terminalRule";
+
+            var successfulTerminal = Terminal(
+                    minimumNumberOfCharactersToParse: 2,
+                    shouldParse: true
+                );
+
+            var failingTerminal = Terminal(
+                    minimumNumberOfCharactersToParse: 2,
+                    shouldParse: false
+                );
+
+            var oneOf = OneOf(
+                    allowNone: true,
+                    options: terminalRuleName
+                );
+
+            var baseRule = Rule(
+                    symbols: new ISymbol[] { oneOf.Object, successfulTerminal.Object }
+                );
+            var terminalRule = Rule(
+                    symbols: failingTerminal.Object
+                );
+
+            var languageDefinition = AutosupportLanguageDefinition(
+                    startRule: "S",
+                    rules: new Dictionary<string, IRule>()
+                    {
+                        { "S", baseRule.Object },
+                        { terminalRuleName, terminalRule.Object }
+                    }
+                );
+
+            // when
+            var result = Parser.Parse(
+                    languageDefinition.Object,
+                    Document.FromText("uri", "12")
+                );
+
+            // then
+            Assert.True(result.FinishedSuccessfully);
         }
     }
 }

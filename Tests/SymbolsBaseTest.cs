@@ -1,6 +1,7 @@
 ﻿using autosupport_lsp_server;
 using autosupport_lsp_server.Symbols;
 using Moq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Tests.Terminals.Impl.Mocks;
@@ -50,6 +51,7 @@ namespace Tests
         }
 
         protected Mock<MockOneOf> OneOf(
+                bool? allowNone = null,
                 params string[] options
             )
         {
@@ -57,6 +59,11 @@ namespace Tests
             {
                 CallBase = true // for both Match functions
             };
+
+            if (allowNone.HasValue)
+            {
+                mock.SetupGet(oo => oo.AllowNone).Returns(allowNone.Value);
+            }
 
             if (options.Length != 0) {
                 mock.SetupGet(oo => oo.Options).Returns(options);
