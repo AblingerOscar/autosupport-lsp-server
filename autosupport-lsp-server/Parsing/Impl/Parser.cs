@@ -122,10 +122,20 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IDictionary<int, IEnumerable<RuleState>>? ParseOneOf(RuleState ruleState, IOneOf oneOf)
         {
-            return oneOf.Options
+            var rules = oneOf.Options
                 .Select(ruleName => ruleState.Clone()
                     .WithNewRule(languageDefinition.Rules[ruleName])
-                    .Build())
+                    .Build());
+
+            if (oneOf.AllowNone)
+            {
+                rules = rules.Append(ruleState.Clone()
+                        .WithNextSymbol()
+                        .TryBuild()
+                        ?? RuleState.FinishedRuleState);
+            }
+
+            return rules
                 .Select(GetPossibleNextStatesOfSymbol)
                 .Aggregate<IDictionary<int, IEnumerable<RuleState>>?, IDictionary<int, IEnumerable<RuleState>>>(new Dictionary<int, IEnumerable<RuleState>>(), MergeDictionaries);
         }
