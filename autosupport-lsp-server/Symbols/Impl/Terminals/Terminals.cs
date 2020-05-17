@@ -10,11 +10,14 @@ namespace autosupport_lsp_server.Symbols.Impl.Terminals
         public StringTerminal(string str)
         {
             String = str;
+            PossibleContent = new string[] { String };
         }
 
-        public string String { get; } = "";
+        public string String { get; }
 
         public override int MinimumNumberOfCharactersToParse => String.Length;
+
+        public override string[] PossibleContent { get; }
 
         protected override Parser<string> Parser =>
             Parse.Ref(() => Parse.String(String)).Text();
@@ -24,6 +27,8 @@ namespace autosupport_lsp_server.Symbols.Impl.Terminals
     {
         public override int MinimumNumberOfCharactersToParse => 1;
 
+        public override string[] PossibleContent { get; } = new string[0];
+
         protected abstract Parser<char> CharParser { get; }
 
         protected override Parser<string> Parser => CharParser.Select(ch => ch.ToString());
@@ -31,6 +36,8 @@ namespace autosupport_lsp_server.Symbols.Impl.Terminals
 
     internal class AnyLineEndTerminal : CharTerminal
     {
+        public override string[] PossibleContent { get; } = new string[] { Constants.NewLine.ToString() };
+
         // note that when adding Text together all newline will be converted to
         // Constants.Newline
         protected override Parser<char> CharParser => Parse.Char(Constants.NewLine);
@@ -68,6 +75,8 @@ namespace autosupport_lsp_server.Symbols.Impl.Terminals
 
     internal class AnyWhitespaceTerminal : CharTerminal
     {
+        public override string[] PossibleContent { get; } = new string[] { " " };
+
         protected override Parser<char> CharParser => Parse.WhiteSpace;
     }
 }

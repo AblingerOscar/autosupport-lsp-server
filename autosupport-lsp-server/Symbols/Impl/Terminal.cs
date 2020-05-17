@@ -3,7 +3,6 @@ using autosupport_lsp_server.Serialization.Annotation;
 using autosupport_lsp_server.Symbols.Impl.Terminals;
 using Sprache;
 using System;
-using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Symbols.Impl
@@ -15,6 +14,8 @@ namespace autosupport_lsp_server.Symbols.Impl
         protected abstract Parser<string> Parser { get; }
 
         public abstract int MinimumNumberOfCharactersToParse { get; }
+
+        public abstract string[] PossibleContent { get; }
 
         public override void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal, Action<IAction> action, Action<IOneOf> oneOf)
         {
