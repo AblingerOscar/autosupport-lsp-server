@@ -1,18 +1,26 @@
 ﻿using autosupport_lsp_server;
 using autosupport_lsp_server.Symbols;
 using Moq;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using Tests.Terminals.Impl.Mocks;
 
 namespace Tests
 {
     public abstract class SymbolsBaseTest
     {
+        protected Mock<MockTerminal> Terminal(string content, bool? shouldParse)
+        {
+            return Terminal(
+                    minimumNumberOfCharactersToParse: content.Length,
+                    shouldParse,
+                    possibleContent: new string[] { content }
+                );
+        }
+
         protected Mock<MockTerminal> Terminal(
                 int? minimumNumberOfCharactersToParse = null,
-                bool? shouldParse = null
+                bool? shouldParse = null,
+                string[]? possibleContent = null
             )
         {
             var mock = new Mock<MockTerminal>
@@ -28,6 +36,11 @@ namespace Tests
             if (shouldParse.HasValue)
             {
                 mock.Setup(t => t.TryParse(It.IsAny<string>())).Returns(shouldParse.Value);
+            }
+
+            if (possibleContent != null)
+            {
+                mock.SetupGet(t => t.PossibleContent).Returns(possibleContent);
             }
 
             return mock;

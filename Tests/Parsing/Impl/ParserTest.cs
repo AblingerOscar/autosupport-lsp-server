@@ -1,30 +1,23 @@
-﻿using autosupport_lsp_server;
-using autosupport_lsp_server.Parsing;
-using autosupport_lsp_server.Parsing.Impl;
+﻿using autosupport_lsp_server.Parsing.Impl;
 using autosupport_lsp_server.Symbols;
-using autosupport_lsp_server.Symbols.Impl;
 using Moq;
 using Sprache;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.ComTypes;
-using Tests.Terminals.Impl.Mocks;
 using Xunit;
 
 namespace Tests.Parsing.Impl
 {
     public class ParserTest : SymbolsBaseTest
     {
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        void When_RuleWithOneTerminal_ThenParsesCorrectly(bool shouldParse)
+        [Fact]
+        void When_RuleWithOneTerminalThatParsesCorrectly_ThenFinish()
         {
             // given
             string parseString = "terminalString";
 
             var terminal = Terminal(
                 minimumNumberOfCharactersToParse: parseString.Length,
-                shouldParse: shouldParse
+                shouldParse: true
                 );
 
             var rule = Rule(
@@ -39,10 +32,42 @@ namespace Tests.Parsing.Impl
             // when
             var result = Parser.Parse(
                 languageDefinition.Object,
-                new string[] { "stringToken" });
+                new string[] { parseString });
 
             // then
-            Assert.Equal(shouldParse, result.FinishedSuccessfully);
+            Assert.True(result.Finished);
+        }
+
+        [Theory]
+        [InlineData("", "aterminal")]
+        [InlineData("a", "terminal")]
+        void When_MoreInputIsExpectedFromTerminal_ThenHavePossibleContinuations(string firstLine, string expectedContinuation)
+        {
+            // given
+            var terminal = Terminal(
+                    "aterminal",
+                    false
+                );
+
+            var rule = Rule(
+                    symbols: terminal.Object
+                );
+
+            var languageDefinition = AutosupportLanguageDefinition(
+                    startRule: "S",
+                    rules: new Dictionary<string, IRule>() { { "S", rule.Object } }
+                );
+
+            // when
+            var result = Parser.Parse(
+                    languageDefinition.Object,
+                    new string[1] { firstLine }
+                );
+
+            // then
+            terminal.Verify(t => t.TryParse(It.IsAny<string>()), Times.Never());
+            Assert.NotEmpty(result.PossibleContinuations);
+            Assert.Equal(expectedContinuation, result.PossibleContinuations[0]);
         }
 
         [Fact]
@@ -79,10 +104,10 @@ namespace Tests.Parsing.Impl
             // when
             var result = Parser.Parse(
                 languageDefinition.Object,
-                new string[] { "stringToken" });
+                new string[] { parseString });
 
             // then
-            Assert.True(result.FinishedSuccessfully);
+            Assert.True(result.Finished);
             terminal.Verify(t => t.TryParse(It.IsAny<string>()), Times.Once());
         }
 
@@ -130,7 +155,7 @@ namespace Tests.Parsing.Impl
                 );
 
             // then
-            Assert.True(result.FinishedSuccessfully);
+            Assert.True(result.Finished);
             terminalSucceeds.Verify(t => t.TryParse(It.IsAny<string>()), Times.Once());
             terminalFails.Verify(t => t.TryParse(It.IsAny<string>()), Times.Once());
         }
@@ -179,7 +204,7 @@ namespace Tests.Parsing.Impl
                 );
 
             // then
-            Assert.True(result.FinishedSuccessfully);
+            Assert.True(result.Finished);
         }
     }
 }

@@ -7,6 +7,7 @@ namespace Tests.Terminals.Impl.Mocks
     public abstract class MockTerminal : Symbol, ITerminal
     {
         public abstract int MinimumNumberOfCharactersToParse { get; }
+        public abstract string[] PossibleContent { get; }
 
         public abstract bool TryParse(string str);
 
