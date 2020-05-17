@@ -3,7 +3,9 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace autosupport_lsp_server.Parsing.Impl
 {
@@ -11,11 +13,15 @@ namespace autosupport_lsp_server.Parsing.Impl
     {
         private readonly ParseState parseState;
         private readonly IAutosupportLanguageDefinition languageDefinition;
+        private readonly IList<IError> errors;
+        private readonly IList<(string Continuation, RuleState? RuleState)> possibleContinuations;
 
         private Parser(IAutosupportLanguageDefinition autosupportLanguageDefinition, string[] text)
         {
             languageDefinition = autosupportLanguageDefinition;
 
+            errors = new List<IError>();
+            possibleContinuations = new List<(string Continuation, RuleState? RuleState)>();
             parseState = GetInitializedParseState(text);
         }
 
@@ -88,7 +94,24 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IDictionary<int, IEnumerable<RuleState>>? ParseTerminal(RuleState ruleState, ITerminal terminal)
         {
-            if (terminal.TryParse(parseState!.GetNextTextFromPosition(terminal.MinimumNumberOfCharactersToParse)))
+            var text = parseState!.GetNextTextFromPosition(terminal.MinimumNumberOfCharactersToParse);
+
+            if (text.Length < terminal.MinimumNumberOfCharactersToParse)
+            {
+                foreach (var content in terminal.PossibleContent)
+                {
+                    if (content.StartsWith(text))
+                    {
+                        possibleContinuations.Add((
+                            content.Substring(text.Length),
+                            ruleState.Clone().WithNextSymbol().TryBuild()
+                            ));
+                    }
+                }
+                return null;
+            }
+
+            if (terminal.TryParse(text))
             {
                 return new Dictionary<int, IEnumerable<RuleState>>(1)
                 {
@@ -161,10 +184,74 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IParseResult MakeParseResult()
         {
-            return new ParseResult()
+            return new ParseResult(
+                    finished: (parseState?.IsAtEndOfDocument) ?? false,
+                    possibleContinuations: GetPossibleContinuations(),
+                    errors: new IError[0]
+                );
+        }
+
+        private string[] GetPossibleContinuations()
+        {
+            return parseState.RuleStates
+                .Select<RuleState, (string Continuation, RuleState? RuleState)>(rs => ("", rs))
+                .Union(possibleContinuations)
+                .SelectMany(GetPossibleContinuationsOfRuleState)
+                .Where(continuation => continuation.Length > 0)
+                .ToArray();
+        }
+
+        private IEnumerable<string> GetPossibleContinuationsOfRuleState((string Continuation, RuleState? RuleState) state)
+        {
+            (var continuation, var ruleState) = state;
+
+            if (ruleState == null || ruleState.IsFinished || ruleState.CurrentSymbol == null)
             {
-                FinishedSuccessfully = (!parseState?.Failed) ?? false
-            };
+                yield return continuation;
+            }
+            else
+            {
+                foreach(var possibleNext in ruleState.CurrentSymbol.Match(
+                    terminal =>
+                    {
+                        return terminal.PossibleContent;
+                    },
+                    nonTerminal =>
+                    {
+                        return GetPossibleContinuationsOfRuleState((continuation, ruleState.Clone()
+                                .WithNewRule(languageDefinition.Rules[nonTerminal.ReferencedRule])
+                                .Build()))
+                            .ToArray();
+                    },
+                    action =>
+                    {
+                        return new string[0];
+                    },
+                    oneOf =>
+                    {
+                        return new string[0];
+                        /*
+                        IEnumerable<(string Continuation, RuleState? RuleState)> rules = oneOf.Options
+                            .Select<string, (string Continuation, RuleState? RuleState)>(ruleName => (continuation, ruleState.Clone()
+                                .WithNewRule(languageDefinition.Rules[ruleName])
+                                .Build()));
+
+                        if (oneOf.AllowNone)
+                        {
+                            rules = rules.Append((continuation, ruleState.Clone()
+                                    .WithNextSymbol()
+                                    .TryBuild()));
+                        }
+
+                        return rules
+                            .SelectMany(GetPossibleContinuationsOfRuleState)
+                            .ToArray();
+                            */
+                    }))
+                {
+                    yield return possibleNext;
+                }
+            }
         }
     }
 }

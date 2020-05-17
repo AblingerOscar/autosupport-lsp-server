@@ -15,7 +15,11 @@ namespace autosupport_lsp_server.Parsing
             ? null
             : CurrentRule.Symbols[ruleStates.Peek().Item2];
 
-        public bool IsFinished { get; } = false;
+        public bool IsFinished {
+            get {
+                return ruleStates.Count == 0;
+            }
+        }
 
         public RuleState(IRule rule, int position = 0)
         {
@@ -37,7 +41,6 @@ namespace autosupport_lsp_server.Parsing
         private RuleState()
         {
             ruleStates = new Stack<Tuple<IRule, int>>(0);
-            IsFinished = true;
 
         }
 
