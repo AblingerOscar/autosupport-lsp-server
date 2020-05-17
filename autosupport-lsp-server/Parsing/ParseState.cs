@@ -1,12 +1,8 @@
-﻿using autosupport_lsp_server.Symbols;
-using Microsoft.Extensions.Primitives;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Data;
+using System.Dynamic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace autosupport_lsp_server.Parsing
@@ -29,6 +25,8 @@ namespace autosupport_lsp_server.Parsing
         private long currentCharacterCount;
         private readonly IDictionary<long, List<RuleState>> scheduledRuleStates;
 
+
+
         internal string[] Text { get; }
         internal Position Position { get; }
         internal IList<RuleState> RuleStates { get; private set; }
@@ -44,7 +42,9 @@ namespace autosupport_lsp_server.Parsing
                     new StringBuilder(),
                     (s1, s2) => s1.Append(Constants.NewLine).Append(s2),
                     (aggr, newStr) => aggr.Length - (int)Position.Character < minimumNumberOfCharacters)
-                .Remove(0, (int)Position.Character)
+                // adding +1 in order to skip the newline added at the start
+                // by the aggregate
+                .Remove(0, (int)Position.Character + 1)
                 .ToString();
         }
 
@@ -61,8 +61,11 @@ namespace autosupport_lsp_server.Parsing
 
             OffsetPositionBy(nextRulesCharCount - currentCharacterCount);
 
-            RuleStates = scheduledRuleStates[nextRulesCharCount];
-            scheduledRuleStates.Remove(nextRulesCharCount);
+            if (IsAtEndOfDocument)
+            {
+                RuleStates = scheduledRuleStates[nextRulesCharCount];
+                scheduledRuleStates.Remove(nextRulesCharCount);
+            }
         }
 
         internal void ScheduleNewRuleStatesIn(int numberOfCharacters, IEnumerable<RuleState> ruleStates)
@@ -91,11 +94,18 @@ namespace autosupport_lsp_server.Parsing
                 Position.Character -= Text[(int)Position.Line].Length + 1;
                 Position.Line++;
             }
+
+            IsAtEndOfDocument = PositionIsAtEndOfDocument();
         }
 
         private bool PositionIsAfterEndOfDocument() =>
             (Position.Line >= Text.Length
                 || (Position.Line == Text.Length - 1
                     && Position.Character >= Text[^1].Length));
+
+        private bool PositionIsAtEndOfDocument() =>
+            (Position.Line >= Text.Length
+                || (Position.Line == Text.Length - 1
+                    && Position.Character >= Text[^1].Length - 1));
     }
 }
