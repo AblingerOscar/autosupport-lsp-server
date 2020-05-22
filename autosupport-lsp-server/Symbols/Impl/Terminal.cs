@@ -35,23 +35,24 @@ namespace autosupport_lsp_server.Symbols.Impl
         public static ITerminal FromXLinq(XElement element, IInterfaceDeserializer interfaceDeserializer)
         {
             var name = element.Name.ToString();
+            var elementType = AnnotationUtils.FindTypeWithName(name);
 
-            if (name == AnnotationUtils.XLinqOf(typeof(StringTerminal)).ClassName())
+            if (elementType == null)
+                throw new ArgumentException($"Type for '{name}' does not exist, is not an ITerminal or does not have a default constructor");
+
+
+            if (typeof(StringTerminal).IsAssignableFrom(elementType))
             {
                 var result = new StringTerminal(element.Value);
                 AddSymbolValuesFromXLinq(result, element, interfaceDeserializer);
                 return result;
-            } else
+            }
+            else if (typeof(Terminal).IsAssignableFrom(elementType))
             {
-                var elementType = AnnotationUtils.FindTypeWithName(name);
-
-                if (elementType != null && typeof(Terminal).IsAssignableFrom(elementType))
+                if (elementType.GetConstructor(new Type[0])?.Invoke(null) is Terminal result)
                 {
-                    if (elementType.GetConstructor(new Type[0])?.Invoke(null) is Terminal result)
-                    {
-                        AddSymbolValuesFromXLinq(result, element, interfaceDeserializer);
-                        return result;
-                    }
+                    AddSymbolValuesFromXLinq(result, element, interfaceDeserializer);
+                    return result;
                 }
             }
 

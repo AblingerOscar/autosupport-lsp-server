@@ -1,10 +1,12 @@
 ﻿using autosupport_lsp_server.Parsing;
+using autosupport_lsp_server.Serialization.Annotation;
 using Sprache;
 using System;
 using System.Linq;
 
 namespace autosupport_lsp_server.Symbols.Impl.Terminals
 {
+    [XLinqName("string")]
     internal class StringTerminal : Terminal
     {
         public StringTerminal(string str)
@@ -34,6 +36,7 @@ namespace autosupport_lsp_server.Symbols.Impl.Terminals
         protected override Parser<string> Parser => CharParser.Select(ch => ch.ToString());
     }
 
+    [XLinqName("lineEnd")]
     internal class AnyLineEndTerminal : CharTerminal
     {
         public override string[] PossibleContent { get; } = new string[] { Constants.NewLine.ToString() };
@@ -43,36 +46,43 @@ namespace autosupport_lsp_server.Symbols.Impl.Terminals
         protected override Parser<char> CharParser => Parse.Char(Constants.NewLine);
     }
 
+    [XLinqName("letter")]
     internal class AnyLetterTerminal : CharTerminal
     {
         protected override Parser<char> CharParser => Parse.Letter;
     }
 
+    [XLinqName("letterOrDigit")]
     internal class AnyLetterOrDigitTerminal : CharTerminal
     {
         protected override Parser<char> CharParser => Parse.LetterOrDigit;
     }
 
+    [XLinqName("lowercaseLetter")]
     internal class AnyLowercaseLetterTerminal : CharTerminal
     {
         protected override Parser<char> CharParser => Parse.Lower;
     }
 
+    [XLinqName("uppercaseLetter")]
     internal class AnyUppercaseLetterTerminal : CharTerminal
     {
         protected override Parser<char> CharParser => Parse.Upper;
     }
 
+    [XLinqName("character")]
     internal class AnyCharacterTerminal : CharTerminal
     {
         protected override Parser<char> CharParser => Parse.AnyChar;
     }
 
+    [XLinqName("digit")]
     internal class AnyDigitTerminal : CharTerminal
     {
         protected override Parser<char> CharParser => Parse.Digit;
     }
 
+    [XLinqName("whitespace")]
     internal class AnyWhitespaceTerminal : CharTerminal
     {
         public override string[] PossibleContent { get; } = new string[] { " " };

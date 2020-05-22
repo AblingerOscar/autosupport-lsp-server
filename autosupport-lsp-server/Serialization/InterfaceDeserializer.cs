@@ -2,9 +2,6 @@
 using autosupport_lsp_server.Symbols;
 using autosupport_lsp_server.Symbols.Impl;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Serialization
@@ -42,7 +39,11 @@ namespace autosupport_lsp_server.Serialization
                 else if (typeof(INonTerminal).IsAssignableFrom(symbol))
                 {
                     return DeserializeNonTerminalSymbol(element);
-                } // TODO: operations & Actions
+                }
+                else if (typeof(IOneOf).IsAssignableFrom(symbol))
+                {
+                    return DeserializeOneOf(element);
+                } // TODO: action
             }
 
             throw new ArgumentException($"The given Element '{element.Name}' does not exist or is not a symbol");
@@ -56,6 +57,11 @@ namespace autosupport_lsp_server.Serialization
         public ITerminal DeserializeTerminalSymbol(XElement element)
         {
             return Terminal.FromXLinq(element, this);
+        }
+
+        private ISymbol DeserializeOneOf(XElement element)
+        {
+            return OneOf.FromXLinq(element, this);
         }
     }
 }

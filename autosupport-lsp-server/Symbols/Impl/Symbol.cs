@@ -5,7 +5,6 @@ using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Symbols.Impl
 {
-    [XLinqName("symbol")]
     public abstract class Symbol : ISymbol
     {
         public abstract void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal, Action<IAction> action, Action<IOneOf> oneOf);
@@ -19,7 +18,7 @@ namespace autosupport_lsp_server.Symbols.Impl
 
         protected static void AddSymbolValuesFromXLinq(Symbol symbol, XElement element, IInterfaceDeserializer interfaceDeserializer)
         {
-            // currently no properties
+            // no properties
         }
 
         private static readonly AnnotationUtils.XLinqClassAnnotationUtil annotation = AnnotationUtils.XLinqOf(typeof(Symbol));

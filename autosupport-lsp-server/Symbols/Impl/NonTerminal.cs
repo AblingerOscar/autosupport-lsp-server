@@ -5,6 +5,7 @@ using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Symbols.Impl
 {
+    [XLinqName("nonTerminal")]
     internal class NonTerminal : Symbol, INonTerminal
     {
         [XLinqName("referencedRule")]

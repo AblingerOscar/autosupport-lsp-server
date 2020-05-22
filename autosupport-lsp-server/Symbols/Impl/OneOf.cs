@@ -1,12 +1,20 @@
-﻿using System;
+﻿using autosupport_lsp_server.Serialization;
+using autosupport_lsp_server.Serialization.Annotation;
+using System;
+using System.Linq;
+using System.Xml;
 using System.Xml.Linq;
+using static autosupport_lsp_server.Serialization.Annotation.AnnotationUtils;
 
 namespace autosupport_lsp_server.Symbols.Impl
 {
+    [XLinqName("oneOf")]
     public class OneOf : IOneOf
     {
+        [XLinqKeys("option")]
         public string[] Options { get; private set; } = new string[0];
 
+        [XLinqName("allowNone")]
         public bool AllowNone { get; private set; } = false;
 
         public void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal, Action<IAction> action, Action<IOneOf> oneOf)
@@ -21,7 +29,22 @@ namespace autosupport_lsp_server.Symbols.Impl
 
         public XElement SerializeToXLinq()
         {
-            throw new NotImplementedException();
+            return new XElement(annotation.ClassName(),
+                Options.Select<string, object>(option =>
+                    new XElement(annotation.PropertyName(nameof(Options)), option))
+                .Append(new XAttribute(annotation.PropertyName(nameof(AllowNone)), XmlConvert.ToString(AllowNone))));
         }
+
+        public static IOneOf FromXLinq(XElement element, IInterfaceDeserializer interfaceDeserializer)
+        {
+            return new OneOf()
+            {
+                AllowNone = XmlConvert.ToBoolean(element.Attribute(annotation.PropertyName(nameof(AllowNone))).Value),
+                Options = (from optionXml in element.Elements(annotation.KeysName(nameof(Options)))
+                           select optionXml.Value).ToArray()
+            };
+        }
+
+        private static readonly XLinqClassAnnotationUtil annotation = AnnotationUtils.XLinqOf(typeof(OneOf));
     }
 }
