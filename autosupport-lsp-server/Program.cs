@@ -1,5 +1,6 @@
 ﻿using autosupport_lsp_server.LSP;
 using autosupport_lsp_server.Serialization;
+using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.LanguageServer.Server;
 using System;
 using System.IO;
@@ -22,10 +23,16 @@ namespace autosupport_lsp_server
                 options
                     .WithInput(Console.OpenStandardInput())
                     .WithOutput(Console.OpenStandardOutput())
-                    .WithHandler<TextDocumentSyncHandler>();
+                    .WithHandler<TextDocumentSyncHandler>()
+                    .WithServices(RegisterServices);
             });
 
             await server.WaitForExit;
+        }
+
+        private static void RegisterServices(IServiceCollection collection)
+        {
+            collection.AddSingleton<KeywordsCompletetionHandler>();
         }
 
         static private bool TrySetupDocumentStore(string[] args)
