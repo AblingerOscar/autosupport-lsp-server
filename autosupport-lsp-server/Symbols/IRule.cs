@@ -1,5 +1,5 @@
 ﻿using autosupport_lsp_server.Serialization;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace autosupport_lsp_server.Symbols
 {
@@ -7,6 +7,6 @@ namespace autosupport_lsp_server.Symbols
     {
         string Name { get; }
 
-        IList<ISymbol> Symbols { get; }
+        IImmutableList<ISymbol> Symbols { get; }
     }
 }

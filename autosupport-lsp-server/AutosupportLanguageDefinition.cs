@@ -57,12 +57,16 @@ namespace autosupport_lsp_server
             {
                 LanguageId = element.Attribute(annotation.PropertyName(nameof(LanguageId))).Value,
                 LanguageFilePattern = element.Attribute(annotation.PropertyName(nameof(LanguageFilePattern))).Value,
-                StartRules = (from node in element
+                StartRules = (from startRuleElement in element
                                         .Element(annotation.PropertyName(nameof(StartRules)))
                                         .Elements(annotation.ValuesName(nameof(StartRules)))
-                              select node.Value)
-                                      .ToArray(),
-                // TODO: Deserialize Rules
+                              select startRuleElement.Value)
+                              .ToArray(),
+                Rules = (from ruleElement in element
+                                        .Element(annotation.PropertyName(nameof(Rules)))
+                                        .Elements()
+                         select interfaceDeserializer.DeserializeRule(ruleElement))
+                         .ToDictionary(rule => rule.Name)
             };
         }
     }

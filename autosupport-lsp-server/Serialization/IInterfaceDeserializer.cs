@@ -5,9 +5,10 @@ namespace autosupport_lsp_server.Serialization
 {
     public interface IInterfaceDeserializer
     {
-        public ISymbol DeserializeSymbol(XElement element);
-        public ITerminal DeserializeTerminalSymbol(XElement element);
-        public INonTerminal DeserializeNonTerminalSymbol(XElement element);
-        public IAutosupportLanguageDefinition DeserializeAutosupportLanguageDefinition(XElement element);
+        ISymbol DeserializeSymbol(XElement element);
+        ITerminal DeserializeTerminalSymbol(XElement element);
+        INonTerminal DeserializeNonTerminalSymbol(XElement element);
+        IAutosupportLanguageDefinition DeserializeAutosupportLanguageDefinition(XElement element);
+        IRule DeserializeRule(XElement element);
     }
 }

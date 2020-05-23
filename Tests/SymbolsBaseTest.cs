@@ -2,6 +2,8 @@
 using autosupport_lsp_server.Symbols;
 using Moq;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using Tests.Terminals.Impl.Mocks;
 
 namespace Tests
@@ -99,7 +101,7 @@ namespace Tests
 
             if (symbols.Length > 0)
             {
-                mock.SetupGet(r => r.Symbols).Returns(new List<ISymbol>(symbols));
+                mock.SetupGet(r => r.Symbols).Returns(new List<ISymbol>(symbols).ToImmutableList());
             }
 
             return mock;

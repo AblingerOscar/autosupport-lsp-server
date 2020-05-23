@@ -63,5 +63,10 @@ namespace autosupport_lsp_server.Serialization
         {
             return OneOf.FromXLinq(element, this);
         }
+
+        public IRule DeserializeRule(XElement element)
+        {
+            return Rule.FromXLinq(element, this);
+        }
     }
 }

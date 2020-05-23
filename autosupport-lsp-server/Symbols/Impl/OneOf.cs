@@ -32,7 +32,8 @@ namespace autosupport_lsp_server.Symbols.Impl
             return new XElement(annotation.ClassName(),
                 Options.Select<string, object>(option =>
                     new XElement(annotation.PropertyName(nameof(Options)), option))
-                .Append(new XAttribute(annotation.PropertyName(nameof(AllowNone)), XmlConvert.ToString(AllowNone))));
+                .Prepend(new XAttribute(annotation.PropertyName(nameof(AllowNone)), XmlConvert.ToString(AllowNone)))
+                .ToArray());
         }
 
         public static IOneOf FromXLinq(XElement element, IInterfaceDeserializer interfaceDeserializer)
