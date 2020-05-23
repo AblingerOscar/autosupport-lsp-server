@@ -12,26 +12,8 @@ namespace autosupport_lsp_server.LSP
 {
     internal class TextDocumentSyncHandler : ITextDocumentSyncHandler
     {
-        private DocumentSelector? documentSelector;
         private readonly TextDocumentSyncKind syncKind = TextDocumentSyncKind.Full;
         private SynchronizationCapability? capability;
-
-        public DocumentSelector DocumentSelector {
-            get {
-                if (DocumentStore.LanguageDefinition == null)
-                    throw new InvalidOperationException("Server not yet properly set up");
-
-                if (documentSelector == null)
-                {
-                    documentSelector = new DocumentSelector(
-                                DocumentFilter.ForPattern(DocumentStore.LanguageDefinition.LanguageFilePattern),
-                                DocumentFilter.ForLanguage(DocumentStore.LanguageDefinition.LanguageId)
-                                );
-                }
-
-                return documentSelector;
-            }
-        }
 
         public TextDocumentChangeRegistrationOptions GetRegistrationOptions()
         {
@@ -40,7 +22,7 @@ namespace autosupport_lsp_server.LSP
 
             return new TextDocumentChangeRegistrationOptions()
             {
-                DocumentSelector = DocumentSelector,
+                DocumentSelector = LSPUtils.DocumentSelector,
                 SyncKind = syncKind
             };
         }
@@ -112,7 +94,7 @@ namespace autosupport_lsp_server.LSP
         {
             return new TextDocumentRegistrationOptions()
             {
-                DocumentSelector = DocumentSelector
+                DocumentSelector = LSPUtils.DocumentSelector
             };
         }
 
@@ -120,7 +102,7 @@ namespace autosupport_lsp_server.LSP
         {
             return new TextDocumentSaveRegistrationOptions()
             {
-                DocumentSelector = DocumentSelector,
+                DocumentSelector = LSPUtils.DocumentSelector,
                 // Whether the client is supposed to send the text on a save
                 IncludeText = false
             };

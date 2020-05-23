@@ -57,6 +57,7 @@ namespace autosupport_lsp_server.LSP
         {
             return new CompletionRegistrationOptions()
             {
+                DocumentSelector = LSPUtils.DocumentSelector,
                 ResolveProvider = false,
                 WorkDoneProgress = false
             };
