@@ -24,15 +24,10 @@ namespace autosupport_lsp_server
                     .WithInput(Console.OpenStandardInput())
                     .WithOutput(Console.OpenStandardOutput())
                     .WithHandler<TextDocumentSyncHandler>()
-                    .WithServices(RegisterServices);
+                    .WithHandler<KeywordsCompletetionHandler>();
             });
 
             await server.WaitForExit;
-        }
-
-        private static void RegisterServices(IServiceCollection collection)
-        {
-            collection.AddSingleton<KeywordsCompletetionHandler>();
         }
 
         static private bool TrySetupDocumentStore(string[] args)
