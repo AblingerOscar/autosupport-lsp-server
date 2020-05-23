@@ -16,6 +16,23 @@ namespace autosupport_lsp_server.LSP
         private readonly TextDocumentSyncKind syncKind = TextDocumentSyncKind.Full;
         private SynchronizationCapability? capability;
 
+        public DocumentSelector DocumentSelector {
+            get {
+                if (DocumentStore.LanguageDefinition == null)
+                    throw new InvalidOperationException("Server not yet properly set up");
+
+                if (documentSelector == null)
+                {
+                    documentSelector = new DocumentSelector(
+                                DocumentFilter.ForPattern(DocumentStore.LanguageDefinition.LanguageFilePattern),
+                                DocumentFilter.ForLanguage(DocumentStore.LanguageDefinition.LanguageId)
+                                );
+                }
+
+                return documentSelector;
+            }
+        }
+
         public TextDocumentChangeRegistrationOptions GetRegistrationOptions()
         {
             if (DocumentStore.LanguageDefinition == null)
@@ -23,7 +40,7 @@ namespace autosupport_lsp_server.LSP
 
             return new TextDocumentChangeRegistrationOptions()
             {
-                DocumentSelector = documentSelector,
+                DocumentSelector = DocumentSelector,
                 SyncKind = syncKind
             };
         }
@@ -32,14 +49,6 @@ namespace autosupport_lsp_server.LSP
         {
             if (DocumentStore.LanguageDefinition == null)
                 throw new InvalidOperationException("Server not yet properly set up");
-
-            if (documentSelector == null)
-            {
-                documentSelector = new DocumentSelector(
-                            DocumentFilter.ForPattern("**/*.atg"),
-                            DocumentFilter.ForLanguage("Cocol-2")
-                            );
-            }
 
             return new TextDocumentAttributes(uri, DocumentStore.LanguageDefinition.LanguageId);
         }
@@ -103,7 +112,7 @@ namespace autosupport_lsp_server.LSP
         {
             return new TextDocumentRegistrationOptions()
             {
-                DocumentSelector = documentSelector
+                DocumentSelector = DocumentSelector
             };
         }
 
@@ -111,7 +120,7 @@ namespace autosupport_lsp_server.LSP
         {
             return new TextDocumentSaveRegistrationOptions()
             {
-                DocumentSelector = documentSelector,
+                DocumentSelector = DocumentSelector,
                 // Whether the client is supposed to send the text on a save
                 IncludeText = false
             };
