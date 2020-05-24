@@ -73,6 +73,9 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IDictionary<int, IEnumerable<RuleState>>? GetPossibleNextStatesOfSymbol(RuleState ruleState)
         {
+            if (ruleState.IsFinished)
+                return null;
+
             var currentSymbol = ruleState.CurrentSymbol;
             if (currentSymbol == null)
                 throw new Exception("Current Symbol is null");
