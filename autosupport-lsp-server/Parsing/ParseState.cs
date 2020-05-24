@@ -1,4 +1,5 @@
-﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+﻿using Microsoft.Extensions.Primitives;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -44,6 +45,29 @@ namespace autosupport_lsp_server.Parsing
                     (aggr, newStr) => aggr.Length - (int)Position.Character < minimumNumberOfCharacters)
                 // adding +1 in order to skip the newline added at the start
                 // by the aggregate
+                .Remove(0, (int)Position.Character + 1)
+                .ToString();
+        }
+
+        /// <summary>
+        /// Gets the text between the two positions, both inclusively
+        /// </summary>
+        /// <param name="start">Start position</param>
+        /// <param name="end">End position, inclusively. If null, current position is used</param>
+        /// <returns>The text between the two positions</returns>
+        internal string GetTextBetweenPositions(Position start, Position? end = null)
+        {
+            if (end == null)
+                end = Position;
+
+            var sb = Text
+                .Skip((int)start.Line)
+                .Take((int)(end.Line - start.Line))
+                .Aggregate(new StringBuilder(), (sb, str) => sb.Append(str));
+
+            int hangingCharNumber = Text[(int)end.Line].Length - (int)end.Character;
+
+            return sb.Remove(sb.Length - hangingCharNumber, hangingCharNumber)
                 .Remove(0, (int)Position.Character + 1)
                 .ToString();
         }

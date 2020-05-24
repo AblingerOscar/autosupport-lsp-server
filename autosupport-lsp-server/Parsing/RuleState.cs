@@ -1,14 +1,14 @@
 ﻿using autosupport_lsp_server.Symbols;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
 
 namespace autosupport_lsp_server.Parsing
 {
     internal class RuleState
     {
         private Stack<Tuple<IRule, int>> ruleStates;
+        private Dictionary<string, Position> markers;
 
         public IRule CurrentRule => ruleStates.Peek().Item1;
         public ISymbol? CurrentSymbol => ruleStates.Peek().Item2 >= CurrentRule.Symbols.Count
@@ -21,6 +21,8 @@ namespace autosupport_lsp_server.Parsing
             }
         }
 
+        public IReadOnlyDictionary<string, Position> Markers => markers;
+
         public RuleState(IRule rule, int position = 0)
         {
             if (position < 0)
@@ -30,6 +32,7 @@ namespace autosupport_lsp_server.Parsing
 
             ruleStates = new Stack<Tuple<IRule, int>>();
             ruleStates.Push(new Tuple<IRule, int>(rule, position));
+            markers = new Dictionary<string, Position>();
         }
 
         /// <summary>
@@ -41,6 +44,7 @@ namespace autosupport_lsp_server.Parsing
         private RuleState()
         {
             ruleStates = new Stack<Tuple<IRule, int>>(0);
+            markers = new Dictionary<string, Position>();
 
         }
 
@@ -57,6 +61,8 @@ namespace autosupport_lsp_server.Parsing
         internal interface IRuleStateBuilder<T> {
             INullableRuleStateBuilder WithNextSymbol();
             T WithNewRule(IRule rule);
+            T WithMarker(string markerName, Position position);
+            T WithoutMarker(string markerName, Position? position = null);
         }
 
         internal interface IConcreteRuleStateBuilder : IRuleStateBuilder<IConcreteRuleStateBuilder>
@@ -129,6 +135,30 @@ namespace autosupport_lsp_server.Parsing
 
             IConcreteRuleStateBuilder IRuleStateBuilder<IConcreteRuleStateBuilder>.WithNewRule(IRule rule) => WithNewRule(rule);
             INullableRuleStateBuilder IRuleStateBuilder<INullableRuleStateBuilder>.WithNewRule(IRule rule) => WithNewRule(rule);
+
+            private RuleStateBuilder WithMarker(string markerName, Position position)
+            {
+                if (ruleState != null)
+                    ruleState.markers.Add(markerName, position);
+
+                return this;
+            }
+
+            IConcreteRuleStateBuilder IRuleStateBuilder<IConcreteRuleStateBuilder>.WithMarker(string markerName, Position position) => WithMarker(markerName, position);
+            INullableRuleStateBuilder IRuleStateBuilder<INullableRuleStateBuilder>.WithMarker(string markerName, Position position) => WithMarker(markerName, position);
+
+            private RuleStateBuilder WithoutMarker(string markerName, Position? position)
+            {
+                if (ruleState != null
+                    && (position == null
+                        || (ruleState.markers.TryGetValue(markerName, out var actualPosition) && actualPosition == position)))
+                    ruleState.markers.Remove(markerName);
+
+                return this;
+            }
+
+            IConcreteRuleStateBuilder IRuleStateBuilder<IConcreteRuleStateBuilder>.WithoutMarker(string markerName, Position? position) => WithoutMarker(markerName, position);
+            INullableRuleStateBuilder IRuleStateBuilder<INullableRuleStateBuilder>.WithoutMarker(string markerName, Position? position) => WithoutMarker(markerName, position);
         }
     }
 }

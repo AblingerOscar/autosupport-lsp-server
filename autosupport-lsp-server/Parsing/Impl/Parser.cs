@@ -3,9 +3,8 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using static autosupport_lsp_server.Parsing.RuleState;
 
 namespace autosupport_lsp_server.Parsing.Impl
 {
@@ -15,6 +14,7 @@ namespace autosupport_lsp_server.Parsing.Impl
         private readonly IAutosupportLanguageDefinition languageDefinition;
         private readonly IList<IError> errors;
         private readonly IList<(string Continuation, RuleState? RuleState)> possibleContinuations;
+        private readonly ISet<Identifier> identifiers = Identifier.CreateIdentifierSet();
 
         private Parser(IAutosupportLanguageDefinition autosupportLanguageDefinition, string[] text)
         {
@@ -149,7 +149,41 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IConcreteRuleStateBuilder InterpretAction(RuleState ruleState, IAction action)
         {
+            (var cmd, var args) = ExtractCommandAndArgsFromAction(action);
 
+            switch (cmd)
+            {
+                case "identifier":
+                    if (ruleState.Markers.TryGetValue("identifier", out var pos))
+                    {
+                        identifiers.Add(new Identifier()
+                        {
+                            Name = parseState.GetTextBetweenPositions(pos)
+                        });
+                        return ruleState.Clone().WithoutMarker("identifier");
+                    }
+                    else
+                        return ruleState.Clone().WithMarker("identifier", parseState.Position);
+                default:
+                    return ruleState.Clone();
+            }
+
+        }
+
+        private (string Cmd, string[]? Args) ExtractCommandAndArgsFromAction(IAction action)
+        {
+            int splitIdx = action.Command.IndexOf(' ');
+
+            if (splitIdx >= 0)
+                return (
+                    Cmd: action.Command.Substring(0, splitIdx),
+                    Args: action.Command.Substring(splitIdx + 1).Split(' ')
+                );
+            else
+                return (
+                    Cmd: action.Command,
+                    Args: null
+                );
         }
 
         private IDictionary<int, IEnumerable<RuleState>>? ParseOneOf(RuleState ruleState, IOneOf oneOf)
