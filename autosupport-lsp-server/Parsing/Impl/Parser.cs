@@ -140,7 +140,16 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IDictionary<int, IEnumerable<RuleState>>? ParseAction(RuleState ruleState, IAction action)
         {
-            throw new NotImplementedException();
+            var ruleStateBuilder = InterpretAction(ruleState, action);
+
+            return GetPossibleNextStatesOfSymbol(
+                    ruleStateBuilder.WithNextSymbol().TryBuild() ?? RuleState.FinishedRuleState
+                );
+        }
+
+        private IConcreteRuleStateBuilder InterpretAction(RuleState ruleState, IAction action)
+        {
+
         }
 
         private IDictionary<int, IEnumerable<RuleState>>? ParseOneOf(RuleState ruleState, IOneOf oneOf)

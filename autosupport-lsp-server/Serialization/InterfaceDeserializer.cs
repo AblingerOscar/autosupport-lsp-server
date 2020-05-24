@@ -1,7 +1,6 @@
 ﻿using autosupport_lsp_server.Serialization.Annotation;
 using autosupport_lsp_server.Symbols;
 using autosupport_lsp_server.Symbols.Impl;
-using System;
 using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Serialization
@@ -14,9 +13,8 @@ namespace autosupport_lsp_server.Serialization
         public static IInterfaceDeserializer Instance {
             get {
                 if (instance == null)
-                {
                     instance = new InterfaceDeserializer();
-                }
+
                 return instance;
             }
         }
@@ -43,10 +41,14 @@ namespace autosupport_lsp_server.Serialization
                 else if (typeof(IOneOf).IsAssignableFrom(symbol))
                 {
                     return DeserializeOneOf(element);
-                } // TODO: action
+                }
+                else if (typeof(IAction).IsAssignableFrom(symbol))
+                {
+                    return DeserializeAction(element);
+                }
             }
 
-            throw new ArgumentException($"The given Element '{element.Name}' does not exist or is not a symbol");
+            throw new System.ArgumentException($"The given Element '{element.Name}' does not exist or is not a symbol");
         }
 
         public INonTerminal DeserializeNonTerminalSymbol(XElement element)
@@ -62,6 +64,11 @@ namespace autosupport_lsp_server.Serialization
         private ISymbol DeserializeOneOf(XElement element)
         {
             return OneOf.FromXLinq(element, this);
+        }
+
+        public IAction DeserializeAction(XElement element)
+        {
+            return Action.FromXLinq(element, this);
         }
 
         public IRule DeserializeRule(XElement element)
