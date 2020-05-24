@@ -49,27 +49,27 @@ namespace autosupport_lsp_server.Parsing
             if (ruleState == null)
                 throw new ArgumentException(nameof(ruleState) + " may not be null");
             ruleStates = ruleState.ruleStates.Clone();
+            markers = new Dictionary<string, Position>(ruleState.markers);
         }
 
         public IConcreteRuleStateBuilder Clone() => new RuleStateBuilder(this);
 
-        internal interface IRuleStateBuilder {
+        internal interface IRuleStateBuilder<T> {
             INullableRuleStateBuilder WithNextSymbol();
+            T WithNewRule(IRule rule);
         }
 
-        internal interface IConcreteRuleStateBuilder : IRuleStateBuilder
+        internal interface IConcreteRuleStateBuilder : IRuleStateBuilder<IConcreteRuleStateBuilder>
         {
             RuleState Build();
-            IConcreteRuleStateBuilder WithNewRule(IRule rule);
         }
 
-        internal interface INullableRuleStateBuilder : IRuleStateBuilder
+        internal interface INullableRuleStateBuilder : IRuleStateBuilder<INullableRuleStateBuilder>
         {
             RuleState? TryBuild();
-            INullableRuleStateBuilder WithNewRule(IRule rule);
         }
 
-        internal class RuleStateBuilder : IConcreteRuleStateBuilder, INullableRuleStateBuilder
+        private class RuleStateBuilder : IConcreteRuleStateBuilder, INullableRuleStateBuilder
         {
             private RuleState? ruleState;
 
@@ -118,7 +118,7 @@ namespace autosupport_lsp_server.Parsing
                 return ruleState;
             }
 
-            public RuleStateBuilder WithNewRule(IRule rule)
+            RuleStateBuilder WithNewRule(IRule rule)
             {
                 if (ruleState == null)
                     return this;
@@ -127,8 +127,8 @@ namespace autosupport_lsp_server.Parsing
                 return this;
             }
 
-            IConcreteRuleStateBuilder IConcreteRuleStateBuilder.WithNewRule(IRule rule) => WithNewRule(rule);
-            INullableRuleStateBuilder INullableRuleStateBuilder.WithNewRule(IRule rule) => WithNewRule(rule);
+            IConcreteRuleStateBuilder IRuleStateBuilder<IConcreteRuleStateBuilder>.WithNewRule(IRule rule) => WithNewRule(rule);
+            INullableRuleStateBuilder IRuleStateBuilder<INullableRuleStateBuilder>.WithNewRule(IRule rule) => WithNewRule(rule);
         }
     }
 }
