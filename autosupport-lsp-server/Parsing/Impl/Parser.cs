@@ -14,7 +14,6 @@ namespace autosupport_lsp_server.Parsing.Impl
         private readonly IAutosupportLanguageDefinition languageDefinition;
         private readonly IList<IError> errors;
         private readonly IList<(string Continuation, RuleState? RuleState)> possibleContinuations;
-        private readonly ISet<Identifier> identifiers = Identifier.CreateIdentifierSet();
 
         private Parser(IAutosupportLanguageDefinition autosupportLanguageDefinition, string[] text)
         {
@@ -159,10 +158,20 @@ namespace autosupport_lsp_server.Parsing.Impl
                 case "identifier":
                     if (ruleState.Markers.TryGetValue("identifier", out var pos))
                     {
-                        identifiers.Add(new Identifier()
+                        string name = parseState.GetTextBetweenPositions(pos);
+                        var identifier = ruleState.Identifiers.FirstOrDefault(i => i.Name == name);
+
+                        if (identifier == null) {
+                            ruleState.Identifiers.Add(new Identifier()
+                            {
+                                Name = name,
+                                References = new List<Position>() { pos }
+                            });
+                        }
+                        else
                         {
-                            Name = parseState.GetTextBetweenPositions(pos)
-                        });
+                            identifier.References.Add(pos);
+                        }
                         return ruleState.Clone().WithoutMarker("identifier");
                     }
                     else

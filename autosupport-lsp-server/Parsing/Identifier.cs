@@ -22,9 +22,14 @@ namespace autosupport_lsp_server.Parsing
         }
 
         public static string RootEnvironment => "root|";
-        public static ISet<Identifier> CreateIdentifierSet()
+
+        public static HashSet<Identifier> CreateIdentifierSet()
         {
             return new HashSet<Identifier>(new IdentifierComparer());
+        }
+        public static HashSet<Identifier> CreateIdentifierSet(IEnumerable<Identifier> baseSet)
+        {
+            return new HashSet<Identifier>(baseSet, new IdentifierComparer());
         }
 
         internal class IdentifierComparer : EqualityComparer<Identifier>

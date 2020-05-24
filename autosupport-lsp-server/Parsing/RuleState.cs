@@ -23,6 +23,8 @@ namespace autosupport_lsp_server.Parsing
 
         public IReadOnlyDictionary<string, Position> Markers => markers;
 
+        public ISet<Identifier> Identifiers { get; private set; }
+
         public RuleState(IRule rule, int position = 0)
         {
             if (position < 0)
@@ -33,6 +35,7 @@ namespace autosupport_lsp_server.Parsing
             ruleStates = new Stack<Tuple<IRule, int>>();
             ruleStates.Push(new Tuple<IRule, int>(rule, position));
             markers = new Dictionary<string, Position>();
+            Identifiers = Identifier.CreateIdentifierSet();
         }
 
         /// <summary>
@@ -45,7 +48,7 @@ namespace autosupport_lsp_server.Parsing
         {
             ruleStates = new Stack<Tuple<IRule, int>>(0);
             markers = new Dictionary<string, Position>();
-
+            Identifiers = Identifier.CreateIdentifierSet();
         }
 
         private RuleState(RuleState ruleState)
@@ -54,6 +57,7 @@ namespace autosupport_lsp_server.Parsing
                 throw new ArgumentException(nameof(ruleState) + " may not be null");
             ruleStates = ruleState.ruleStates.Clone();
             markers = new Dictionary<string, Position>(ruleState.markers);
+            Identifiers = Identifier.CreateIdentifierSet(ruleState.Identifiers);
         }
 
         public IConcreteRuleStateBuilder Clone() => new RuleStateBuilder(this);
