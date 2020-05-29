@@ -1,6 +1,8 @@
 ﻿using autosupport_lsp_server.LSP;
 using autosupport_lsp_server.Serialization;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Server;
 using System;
 using System.IO;
@@ -15,6 +17,7 @@ namespace autosupport_lsp_server
         {
             if (!TrySetupDocumentStore(args))
             {
+                Console.WriteLine("[ERROR]: The server could not be set up: There seems to be something wrong with your languageDefinition file");
                 return; // TODO: somehow tell client that it failed and will always fail
             }
 
@@ -23,14 +26,23 @@ namespace autosupport_lsp_server
                 options
                     .WithInput(Console.OpenStandardInput())
                     .WithOutput(Console.OpenStandardOutput())
-                    .WithHandler<TextDocumentSyncHandler>()
-                    .WithHandler<KeywordsCompletetionHandler>();
+                    .ConfigureLogging(lb =>
+                        lb.AddLanguageServer()
+                          .SetMinimumLevel(LogLevel.Trace))
+                    //.WithServices(RegisterServices)
+                    .WithHandler<LSP.TextDocumentSyncHandler>()
+                    .WithHandler<KeywordsCompletetionHandler>()
+                    ;
             });
 
             await server.WaitForExit;
         }
 
-        static private bool TrySetupDocumentStore(string[] args)
+        private static void RegisterServices(IServiceCollection serviceCollection)
+        {
+        }
+
+        private static bool TrySetupDocumentStore(string[] args)
         {
             try
             {

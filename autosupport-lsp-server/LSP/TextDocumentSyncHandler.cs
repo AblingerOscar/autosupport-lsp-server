@@ -12,7 +12,7 @@ namespace autosupport_lsp_server.LSP
 {
     internal class TextDocumentSyncHandler : ITextDocumentSyncHandler
     {
-        private readonly TextDocumentSyncKind syncKind = TextDocumentSyncKind.Full;
+        private readonly TextDocumentSyncKind syncKind = TextDocumentSyncKind.Incremental;
         private SynchronizationCapability? capability;
 
         public TextDocumentChangeRegistrationOptions GetRegistrationOptions()
@@ -35,44 +35,39 @@ namespace autosupport_lsp_server.LSP
             return new TextDocumentAttributes(uri, DocumentStore.LanguageDefinition.LanguageId);
         }
 
-        public Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken)
         {
-            return new Task<Unit>(() =>
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var documentUri = request.TextDocument.Uri.ToString();
+            bool didCreateNewDocument = false;
+            if (!DocumentStore.Documents.ContainsKey(documentUri))
             {
+                DocumentStore.Documents[documentUri] = Document.CreateEmptyDocument(documentUri);
+                didCreateNewDocument = true;
+            }
+
+            foreach (var change in request.ContentChanges)
+            {
+                DocumentStore.Documents[documentUri].ApplyChange(change);
+
+                if (cancellationToken.IsCancellationRequested && didCreateNewDocument)
+                {
+                    DocumentStore.Documents.Remove(documentUri);
+                }
                 cancellationToken.ThrowIfCancellationRequested();
+            }
 
-                var documentUri = request.TextDocument.Uri.ToString();
-                bool didCreateNewDocument = false;
-                if (!DocumentStore.Documents.ContainsKey(documentUri))
-                {
-                    DocumentStore.Documents[documentUri] = Document.CreateEmptyDocument(documentUri);
-                    didCreateNewDocument = true;
-                }
-
-                foreach (var change in request.ContentChanges)
-                {
-                    DocumentStore.Documents[documentUri].ApplyChange(change);
-
-                    if (cancellationToken.IsCancellationRequested && didCreateNewDocument)
-                    {
-                        DocumentStore.Documents.Remove(documentUri);
-                    }
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
-
-                return Unit.Value;
-            }, cancellationToken);
+            return Unit.Value;
         }
 
-        public Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
         {
-            return new Task<Unit>(() =>
-            {
-                var documentUri = request.TextDocument.Uri.ToString();
-                DocumentStore.Documents.Add(documentUri, Document.FromText(documentUri, request.TextDocument.Text));
+            Console.WriteLine("...............Opened a new document :O");
+            var documentUri = request.TextDocument.Uri.ToString();
+            DocumentStore.Documents.Add(documentUri, Document.FromText(documentUri, request.TextDocument.Text));
 
-                return Unit.Value;
-            }, cancellationToken);
+            return Unit.Value;
         }
 
         public Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken)

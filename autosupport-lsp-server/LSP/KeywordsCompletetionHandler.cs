@@ -6,6 +6,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,7 +15,6 @@ namespace autosupport_lsp_server.LSP
     public class KeywordsCompletetionHandler : ICompletionHandler
     {
         CompletionCapability? completionCapability = null;
-        CompletionItem[]? tokens = null;
 
         CompletionList? keywordsCompletionList = null;
 
@@ -41,7 +41,8 @@ namespace autosupport_lsp_server.LSP
                         .Select(str => {
                             return new CompletionItem()
                             {
-                                Label = str
+                                Label = str,
+                                Kind = CompletionItemKind.Keyword
                             };
                         });
 
@@ -58,13 +59,25 @@ namespace autosupport_lsp_server.LSP
             return new CompletionRegistrationOptions()
             {
                 DocumentSelector = LSPUtils.DocumentSelector,
-                ResolveProvider = false,
-                WorkDoneProgress = false
+                ResolveProvider = false
             };
         }
 
-        public Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken) =>
-            Task.FromResult(KeywordsCompletionList);
+        public async Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken)
+        {
+            return new CompletionList(KeywordsCompletionList.Select(item =>
+            {
+                item.TextEdit = new TextEdit()
+                {
+                    NewText = item.Label,
+                    Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
+                            start: request.Position,
+                            end: request.Position
+                        )
+                };
+                return item;
+            }));
+        }
 
         public void SetCapability(CompletionCapability capability)
         {
