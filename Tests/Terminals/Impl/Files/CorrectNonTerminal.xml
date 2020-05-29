@@ -1,9 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<symbol id="id" isTerminal="false" source="file:///c:/user/groot/defs/nonTerminal.atg">
-	<documentation>This is just a NonTerminal documentation</documentation>
-	<nextSymbols>
-		<symbol>sym1</symbol>
-		<symbol>sym2</symbol>
-		<symbol>sym3</symbol>
-	</nextSymbols>
-</symbol>

@@ -6,15 +6,18 @@ using System.Linq;
 
 namespace autosupport_lsp_server
 {
-    internal class Document
+    public class Document
     {
-        private Document(string uri)
+        private Document(string uri, IParser parser)
         {
             Uri = uri;
+            this.parser = parser;
         }
 
         internal string Uri { get; }
         internal IList<string> Text { get; private set; } = new List<string>();
+
+        private IParser parser;
 
         internal void ApplyChange(TextDocumentContentChangeEvent change)
         {
@@ -34,10 +37,7 @@ namespace autosupport_lsp_server
 
         private void Reparse()
         {
-            if (DocumentStore.LanguageDefinition != null)
-            {
-                Parser.Parse(DocumentStore.LanguageDefinition, Text.ToArray());
-            }
+            //parser.Parse(Text.ToArray());
         }
 
         private void ApplyPartialChange(TextDocumentContentChangeEvent change)
@@ -88,14 +88,14 @@ namespace autosupport_lsp_server
             }
         }
 
-        internal static Document CreateEmptyDocument(string uri)
+        internal static Document CreateEmptyDocument(string uri, IParser parser)
         {
-            return new Document(uri);
+            return new Document(uri, parser);
         }
 
-        internal static Document FromText(string uri, string text)
+        internal static Document FromText(string uri, string text, IParser parser)
         {
-            return new Document(uri)
+            return new Document(uri, parser)
             {
                 Text = ConvertTextToList(text)
             };

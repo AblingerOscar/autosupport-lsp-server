@@ -13,11 +13,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Terminals\Impl\Files\CorrectNonTerminal.xml" />
-    <None Remove="Terminals\Impl\Files\CorrectTerminal.xml" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="AutoFixture.AutoMoq" Version="4.11.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
     <PackageReference Include="Moq" Version="4.14.1" />
@@ -31,15 +26,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\autosupport-lsp-server\autosupport-lsp-server.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Terminals\Impl\Files\CorrectNonTerminal.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Terminals\Impl\Files\CorrectTerminal.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

@@ -2,7 +2,7 @@
 using autosupport_lsp_server.Symbols.Impl;
 using System;
 
-namespace Tests.Terminals.Impl.Mocks
+namespace Tests.Mocks.Symbols
 {
     public abstract class MockTerminal : Symbol, ITerminal
     {

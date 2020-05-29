@@ -2,7 +2,7 @@
 using System;
 using System.Xml.Linq;
 
-namespace Tests.Terminals.Impl.Mocks
+namespace Tests.Mocks.Symbols
 {
     public abstract class MockOneOf : IOneOf
     {

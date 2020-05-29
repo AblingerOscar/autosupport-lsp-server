@@ -1,6 +1,6 @@
 ﻿namespace autosupport_lsp_server.Parsing
 {
-    interface IParseResult
+    public interface IParseResult
     {
         bool Finished { get; }
 

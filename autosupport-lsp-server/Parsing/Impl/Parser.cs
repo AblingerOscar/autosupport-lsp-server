@@ -8,31 +8,40 @@ using static autosupport_lsp_server.Parsing.RuleState;
 
 namespace autosupport_lsp_server.Parsing.Impl
 {
-    internal class Parser
+    internal class Parser : IParser
     {
-        private readonly ParseState parseState;
         private readonly IAutosupportLanguageDefinition languageDefinition;
         private readonly IList<IError> errors;
         private readonly IList<(string Continuation, RuleState? RuleState)> possibleContinuations;
+        private ParseState parseState;
 
-        private Parser(IAutosupportLanguageDefinition autosupportLanguageDefinition, string[] text)
+        public Parser(IAutosupportLanguageDefinition autosupportLanguageDefinition)
         {
             languageDefinition = autosupportLanguageDefinition;
 
             errors = new List<IError>();
             possibleContinuations = new List<(string Continuation, RuleState? RuleState)>();
-            parseState = GetInitializedParseState(text);
+            parseState = new ParseState(new string[0], new Position(), new List<RuleState>(0));
         }
 
+        [Obsolete("Replaced by new Parser(autosupportLanguageDefinition).Parse(text)")]
         public static IParseResult Parse(IAutosupportLanguageDefinition autosupportLanguageDefinition, string[] text)
         {
-            return new Parser(autosupportLanguageDefinition, text).Parse();
+            return new Parser(autosupportLanguageDefinition).Parse(text);
         }
 
-        private IParseResult Parse()
+        public IParseResult Parse(string[] text)
         {
+            SetupDefaultValues(text);
             ParseUntilEndOrFailed();
             return MakeParseResult();
+        }
+
+        private void SetupDefaultValues(string[] text)
+        {
+            errors.Clear();
+            possibleContinuations.Clear();
+            parseState = GetInitializedParseState(text);
         }
 
         private ParseState GetInitializedParseState(string[] text)

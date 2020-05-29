@@ -19,14 +19,21 @@ namespace autosupport_lsp_server.LSP
 
         CompletionList? keywordsCompletionList = null;
 
+        IDocumentStore documentStore;
+
+        public KeywordsCompletetionHandler(IDocumentStore documentStore)
+        {
+            this.documentStore = documentStore;
+        }
+
         CompletionList KeywordsCompletionList {
             get {
                 if (keywordsCompletionList == null)
                 {
-                    if (DocumentStore.LanguageDefinition == null)
+                    if (documentStore.LanguageDefinition == null)
                         throw new InvalidOperationException("Server not yet properly set up");
 
-                    IEnumerable<CompletionItem> keywords = DocumentStore.LanguageDefinition.Rules
+                    IEnumerable<CompletionItem> keywords = documentStore.LanguageDefinition.Rules
                         .SelectMany(rule =>
                             rule.Value.Symbols)
                         .Select(symbol =>
@@ -60,7 +67,7 @@ namespace autosupport_lsp_server.LSP
         {
             return new CompletionRegistrationOptions()
             {
-                DocumentSelector = LSPUtils.DocumentSelector,
+                DocumentSelector = LSPUtils.GetDocumentSelector(documentStore.LanguageDefinition),
                 ResolveProvider = false
             };
         }

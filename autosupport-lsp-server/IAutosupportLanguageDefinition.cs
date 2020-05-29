@@ -9,6 +9,6 @@ namespace autosupport_lsp_server
         string LanguageFilePattern { get; }
 
         string[] StartRules { get; }
-        public IDictionary<string, IRule> Rules { get; }
+        IDictionary<string, IRule> Rules { get; }
     }
 }

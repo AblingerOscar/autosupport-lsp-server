@@ -14,25 +14,25 @@ namespace autosupport_lsp_server.LSP
     {
         private readonly TextDocumentSyncKind syncKind = TextDocumentSyncKind.Incremental;
         private SynchronizationCapability? capability;
+        private IDocumentStore documentStore;
+
+        public TextDocumentSyncHandler(IDocumentStore documentStore)
+        {
+            this.documentStore = documentStore;
+        }
 
         public TextDocumentChangeRegistrationOptions GetRegistrationOptions()
         {
-            if (DocumentStore.LanguageDefinition == null)
-                throw new InvalidOperationException("Server not yet properly set up");
-
             return new TextDocumentChangeRegistrationOptions()
             {
-                DocumentSelector = LSPUtils.DocumentSelector,
+                DocumentSelector = LSPUtils.GetDocumentSelector(documentStore.LanguageDefinition),
                 SyncKind = syncKind
             };
         }
 
         public TextDocumentAttributes GetTextDocumentAttributes(Uri uri)
         {
-            if (DocumentStore.LanguageDefinition == null)
-                throw new InvalidOperationException("Server not yet properly set up");
-
-            return new TextDocumentAttributes(uri, DocumentStore.LanguageDefinition.LanguageId);
+            return new TextDocumentAttributes(uri, documentStore.LanguageDefinition.LanguageId);
         }
 
         public async Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken)
@@ -41,19 +41,19 @@ namespace autosupport_lsp_server.LSP
 
             var documentUri = request.TextDocument.Uri.ToString();
             bool didCreateNewDocument = false;
-            if (!DocumentStore.Documents.ContainsKey(documentUri))
+            if (!documentStore.Documents.ContainsKey(documentUri))
             {
-                DocumentStore.Documents[documentUri] = Document.CreateEmptyDocument(documentUri);
+                documentStore.Documents[documentUri] = Document.CreateEmptyDocument(documentUri, documentStore.CreateDefaultParser());
                 didCreateNewDocument = true;
             }
 
             foreach (var change in request.ContentChanges)
             {
-                DocumentStore.Documents[documentUri].ApplyChange(change);
+                documentStore.Documents[documentUri].ApplyChange(change);
 
                 if (cancellationToken.IsCancellationRequested && didCreateNewDocument)
                 {
-                    DocumentStore.Documents.Remove(documentUri);
+                    documentStore.Documents.Remove(documentUri);
                 }
                 cancellationToken.ThrowIfCancellationRequested();
             }
@@ -63,9 +63,8 @@ namespace autosupport_lsp_server.LSP
 
         public async Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
         {
-            Console.WriteLine("...............Opened a new document :O");
             var documentUri = request.TextDocument.Uri.ToString();
-            DocumentStore.Documents.Add(documentUri, Document.FromText(documentUri, request.TextDocument.Text));
+            documentStore.Documents.Add(documentUri, Document.FromText(documentUri, request.TextDocument.Text, documentStore.CreateDefaultParser()));
 
             return Unit.Value;
         }
@@ -89,7 +88,7 @@ namespace autosupport_lsp_server.LSP
         {
             return new TextDocumentRegistrationOptions()
             {
-                DocumentSelector = LSPUtils.DocumentSelector
+                DocumentSelector = LSPUtils.GetDocumentSelector(documentStore.LanguageDefinition)
             };
         }
 
@@ -97,7 +96,7 @@ namespace autosupport_lsp_server.LSP
         {
             return new TextDocumentSaveRegistrationOptions()
             {
-                DocumentSelector = LSPUtils.DocumentSelector,
+                DocumentSelector = LSPUtils.GetDocumentSelector(documentStore.LanguageDefinition),
                 // Whether the client is supposed to send the text on a save
                 IncludeText = false
             };

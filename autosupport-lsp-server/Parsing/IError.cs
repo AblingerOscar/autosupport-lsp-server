@@ -2,7 +2,7 @@
 
 namespace autosupport_lsp_server.Parsing
 {
-    internal interface IError
+    public interface IError
     {
         Position Position { get; }
 

@@ -7,21 +7,16 @@ namespace autosupport_lsp_server.LSP
     {
         private static DocumentSelector? documentSelector;
 
-        public static DocumentSelector DocumentSelector {
-            get {
-                if (DocumentStore.LanguageDefinition == null)
-                    throw new InvalidOperationException("Server not yet properly set up");
-
-                if (documentSelector == null)
-                {
-                    documentSelector = new DocumentSelector(
-                                DocumentFilter.ForPattern(DocumentStore.LanguageDefinition.LanguageFilePattern),
-                                DocumentFilter.ForLanguage(DocumentStore.LanguageDefinition.LanguageId)
-                                );
-                }
-
-                return documentSelector;
+        public static DocumentSelector GetDocumentSelector(IAutosupportLanguageDefinition languageDefinition) {
+            if (documentSelector == null)
+            {
+                documentSelector = new DocumentSelector(
+                            DocumentFilter.ForPattern(languageDefinition.LanguageFilePattern),
+                            DocumentFilter.ForLanguage(languageDefinition.LanguageId)
+                            );
             }
+
+            return documentSelector;
         }
 
     }

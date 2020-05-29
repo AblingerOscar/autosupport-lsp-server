@@ -3,8 +3,7 @@ using autosupport_lsp_server.Symbols;
 using Moq;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using Tests.Terminals.Impl.Mocks;
+using Tests.Mocks.Symbols;
 
 namespace Tests
 {

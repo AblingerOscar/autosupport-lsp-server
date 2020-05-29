@@ -1,11 +1,13 @@
 using autosupport_lsp_server;
+using autosupport_lsp_server.Parsing.Impl;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using System;
 using System.Collections.Generic;
 using Xunit;
 
 namespace Tests
 {
-    public class DocumentTests
+    public class DocumentTest : DocumentBaseTest
     {
         const string uri = "uri";
         IList<string> text = new List<string>()
@@ -19,10 +21,10 @@ namespace Tests
         [Fact]
         public void UriIsAssignedProperly()
         {
-            Document d1 = Document.CreateEmptyDocument(uri);
+            Document d1 = Document.CreateEmptyDocument(uri, NoOpParser());
             Assert.Equal(d1.Uri, uri);
 
-            Document d2 = Document.FromText(uri, "some text");
+            Document d2 = Document.FromText(uri, "some text", NoOpParser());
             Assert.Equal(d2.Uri, uri);
         }
 
@@ -32,7 +34,7 @@ namespace Tests
         [InlineData("\r")]
         public void TextIsAssignedProperly(string newline)
         {
-            Document d = Document.FromText(uri, string.Join(newline, text));
+            Document d = Document.FromText(uri, string.Join(newline, text), NoOpParser());
             Assert.Equal(text, d.Text);
         }
 
@@ -52,7 +54,7 @@ namespace Tests
                 Text = string.Join('\n', newText)
             };
 
-            Document d = Document.FromText(uri, string.Join('\n', text));
+            Document d = Document.FromText(uri, string.Join('\n', text), NoOpParser());
 
             // when
             d.ApplyChange(change);
@@ -81,11 +83,11 @@ namespace Tests
 
             var change = new TextDocumentContentChangeEvent()
             {
-                Range = new Range(new Position(startL, startC), new Position(endL, endC)),
+                Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(new Position(startL, startC), new Position(endL, endC)),
                 Text = newText
             };
 
-            Document d = Document.FromText(uri, string.Join('\n', originalText));
+            Document d = Document.FromText(uri, string.Join('\n', originalText), NoOpParser());
 
             // when
             d.ApplyChange(change);
@@ -116,11 +118,11 @@ namespace Tests
 
             var change = new TextDocumentContentChangeEvent()
             {
-                Range = new Range(new Position(startL, startC), new Position(endL, endC)),
+                Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(new Position(startL, startC), new Position(endL, endC)),
                 Text = string.Join('\n', newText)
             };
 
-            Document d = Document.FromText(uri, string.Join('\n', originalText));
+            Document d = Document.FromText(uri, string.Join('\n', originalText), NoOpParser());
 
             // when
             d.ApplyChange(change);

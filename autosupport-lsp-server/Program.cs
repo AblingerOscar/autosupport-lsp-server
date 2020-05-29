@@ -15,11 +15,14 @@ namespace autosupport_lsp_server
     {
         static async Task Main(string[] args)
         {
-            if (!TrySetupDocumentStore(args))
+            if (!TrySetupDocumentStore(args, out IDocumentStore? documentStore))
             {
                 Console.WriteLine("[ERROR]: The server could not be set up: There seems to be something wrong with your languageDefinition file");
                 return; // TODO: somehow tell client that it failed and will always fail
             }
+
+            if (documentStore == null)
+                return; // should never happen, but this check is necessary for compilation with nullable enabled
 
             var server = await LanguageServer.From(options =>
             {
@@ -29,7 +32,8 @@ namespace autosupport_lsp_server
                     .ConfigureLogging(lb =>
                         lb.AddLanguageServer()
                           .SetMinimumLevel(LogLevel.Trace))
-                    //.WithServices(RegisterServices)
+                    .WithServices(serviceCollection =>
+                        RegisterServices(serviceCollection, documentStore))
                     .WithHandler<LSP.TextDocumentSyncHandler>()
                     .WithHandler<KeywordsCompletetionHandler>()
                     ;
@@ -38,21 +42,23 @@ namespace autosupport_lsp_server
             await server.WaitForExit;
         }
 
-        private static void RegisterServices(IServiceCollection serviceCollection)
+        private static void RegisterServices(IServiceCollection serviceCollection, IDocumentStore documentStore)
         {
+            serviceCollection.AddSingleton(documentStore);
         }
 
-        private static bool TrySetupDocumentStore(string[] args)
+        private static bool TrySetupDocumentStore(string[] args, out IDocumentStore? documentStore)
         {
             try
             {
                 string xml = File.ReadAllText(args[0]);
                 XElement element = XElement.Parse(xml);
-                DocumentStore.LanguageDefinition = AutosupportLanguageDefinition.FromXLinq(element, InterfaceDeserializer.Instance);
+                documentStore = new DocumentStore(AutosupportLanguageDefinition.FromXLinq(element, InterfaceDeserializer.Instance));
                 return true;
             }
             catch (Exception)
             {
+                documentStore = null;
                 return false;
             }
         }
