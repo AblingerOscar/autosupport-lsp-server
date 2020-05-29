@@ -1,7 +1,6 @@
 ﻿using autosupport_lsp_server.Parsing.Impl;
 using autosupport_lsp_server.Symbols;
 using Moq;
-using Sprache;
 using System.Collections.Generic;
 using Xunit;
 

@@ -1,5 +1,4 @@
 ﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using System;
 
 namespace autosupport_lsp_server.LSP
 {
@@ -7,7 +6,8 @@ namespace autosupport_lsp_server.LSP
     {
         private static DocumentSelector? documentSelector;
 
-        public static DocumentSelector GetDocumentSelector(IAutosupportLanguageDefinition languageDefinition) {
+        public static DocumentSelector GetDocumentSelector(IAutosupportLanguageDefinition languageDefinition)
+        {
             if (documentSelector == null)
             {
                 documentSelector = new DocumentSelector(

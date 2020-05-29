@@ -1,7 +1,6 @@
 ﻿using autosupport_lsp_server.Parsing.Impl;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Reflection.Metadata.Ecma335;
 
 namespace autosupport_lsp_server
 {

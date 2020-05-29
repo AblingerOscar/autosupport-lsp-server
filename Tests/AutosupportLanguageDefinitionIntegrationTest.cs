@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Tests
+﻿namespace Tests
 {
     public class AutosupportLanguageDefinitionIntegrationTest
     {

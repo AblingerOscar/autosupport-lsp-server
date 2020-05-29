@@ -1,5 +1,4 @@
-﻿using autosupport_lsp_server.Parsing;
-using autosupport_lsp_server.Serialization.Annotation;
+﻿using autosupport_lsp_server.Serialization.Annotation;
 using Sprache;
 using System;
 using System.Linq;

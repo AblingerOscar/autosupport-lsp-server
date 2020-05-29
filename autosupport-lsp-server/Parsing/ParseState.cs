@@ -1,8 +1,5 @@
-﻿using Microsoft.Extensions.Primitives;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using System;
+﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using System.Text;
 

@@ -79,7 +79,8 @@ namespace Tests
                 mock.SetupGet(oo => oo.AllowNone).Returns(allowNone.Value);
             }
 
-            if (options.Length != 0) {
+            if (options.Length != 0)
+            {
                 mock.SetupGet(oo => oo.Options).Returns(options);
             }
 

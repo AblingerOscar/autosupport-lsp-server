@@ -3,9 +3,7 @@ using autosupport_lsp_server.Parsing;
 using autosupport_lsp_server.Parsing.Impl;
 using autosupport_lsp_server.Symbols;
 using Moq;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Tests
 {
