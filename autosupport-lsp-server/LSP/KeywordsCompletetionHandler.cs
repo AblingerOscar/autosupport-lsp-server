@@ -1,17 +1,18 @@
-﻿using autosupport_lsp_server.Symbols;
-using autosupport_lsp_server.Symbols.Impl.Terminals;
+﻿using autosupport_lsp_server.Symbols.Impl.Terminals;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace autosupport_lsp_server.LSP
 {
+    /// <summary>
+    /// A CompletionHandler that only ever returns all keywords
+    /// </summary>
     public class KeywordsCompletetionHandler : ICompletionHandler
     {
         CompletionCapability? completionCapability = null;
@@ -38,7 +39,8 @@ namespace autosupport_lsp_server.LSP
                                 oneOf: (_) => null,
                                 action: (_) => null))
                         .Where(str => str != null)
-                        .Select(str => {
+                        .Select(str =>
+                        {
                             return new CompletionItem()
                             {
                                 Label = str,
