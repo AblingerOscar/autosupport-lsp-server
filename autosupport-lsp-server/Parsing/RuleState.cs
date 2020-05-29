@@ -62,7 +62,8 @@ namespace autosupport_lsp_server.Parsing
 
         public IConcreteRuleStateBuilder Clone() => new RuleStateBuilder(this);
 
-        internal interface IRuleStateBuilder<T> {
+        internal interface IRuleStateBuilder<T>
+        {
             INullableRuleStateBuilder WithNextSymbol();
             T WithNewRule(IRule rule);
             T WithMarker(string markerName, Position position);

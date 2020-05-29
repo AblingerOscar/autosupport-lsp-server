@@ -161,7 +161,8 @@ namespace autosupport_lsp_server.Parsing.Impl
                         string name = parseState.GetTextBetweenPositions(pos);
                         var identifier = ruleState.Identifiers.FirstOrDefault(i => i.Name == name);
 
-                        if (identifier == null) {
+                        if (identifier == null)
+                        {
                             ruleState.Identifiers.Add(new Identifier()
                             {
                                 Name = name,
@@ -266,7 +267,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             }
             else
             {
-                foreach(var possibleNext in ruleState.CurrentSymbol.Match(
+                foreach (var possibleNext in ruleState.CurrentSymbol.Match(
                     terminal =>
                     {
                         return terminal.PossibleContent;
