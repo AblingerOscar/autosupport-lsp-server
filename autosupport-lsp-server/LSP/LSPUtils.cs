@@ -37,6 +37,7 @@ namespace autosupport_lsp_server.LSP
                         oneOf: (_) => null,
                         action: (_) => null))
                 .Where(str => str != null)
+                .Distinct()
                 .Select(str =>
                 {
                     return new CompletionItem()
