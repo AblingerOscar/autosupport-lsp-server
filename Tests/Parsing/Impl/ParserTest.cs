@@ -29,9 +29,8 @@ namespace Tests.Parsing.Impl
                 );
 
             // when
-            var result = Parser.Parse(
-                languageDefinition.Object,
-                new string[] { parseString });
+            var result = new Parser(languageDefinition.Object)
+                .Parse(new string[] { parseString });
 
             // then
             Assert.True(result.Finished);
@@ -58,10 +57,8 @@ namespace Tests.Parsing.Impl
                 );
 
             // when
-            var result = Parser.Parse(
-                    languageDefinition.Object,
-                    new string[1] { firstLine }
-                );
+            var result = new Parser(languageDefinition.Object)
+                .Parse(new string[] { firstLine });
 
             // then
             terminal.Verify(t => t.TryParse(It.IsAny<string>()), Times.Never());
@@ -101,9 +98,8 @@ namespace Tests.Parsing.Impl
                 );
 
             // when
-            var result = Parser.Parse(
-                languageDefinition.Object,
-                new string[] { parseString });
+            var result = new Parser(languageDefinition.Object)
+                .Parse(new string[] { parseString });
 
             // then
             Assert.True(result.Finished);
@@ -148,10 +144,8 @@ namespace Tests.Parsing.Impl
                 );
 
             // when
-            var result = Parser.Parse(
-                    languageDefinition.Object,
-                    new string[] { " " }
-                );
+            var result = new Parser(languageDefinition.Object)
+                .Parse(new string[] { " " });
 
             // then
             Assert.True(result.Finished);
@@ -197,10 +191,8 @@ namespace Tests.Parsing.Impl
                 );
 
             // when
-            var result = Parser.Parse(
-                    languageDefinition.Object,
-                    new string[] { "12" }
-                );
+            var result = new Parser(languageDefinition.Object)
+                .Parse(new string[] { "12" });
 
             // then
             Assert.True(result.Finished);
