@@ -34,7 +34,7 @@ namespace autosupport_lsp_server
                     .WithServices(serviceCollection =>
                         RegisterServices(serviceCollection, documentStore))
                     .WithHandler<LSP.TextDocumentSyncHandler>()
-                    .WithHandler<KeywordsCompletetionHandler>()
+                    .WithHandler<AutocompletionHandler>()
                     ;
             });
 
