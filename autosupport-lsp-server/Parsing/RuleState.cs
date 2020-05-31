@@ -62,6 +62,11 @@ namespace autosupport_lsp_server.Parsing
 
         public IConcreteRuleStateBuilder Clone() => new RuleStateBuilder(this);
 
+        public override string? ToString()
+        {
+            return $"{CurrentSymbol?.ToString() ?? "<no symbol>"} in rule {CurrentRule.Name} with {ruleStates.Count} rulestates";
+        }
+
         internal interface IRuleStateBuilder<T>
         {
             INullableRuleStateBuilder WithNextSymbol();

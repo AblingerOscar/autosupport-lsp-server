@@ -128,5 +128,25 @@ namespace autosupport_lsp_server.Parsing
             (Position.Line >= Text.Length
                 || (Position.Line == Text.Length - 1
                     && Position.Character >= Text[^1].Length - 1));
+
+        public override string? ToString()
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"Position ({Position.Line}, {Position.Character}) with {RuleStates.Count} ruleStates. ");
+
+            if (Text.Length <= Position.Line || Text[Position.Line].Length <= Position.Character)
+            {
+                sb.Append("(Position OOB)");
+            }
+            else
+            {
+                sb.AppendLine(Text[Position.Line].Insert((int)Position.Character, "|"));
+                Enumerable.Repeat(" ", (int)Position.Character).ForEach(s => sb.Append(s));
+                sb.Append("^");
+            }
+
+            return sb.ToString();
+        }
     }
 }
