@@ -79,14 +79,10 @@ namespace autosupport_lsp_server.Parsing
             }
 
             var nextRulesCharCount = scheduledRuleStates.Keys.Min();
+            RuleStates = scheduledRuleStates[nextRulesCharCount];
+            scheduledRuleStates.Remove(nextRulesCharCount);
 
             OffsetPositionBy(nextRulesCharCount - currentCharacterCount);
-
-            if (IsAtEndOfDocument)
-            {
-                RuleStates = scheduledRuleStates[nextRulesCharCount];
-                scheduledRuleStates.Remove(nextRulesCharCount);
-            }
         }
 
         internal void ScheduleNewRuleStatesIn(int numberOfCharacters, IEnumerable<RuleState> ruleStates)
