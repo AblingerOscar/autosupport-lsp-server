@@ -21,7 +21,7 @@ namespace autosupport_lsp_server.Parsing
             Any
         }
 
-        public static string RootEnvironment => "root|";
+        public static string GlobalEnvironment => "global|";
 
         public static HashSet<Identifier> CreateIdentifierSet()
         {
