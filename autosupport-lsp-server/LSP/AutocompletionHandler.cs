@@ -30,13 +30,14 @@ namespace autosupport_lsp_server.LSP
         public async Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken)
         {
             var uri = request.TextDocument.Uri.ToString();
-            var parseResult = documentStore.Documents[uri].ParseResult;
 
-            if (!documentStore.Documents.ContainsKey(uri) || parseResult == null)
+            if (!documentStore.Documents.ContainsKey(uri) || documentStore.Documents[uri].ParseResult == null)
             {
                 // should never happen as the document is latest created at first opening
                 return KeywordsCompletionList;
             }
+
+            var parseResult = documentStore.Documents[uri].ParseResult;
 
             return parseResult.PossibleContinuations
                 .Select(str => new CompletionItem()
