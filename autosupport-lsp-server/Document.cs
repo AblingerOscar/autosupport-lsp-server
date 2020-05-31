@@ -97,10 +97,12 @@ namespace autosupport_lsp_server
 
         internal static Document FromText(string uri, string text, IParser parser)
         {
-            return new Document(uri, parser)
+            var doc = new Document(uri, parser)
             {
                 Text = ConvertTextToList(text)
             };
+            doc.Reparse();
+            return doc;
         }
 
         private static IList<string> ConvertTextToList(string text)
