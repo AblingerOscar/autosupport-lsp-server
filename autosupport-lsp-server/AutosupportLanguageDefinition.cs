@@ -48,6 +48,9 @@ namespace autosupport_lsp_server
 
         public static AutosupportLanguageDefinition FromXLinq(XElement element, IInterfaceDeserializer interfaceDeserializer)
         {
+            if (element == null)
+                throw new System.ArgumentException("'element' is null");
+
             return new AutosupportLanguageDefinition()
             {
                 LanguageId = element.Attribute(annotation.PropertyName(nameof(LanguageId))).Value,
