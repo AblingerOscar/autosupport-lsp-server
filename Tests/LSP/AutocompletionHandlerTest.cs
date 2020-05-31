@@ -47,14 +47,7 @@ namespace Tests.LSP
 
             var labels = result.Select(ci => ci.Label);
             foreach (var kw in keywords)
-            {
-                Assert.Contains(kw, labels);
-
-                var resultsWithKw = result.Where(ci => ci.Label == kw);
-
-                Assert.Single(resultsWithKw);
-                Assert.Equal(OmniSharp.Extensions.LanguageServer.Protocol.Models.CompletionItemKind.Keyword, resultsWithKw.First().Kind);
-            }
+                Assert.Single(result, ci => ci.Label == kw && ci.Kind == CompletionItemKind.Keyword);
         }
 
         // –––––––––––– Integration tests –––––––––––– //
@@ -143,7 +136,7 @@ namespace Tests.LSP
 
             // then: expectedContinuations are always the first options
             Assert.NotNull(result);
-            Assert.True(result.Count() == VarAndPrintKeywords.Length + 1);
+            Assert.Equal(VarAndPrintKeywords.Length + 1, result.Count());
 
             Assert.Contains(("var", CompletionItemKind.Variable), result.Select(r => (r.TextEdit?.NewText ?? r.Label, r.Kind)));
         }
