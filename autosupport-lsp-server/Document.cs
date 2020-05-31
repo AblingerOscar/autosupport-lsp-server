@@ -1,7 +1,9 @@
-﻿using autosupport_lsp_server.Parsing.Impl;
+﻿using autosupport_lsp_server.Parsing;
+using autosupport_lsp_server.Parsing.Impl;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace autosupport_lsp_server
 {
@@ -15,8 +17,9 @@ namespace autosupport_lsp_server
 
         internal string Uri { get; }
         internal IList<string> Text { get; private set; } = new List<string>();
+        public IParseResult? ParseResult { get; private set; }
 
-        private IParser parser;
+        private readonly IParser parser;
 
         internal void ApplyChange(TextDocumentContentChangeEvent change)
         {
@@ -36,7 +39,7 @@ namespace autosupport_lsp_server
 
         private void Reparse()
         {
-            //parser.Parse(Text.ToArray());
+            ParseResult = parser.Parse(Text.ToArray());
         }
 
         private void ApplyPartialChange(TextDocumentContentChangeEvent change)
