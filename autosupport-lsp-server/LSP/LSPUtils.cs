@@ -1,4 +1,7 @@
-﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+﻿using autosupport_lsp_server.Symbols.Impl.Terminals;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace autosupport_lsp_server.LSP
 {
@@ -19,5 +22,29 @@ namespace autosupport_lsp_server.LSP
             return documentSelector;
         }
 
+        public static IEnumerable<CompletionItem> GetAllKeywordsAsCompletionItems(IAutosupportLanguageDefinition languageDefinition)
+        {
+            return languageDefinition.Rules
+                .SelectMany(rule =>
+                    rule.Value.Symbols)
+                .Select(symbol =>
+                    symbol.Match(
+                        terminal: terminal =>
+                            terminal is StringTerminal stringTerminal
+                                ? stringTerminal.String
+                                : null,
+                        nonTerminal: (_) => null,
+                        oneOf: (_) => null,
+                        action: (_) => null))
+                .Where(str => str != null)
+                .Select(str =>
+                {
+                    return new CompletionItem()
+                    {
+                        Label = str,
+                        Kind = CompletionItemKind.Keyword
+                    };
+                });
+        }
     }
 }

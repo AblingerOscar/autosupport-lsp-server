@@ -15,11 +15,10 @@ namespace autosupport_lsp_server.LSP
     /// </summary>
     public class KeywordsCompletetionHandler : ICompletionHandler
     {
-        CompletionCapability? completionCapability = null;
+        private CompletionCapability? completionCapability = null;
 
-        CompletionList? keywordsCompletionList = null;
-
-        IDocumentStore documentStore;
+        private CompletionList? keywordsCompletionList = null;
+        private readonly IDocumentStore documentStore;
 
         public KeywordsCompletetionHandler(IDocumentStore documentStore)
         {
@@ -30,32 +29,9 @@ namespace autosupport_lsp_server.LSP
             get {
                 if (keywordsCompletionList == null)
                 {
-                    if (documentStore.LanguageDefinition == null)
-                        throw new InvalidOperationException("Server not yet properly set up");
-
-                    IEnumerable<CompletionItem> keywords = documentStore.LanguageDefinition.Rules
-                        .SelectMany(rule =>
-                            rule.Value.Symbols)
-                        .Select(symbol =>
-                            symbol.Match(
-                                terminal: terminal =>
-                                    terminal is StringTerminal stringTerminal
-                                        ? stringTerminal.String
-                                        : null,
-                                nonTerminal: (_) => null,
-                                oneOf: (_) => null,
-                                action: (_) => null))
-                        .Where(str => str != null)
-                        .Select(str =>
-                        {
-                            return new CompletionItem()
-                            {
-                                Label = str,
-                                Kind = CompletionItemKind.Keyword
-                            };
-                        });
-
-                    keywordsCompletionList = new CompletionList(keywords);
+                    keywordsCompletionList = new CompletionList(
+                            LSPUtils.GetAllKeywordsAsCompletionItems(documentStore.LanguageDefinition)
+                        );
                 }
 
                 return keywordsCompletionList!;
