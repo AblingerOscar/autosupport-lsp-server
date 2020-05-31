@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<languageDefinition name="cocol-2" filePattern="**/*.atg">
+	<startRules>
+		<startRule>S</startRule>
+	</startRules>
+	<rules>
+		<rule name="S">
+			<string>Program</string>
+			<nonTerminal referencedRule="Ws" />
+			<oneOf allowNone="true">
+				<option>S$1</option>
+				<option>S$2</option>
+			</oneOf>
+		</rule>
+		<rule name="S$1">
+			<nonTerminal referencedRule="VarDecl"/>
+			<nonTerminal referencedRule="Ws"/>
+		</rule>
+		<rule name="S$2">
+			<nonTerminal referencedRule="PrintStatement"/>
+			<nonTerminal referencedRule="Ws"/>
+		</rule>
+		<rule name="VarDecl">
+			<string>var</string>
+			<nonTerminal referencedRule="Ws" />
+			<nonTerminal referencedRule="Identifier" />
+			<nonTerminal referencedRule="Ws" />
+			<string>=</string>
+			<nonTerminal referencedRule="Ws" />
+			<nonTerminal referencedRule="Number"/>
+			<nonTerminal referencedRule="Ws" />
+			<string>;</string>
+		</rule>
+		<rule name="PrintStatement">
+			<nonTerminal referencedRule="Identifier" />
+			<nonTerminal referencedRule="Ws" />
+			<string>print</string>
+			<nonTerminal referencedRule="Ws"/>
+			<string>;</string>
+		</rule>
+		<rule name="Ws">
+			<oneOf allowNone="true">
+				<option>Ws$1</option>
+			</oneOf>
+		</rule>
+		<rule name="Ws$1">
+			<whitespace />
+			<oneOf allowNone="true">
+				<option>Ws$1</option>
+			</oneOf>
+		</rule>
+		<rule name="Identifier">
+			<letter />
+			<oneOf allowNone="true">
+				<option>Identifier$1</option>
+			</oneOf>
+		</rule>
+		<rule name="Identifier$1">
+			<letterOrDigit />
+			<oneOf allowNone="true">
+				<option>Identifier$1</option>
+			</oneOf>
+		</rule>
+		<rule name="Number">
+			<digit />
+			<oneOf allowNone="true">
+				<option>Number</option>
+			</oneOf>
+		</rule>
+	</rules>
+</languageDefinition>
+
