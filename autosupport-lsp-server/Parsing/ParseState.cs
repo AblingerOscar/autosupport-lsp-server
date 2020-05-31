@@ -31,6 +31,7 @@ namespace autosupport_lsp_server.Parsing
         internal bool Failed { get; private set; } = false;
 
         internal bool IsAtEndOfDocument { get; private set; }
+        internal bool HasFinishedParsing => RuleStates.Count == 0;
 
         internal string GetNextTextFromPosition(int minimumNumberOfCharacters)
         {

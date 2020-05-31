@@ -59,7 +59,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             if (parseState == null)
                 throw new ArgumentException(nameof(parseState) + " may not be null when running " + nameof(ParseUntilEndOrFailed));
 
-            while (!parseState.Failed && !parseState.IsAtEndOfDocument)
+            while (!parseState.HasFinishedParsing && !parseState.IsAtEndOfDocument)
             {
                 foreach (var ruleState in parseState.RuleStates)
                 {
