@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Tests.Parsing.Impl
 {
-    public class ParserTest : SymbolsBaseTest
+    public class ParserTest : BaseTest
     {
         [Fact]
         void When_RuleWithOneTerminalThatParsesCorrectly_ThenFinish()

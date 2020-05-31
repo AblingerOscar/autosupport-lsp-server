@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Tests
 {
-    public class DocumentTest : DocumentBaseTest
+    public class DocumentTest : BaseTest
     {
         const string uri = "uri";
         IList<string> text = new List<string>()

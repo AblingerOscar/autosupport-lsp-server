@@ -7,7 +7,7 @@ using Tests.Mocks.Symbols;
 
 namespace Tests
 {
-    public abstract class SymbolsBaseTest
+    public abstract partial class BaseTest
     {
         protected Mock<MockTerminal> Terminal(string content, bool? shouldParse)
         {
