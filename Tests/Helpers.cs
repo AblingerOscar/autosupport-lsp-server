@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace Tests
 {
@@ -27,7 +28,13 @@ namespace Tests
 
             if (stream == null)
             {
-                throw new NullReferenceException($"Could not read resource '{resourceName}': It probably doesn't exist");
+                var resources = Assembly.GetExecutingAssembly().GetManifestResourceNames();
+                var sb = new StringBuilder();
+                sb.AppendLine($"Could not read resource '{resourceName}': It probably doesn't exist\n");
+                sb.AppendLine("\tThe following resources were found:");
+                sb.AppendJoin('\n', resources.Select(s => "\t\t- " + s));
+
+                throw new NullReferenceException(sb.ToString());
             }
 
             using StreamReader reader = new StreamReader(stream);
