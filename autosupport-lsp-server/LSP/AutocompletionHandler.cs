@@ -63,11 +63,11 @@ namespace autosupport_lsp_server.LSP
         {
             var documentText = documentStore.Documents[uri].Text;
 
-            if (position.Line == documentText.Count
-                && (position.Line == 0 || position.Character == documentText[^1].Length))
+            if (position.Line == documentText.Count - 1
+                && position.Character == documentText[(int)position.Line].Length)
                 return documentStore.Documents[uri].ParseResult;
 
-            var textUpToPosition = documentText.Take((int)position.Line).ToArray();
+            var textUpToPosition = documentText.Take((int)position.Line + 1).ToArray();
 
             if (textUpToPosition.Length > 0)
                 textUpToPosition[^1] = textUpToPosition[^1].Substring(0, (int)position.Character);
