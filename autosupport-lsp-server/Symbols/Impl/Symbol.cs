@@ -22,5 +22,10 @@ namespace autosupport_lsp_server.Symbols.Impl
         }
 
         private static readonly AnnotationUtils.XLinqClassAnnotationUtil annotation = AnnotationUtils.XLinqOf(typeof(Symbol));
+        
+        public override string? ToString()
+        {
+            return $"{annotation.RuntimeClassName(GetType())}";
+        }
     }
 }

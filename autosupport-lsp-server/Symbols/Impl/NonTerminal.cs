@@ -46,5 +46,10 @@ namespace autosupport_lsp_server.Symbols.Impl
 
             return symbol;
         }
+
+        public override string? ToString()
+        {
+            return $"NonTerminal({ReferencedRule})";
+        }
     }
 }

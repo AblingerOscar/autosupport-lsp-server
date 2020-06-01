@@ -1,5 +1,7 @@
-﻿using System;
+﻿using autosupport_lsp_server.Shared;
+using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace autosupport_lsp_server
 {
@@ -41,8 +43,8 @@ namespace autosupport_lsp_server
                 if (item != null)
                     yield return item;
             }
-        } 
-        
+        }
+
         public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source) where T : struct
         {
             foreach (var item in source)
@@ -50,6 +52,16 @@ namespace autosupport_lsp_server
                 if (item.HasValue)
                     yield return item.Value;
             }
-        } 
+        }
+
+        public static StringBuilder If(this StringBuilder sb, Either<Func<bool>, bool> condition, Action<StringBuilder> then, Action<StringBuilder>? @else = null)
+        {
+            if (condition.Match(f => f.Invoke(), b => b))
+                then.Invoke(sb);
+            else
+                @else?.Invoke(sb);
+
+            return sb;
+        }
     }
 }

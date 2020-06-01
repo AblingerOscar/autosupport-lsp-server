@@ -71,6 +71,14 @@ namespace autosupport_lsp_server.Serialization.Annotation
 
             }
 
+            internal string RuntimeClassName(Type t)
+            {
+                return ThrowIfNull(
+                    t.GetCustomAttribute<XLinqNameAttribute>()
+                        ?.Name,
+                    $"{nameof(XLinqValueAttribute)} not found on '{t.FullName}'");
+            }
+
             public string KeysName(string propertyName)
             {
                 return ThrowIfNull(

@@ -22,6 +22,11 @@ namespace autosupport_lsp_server.Symbols.Impl.Terminals
 
         protected override Parser<string> Parser =>
             Parse.Ref(() => Parse.String(String)).Text();
+
+        public override string? ToString()
+        {
+            return base.ToString() + $"({String})";
+        }
     }
 
     internal abstract class CharTerminal : Terminal

@@ -2,6 +2,7 @@
 using autosupport_lsp_server.Serialization.Annotation;
 using System;
 using System.Linq;
+using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using static autosupport_lsp_server.Serialization.Annotation.AnnotationUtils;
@@ -44,6 +45,16 @@ namespace autosupport_lsp_server.Symbols.Impl
                 Options = (from optionXml in element.Elements(annotation.KeysName(nameof(Options)))
                            select optionXml.Value).ToArray()
             };
+        }
+
+        public override string? ToString()
+        {
+            return new StringBuilder()
+                .Append("OneOf(")
+                .AppendJoin(", ", Options)
+                .Append(')')
+                .If(AllowNone, sb => sb.Append('?'))
+                .ToString();
         }
 
         private static readonly XLinqClassAnnotationUtil annotation = AnnotationUtils.XLinqOf(typeof(OneOf));
