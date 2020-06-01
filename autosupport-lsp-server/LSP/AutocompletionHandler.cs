@@ -1,8 +1,10 @@
-﻿using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
+﻿using autosupport_lsp_server.Parsing.Impl;
+using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,21 +33,46 @@ namespace autosupport_lsp_server.LSP
         {
             var uri = request.TextDocument.Uri.ToString();
 
-            if (!documentStore.Documents.ContainsKey(uri) || documentStore.Documents[uri].ParseResult == null)
-            {
+            if (!documentStore.Documents.ContainsKey(uri))
                 // should never happen as the document is latest created at first opening
                 return KeywordsCompletionList;
+
+            var parseResult = GetParseResult(request.Position, uri);
+
+            return MergeParseResultWithKeywords(parseResult);
+        }
+
+        private CompletionList MergeParseResultWithKeywords(Parsing.IParseResult? parseResult)
+        {
+            if (parseResult == null)
+                return KeywordsCompletionList;
+
+            var completions = new List<CompletionItem>(parseResult.PossibleContinuations);
+            var equalityComparator = new CompletionItemContentEqualityComparer();
+
+            foreach (var kw in KeywordsCompletionList)
+            {
+                if (!parseResult.PossibleContinuations.Contains(kw, equalityComparator))
+                    completions.Add(kw);
             }
 
-            var parseResult = documentStore.Documents[uri].ParseResult;
+            return completions;
+        }
 
-            return parseResult.PossibleContinuations
-                .Select(str => new CompletionItem()
-                {
-                    Label = str
-                })
-                .Union(KeywordsCompletionList)
-                .ToList();
+        private Parsing.IParseResult? GetParseResult(Position position, string uri)
+        {
+            var documentText = documentStore.Documents[uri].Text;
+
+            if (position.Line == documentText.Count
+                && (position.Line == 0 || position.Character == documentText[^1].Length))
+                return documentStore.Documents[uri].ParseResult;
+
+            var textUpToPosition = documentText.Take((int)position.Line).ToArray();
+
+            if (textUpToPosition.Length > 0)
+                textUpToPosition[^1] = textUpToPosition[^1].Substring(0, (int)position.Character);
+
+            return new Parser(documentStore.LanguageDefinition).Parse(textUpToPosition);
         }
 
         public void SetCapability(CompletionCapability capability)
@@ -63,6 +90,25 @@ namespace autosupport_lsp_server.LSP
                 }
 
                 return keywordsCompletionList;
+            }
+        }
+
+        private class CompletionItemContentEqualityComparer : IEqualityComparer<CompletionItem>
+        {
+            public bool Equals([AllowNull] CompletionItem x, [AllowNull] CompletionItem y)
+            {
+                if (x == null)
+                    return y == null;
+
+                if (y == null)
+                    return false;
+
+                return x.Label == y.Label && x.Kind == y.Kind;
+            }
+
+            public int GetHashCode([DisallowNull] CompletionItem ci)
+            {
+                return $"{ci.Kind}{ci.Label.GetHashCode()}".GetHashCode();
             }
         }
     }
