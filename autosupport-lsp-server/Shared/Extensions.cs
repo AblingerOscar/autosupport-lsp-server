@@ -33,5 +33,23 @@ namespace autosupport_lsp_server
             }
             return seed;
         }
+
+        public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source) where T : class
+        {
+            foreach (var item in source)
+            {
+                if (item != null)
+                    yield return item;
+            }
+        } 
+        
+        public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source) where T : struct
+        {
+            foreach (var item in source)
+            {
+                if (item.HasValue)
+                    yield return item.Value;
+            }
+        } 
     }
 }

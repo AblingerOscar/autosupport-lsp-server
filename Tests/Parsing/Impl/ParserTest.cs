@@ -1,6 +1,7 @@
 ﻿using autosupport_lsp_server.Parsing.Impl;
 using autosupport_lsp_server.Symbols;
 using Moq;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System.Collections.Generic;
 using Xunit;
 
@@ -63,7 +64,9 @@ namespace Tests.Parsing.Impl
             // then
             terminal.Verify(t => t.TryParse(It.IsAny<string>()), Times.Never());
             Assert.NotEmpty(result.PossibleContinuations);
-            Assert.Equal(expectedContinuation, result.PossibleContinuations[0]);
+
+            var firstChoiceContinuation = result.PossibleContinuations[0];
+            Assert.Equal(expectedContinuation, firstChoiceContinuation.TextEdit?.NewText ?? firstChoiceContinuation.Label);
         }
 
         [Fact]

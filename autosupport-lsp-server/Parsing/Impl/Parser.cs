@@ -12,7 +12,7 @@ namespace autosupport_lsp_server.Parsing.Impl
     {
         private readonly IAutosupportLanguageDefinition languageDefinition;
         private readonly IList<IError> errors;
-        private readonly IList<(string Continuation, RuleState? RuleState)> possibleContinuations;
+        private readonly IList<(CompletionItem Continuation, RuleState? RuleState)> possibleContinuations;
         private ParseState parseState;
 
         public Parser(IAutosupportLanguageDefinition autosupportLanguageDefinition)
@@ -20,7 +20,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             languageDefinition = autosupportLanguageDefinition;
 
             errors = new List<IError>();
-            possibleContinuations = new List<(string Continuation, RuleState? RuleState)>();
+            possibleContinuations = new List<(CompletionItem Continuation, RuleState? RuleState)>();
             parseState = new ParseState(new string[0], new Position(), new List<RuleState>(0));
         }
 
@@ -67,7 +67,7 @@ namespace autosupport_lsp_server.Parsing.Impl
         private void ParseRuleState(RuleState ruleState)
         {
             if (parseState == null)
-                throw new ArgumentException(nameof(parseState) + " may not be null when running " + nameof(ParseUntilEndOrFailed));
+                throw new ArgumentException(nameof(parseState) + " may not be null when running " + nameof(ParseRuleState));
 
             var newParseStates = GetPossibleNextStatesOfSymbol(ruleState);
             ScheduleNextParseStates(newParseStates);
@@ -99,16 +99,33 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IDictionary<int, IEnumerable<RuleState>>? ParseTerminal(RuleState ruleState, ITerminal terminal)
         {
-            var text = parseState!.GetNextTextFromPosition(terminal.MinimumNumberOfCharactersToParse);
+            var actualText = parseState.GetNextTextFromPosition(terminal.MinimumNumberOfCharactersToParse);
 
-            if (text.Length < terminal.MinimumNumberOfCharactersToParse)
+            if (actualText.Length < terminal.MinimumNumberOfCharactersToParse)
             {
-                foreach (var content in terminal.PossibleContent)
+                foreach (var expectedText in terminal.PossibleContent)
                 {
-                    if (content.StartsWith(text))
+                    if (expectedText.StartsWith(actualText))
                     {
+                        TextEdit? textEdit = null;
+
+                        if (expectedText != actualText)
+                        {
+                            textEdit = new TextEdit()
+                            {
+                                Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(parseState.Position, parseState.Position),
+                                NewText = expectedText.Substring(actualText.Length)
+                            };
+                        }
+
+
                         possibleContinuations.Add((
-                            content.Substring(text.Length),
+                            new CompletionItem()
+                            {
+                                Label = expectedText,
+                                Kind = CompletionItemKind.Keyword,
+                                TextEdit = textEdit
+                            },
                             ruleState.Clone().WithNextSymbol().TryBuild()
                             ));
                     }
@@ -116,7 +133,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                 return null;
             }
 
-            if (terminal.TryParse(text))
+            if (terminal.TryParse(actualText))
             {
                 return new Dictionary<int, IEnumerable<RuleState>>(1)
                 {
@@ -235,6 +252,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                 {
                     dict1.Add(key, new RuleState[0]);
                 }
+
                 dict1[key] = dict2[key].Aggregate(dict1[key], (acc, ruleState) => acc.Append(ruleState));
             });
 
@@ -250,17 +268,17 @@ namespace autosupport_lsp_server.Parsing.Impl
                 );
         }
 
-        private string[] GetPossibleContinuations()
+        private CompletionItem[] GetPossibleContinuations()
         {
             return parseState.RuleStates
-                .Select<RuleState, (string Continuation, RuleState? RuleState)>(rs => ("", rs))
-                .Union(possibleContinuations)
+                .Select<RuleState, (CompletionItem? Continuation, RuleState? RuleState)>(rs => (null, rs))
+                .Union(Enumerable.Cast<(CompletionItem? Continuation, RuleState? RuleState)>(possibleContinuations))
                 .SelectMany(GetPossibleContinuationsOfRuleState)
-                .Where(continuation => continuation.Length > 0)
+                .WhereNotNull()
                 .ToArray();
         }
 
-        private IEnumerable<string> GetPossibleContinuationsOfRuleState((string Continuation, RuleState? RuleState) state)
+        private IEnumerable<CompletionItem?> GetPossibleContinuationsOfRuleState((CompletionItem? Continuation, RuleState? RuleState) state)
         {
             (var continuation, var ruleState) = state;
 
@@ -273,7 +291,12 @@ namespace autosupport_lsp_server.Parsing.Impl
                 foreach (var possibleNext in ruleState.CurrentSymbol.Match(
                     terminal =>
                     {
-                        return terminal.PossibleContent;
+                        return terminal.PossibleContent.Select(pc =>
+                            new CompletionItem()
+                            {
+                                Label = pc,
+                                Kind = CompletionItemKind.Keyword
+                            });
                     },
                     nonTerminal =>
                     {
@@ -284,28 +307,11 @@ namespace autosupport_lsp_server.Parsing.Impl
                     },
                     action =>
                     {
-                        return new string[0];
+                        return Enumerable.Empty<CompletionItem?>();
                     },
                     oneOf =>
                     {
-                        return new string[0];
-                        /*
-                        IEnumerable<(string Continuation, RuleState? RuleState)> rules = oneOf.Options
-                            .Select<string, (string Continuation, RuleState? RuleState)>(ruleName => (continuation, ruleState.Clone()
-                                .WithNewRule(languageDefinition.Rules[ruleName])
-                                .Build()));
-
-                        if (oneOf.AllowNone)
-                        {
-                            rules = rules.Append((continuation, ruleState.Clone()
-                                    .WithNextSymbol()
-                                    .TryBuild()));
-                        }
-
-                        return rules
-                            .SelectMany(GetPossibleContinuationsOfRuleState)
-                            .ToArray();
-                            */
+                        return Enumerable.Empty<CompletionItem?>();
                     }))
                 {
                     yield return possibleNext;

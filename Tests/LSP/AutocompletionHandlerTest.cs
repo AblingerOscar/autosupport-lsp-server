@@ -23,7 +23,16 @@ namespace Tests.LSP
         {
             // given
             string uri = "file:///docuri";
-            string[] continuations = new string[] { "foo", "bar" };
+            CompletionItem[] continuations = new CompletionItem[] {
+                new CompletionItem() {
+                    Label = "foo",
+                    Kind = CompletionItemKind.Variable
+                },
+                new CompletionItem() {
+                    Label = "bar",
+                    Kind = CompletionItemKind.Variable
+                },
+            };
 
             string[] keywords = new string[]
             {
