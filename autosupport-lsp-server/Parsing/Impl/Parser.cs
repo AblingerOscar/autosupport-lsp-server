@@ -256,7 +256,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                 dict1[key] = dict2[key].Aggregate(dict1[key], (acc, ruleState) => acc.Append(ruleState));
             });
 
-            return dict2;
+            return dict1;
         }
 
         private IParseResult MakeParseResult()
