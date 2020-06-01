@@ -24,12 +24,6 @@ namespace autosupport_lsp_server.Parsing.Impl
             parseState = new ParseState(new string[0], new Position(), new List<RuleState>(0));
         }
 
-        [Obsolete("Replaced by new Parser(autosupportLanguageDefinition).Parse(text)")]
-        public static IParseResult Parse(IAutosupportLanguageDefinition autosupportLanguageDefinition, string[] text)
-        {
-            return new Parser(autosupportLanguageDefinition).Parse(text);
-        }
-
         public IParseResult Parse(string[] text)
         {
             SetupDefaultValues(text);
