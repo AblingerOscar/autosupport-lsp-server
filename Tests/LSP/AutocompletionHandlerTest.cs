@@ -110,10 +110,6 @@ namespace Tests.LSP
 
             // then: expectedContinuations are always the first options
             Assert.NotNull(result);
-            // note that this assert is only true in cases where the continuations do not have identifiers
-            //   that are equal to a keyword. In this case the result SHOULD indeed return two different completions
-            //   for it as their types should be different
-            Assert.True(result.Count() == VarAndPrintKeywords.Union(expectedContinuations).ToHashSet().Count());
 
             var resultAsList = result.Items.ToList();
             for(int i = 0; i < expectedContinuations.Length; ++i)
