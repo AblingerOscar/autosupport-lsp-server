@@ -1,4 +1,5 @@
-﻿using autosupport_lsp_server.Symbols;
+﻿using autosupport_lsp_server.LSP;
+using autosupport_lsp_server.Symbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
@@ -82,13 +83,20 @@ namespace autosupport_lsp_server.Parsing.Impl
             if (currentSymbol == null)
                 throw new Exception("Current Symbol is null");
 
-            return currentSymbol.Match(
-                        terminal => ParseTerminal(ruleState, terminal),
-                        nonTerminal => ParseNonTerminal(ruleState, nonTerminal),
-                        action => ParseAction(ruleState, action),
-                        oneOf => ParseOneOf(ruleState, oneOf)
-                    );
+            var nextStates = LSPUtils.FollowUntilNextTerminalOrAction(
+                new LSPUtils.FollowUntilNextTerminalOrActionArgs<IDictionary<int, IEnumerable<RuleState>>?>(
+                        ruleState,
+                        rules: languageDefinition.Rules,
+                        onTerminal: ParseTerminal,
+                        onAction: InterpretAction
+                    ))
+                .WhereNotNull();
+
+            return nextStates.Aggregate<IDictionary<int, IEnumerable<RuleState>>?, IDictionary<int, IEnumerable<RuleState>>>(
+                new Dictionary<int, IEnumerable<RuleState>>(), MergeDictionaries
+                );
         }
+
 
         private void ScheduleNextParseStates(IDictionary<int, IEnumerable<RuleState>>? nextParseStates)
         {
@@ -152,23 +160,6 @@ namespace autosupport_lsp_server.Parsing.Impl
             }
         }
 
-        private IDictionary<int, IEnumerable<RuleState>>? ParseNonTerminal(RuleState ruleState, INonTerminal nonTerminal)
-        {
-            return GetPossibleNextStatesOfSymbol(
-                ruleState.Clone()
-                .WithNewRule(languageDefinition.Rules[nonTerminal.ReferencedRule])
-                .Build());
-        }
-
-        private IDictionary<int, IEnumerable<RuleState>>? ParseAction(RuleState ruleState, IAction action)
-        {
-            var ruleStateBuilder = InterpretAction(ruleState, action);
-
-            return GetPossibleNextStatesOfSymbol(
-                    ruleStateBuilder.WithNextSymbol().TryBuild() ?? RuleState.FinishedRuleState
-                );
-        }
-
         private IConcreteRuleStateBuilder InterpretAction(RuleState ruleState, IAction action)
         {
             (var cmd, var args) = ExtractCommandAndArgsFromAction(action);
@@ -203,42 +194,6 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         }
 
-        private (string Cmd, string[]? Args) ExtractCommandAndArgsFromAction(IAction action)
-        {
-            int splitIdx = action.Command.IndexOf(' ');
-
-            if (splitIdx >= 0)
-                return (
-                    Cmd: action.Command.Substring(0, splitIdx),
-                    Args: action.Command.Substring(splitIdx + 1).Split(' ')
-                );
-            else
-                return (
-                    Cmd: action.Command,
-                    Args: null
-                );
-        }
-
-        private IDictionary<int, IEnumerable<RuleState>>? ParseOneOf(RuleState ruleState, IOneOf oneOf)
-        {
-            var rules = oneOf.Options
-                .Select(ruleName => ruleState.Clone()
-                    .WithNewRule(languageDefinition.Rules[ruleName])
-                    .Build());
-
-            if (oneOf.AllowNone)
-            {
-                rules = rules.Append(ruleState.Clone()
-                        .WithNextSymbol()
-                        .TryBuild()
-                        ?? RuleState.FinishedRuleState);
-            }
-
-            return rules
-                .Select(GetPossibleNextStatesOfSymbol)
-                .Aggregate<IDictionary<int, IEnumerable<RuleState>>?, IDictionary<int, IEnumerable<RuleState>>>(new Dictionary<int, IEnumerable<RuleState>>(), MergeDictionaries);
-        }
-
         private IDictionary<int, IEnumerable<RuleState>> MergeDictionaries(IDictionary<int, IEnumerable<RuleState>> dict1, IDictionary<int, IEnumerable<RuleState>>? dict2)
         {
             if (dict2 == null)
@@ -257,6 +212,23 @@ namespace autosupport_lsp_server.Parsing.Impl
             });
 
             return dict1;
+        }
+
+
+        private (string Cmd, string[]? Args) ExtractCommandAndArgsFromAction(IAction action)
+        {
+            int splitIdx = action.Command.IndexOf(' ');
+
+            if (splitIdx >= 0)
+                return (
+                    Cmd: action.Command.Substring(0, splitIdx),
+                    Args: action.Command.Substring(splitIdx + 1).Split(' ')
+                );
+            else
+                return (
+                    Cmd: action.Command,
+                    Args: null
+                );
         }
 
         private IParseResult MakeParseResult()

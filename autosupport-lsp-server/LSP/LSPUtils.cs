@@ -1,7 +1,12 @@
-﻿using autosupport_lsp_server.Symbols.Impl.Terminals;
+﻿using autosupport_lsp_server.Parsing;
+using autosupport_lsp_server.Symbols;
+using autosupport_lsp_server.Symbols.Impl;
+using autosupport_lsp_server.Symbols.Impl.Terminals;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using static autosupport_lsp_server.Parsing.RuleState;
 
 namespace autosupport_lsp_server.LSP
 {
@@ -46,6 +51,74 @@ namespace autosupport_lsp_server.LSP
                         Kind = CompletionItemKind.Keyword
                     };
                 });
+        }
+
+        internal class FollowUntilNextTerminalOrActionArgs<T>
+        {
+            public RuleState RuleState;
+            public IDictionary<string, IRule> Rules;
+
+            public Func<RuleState, ITerminal, T> OnTerminal;
+            public Func<RuleState, IAction, IConcreteRuleStateBuilder> OnAction;
+
+            public FollowUntilNextTerminalOrActionArgs(
+                RuleState ruleState,
+                IDictionary<string, IRule> rules,
+                Func<RuleState, ITerminal, T> onTerminal,
+                Func<RuleState, IAction, IConcreteRuleStateBuilder> onAction)
+            {
+                RuleState = ruleState;
+                Rules = rules;
+                OnTerminal = onTerminal;
+                OnAction = onAction;
+            }
+        }
+
+
+        public static IEnumerable<T> FollowUntilNextTerminalOrAction<T>(FollowUntilNextTerminalOrActionArgs<T> args)
+        {
+            if (args.RuleState.IsFinished || args.RuleState.CurrentSymbol == null)
+                return Enumerable.Empty<T>();
+
+            return args.RuleState.CurrentSymbol.Match(
+                    terminal: nt => new T[] { args.OnTerminal(args.RuleState, nt) },
+                    nonTerminal: nt =>
+                        FollowUntilNextTerminalOrAction(
+                            new FollowUntilNextTerminalOrActionArgs<T>(
+                                args.RuleState.Clone().WithNewRule(args.Rules[nt.ReferencedRule]).Build(),
+                                args.Rules,
+                                args.OnTerminal,
+                                args.OnAction)),
+                    action: action =>
+                    {
+                        var ruleStateBuilder = args.OnAction.Invoke(args.RuleState, action);
+                        return FollowUntilNextTerminalOrAction(
+                            new FollowUntilNextTerminalOrActionArgs<T>(
+                                ruleStateBuilder.WithNextSymbol().TryBuild() ?? RuleState.FinishedRuleState,
+                                args.Rules,
+                                args.OnTerminal,
+                                args.OnAction));
+                    },
+                    oneOf: oneOf =>
+                    {
+                        var newRuleStates = oneOf.Options
+                            .Select(ruleName => args.RuleState.Clone()
+                                .WithNewRule(args.Rules[ruleName])
+                                .Build());
+
+                        if (oneOf.AllowNone)
+                        {
+                            newRuleStates = newRuleStates.Append(args.RuleState.Clone()
+                                    .WithNextSymbol()
+                                    .TryBuild()
+                                    ?? RuleState.FinishedRuleState);
+                        }
+
+                        return newRuleStates
+                            .SelectMany(nrs => FollowUntilNextTerminalOrAction(
+                                new FollowUntilNextTerminalOrActionArgs<T>(nrs, args.Rules, args.OnTerminal, args.OnAction)));
+                    }
+                );
         }
     }
 }
