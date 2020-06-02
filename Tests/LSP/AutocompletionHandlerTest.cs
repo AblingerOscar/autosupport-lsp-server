@@ -93,6 +93,7 @@ namespace Tests.LSP
 
         [Theory]
         [InlineData("", new string[] { "Program" })] // start of program -> correct kw must be first in line
+        [InlineData("Pro", new string[] { "gram" })] // start of keyword -> rest of keyword should be suggested
         [InlineData("Program ", new string[0])] // next any identifier -> no special autocompletion
         [InlineData("Program a var b = 0;", new string[] { "var", "b" })] // defined an identifier -> identifier should be suggested as continuation, but not the program name
         [InlineData("Program a var b = 00; b", new string[] { "print" })] // only one possible kw next -> first in line
@@ -121,7 +122,7 @@ namespace Tests.LSP
                 // if they're not the same, however, TextEdit has to exist and contain the exact Continuation
                 if (expectedContinuations[i] != resultAsList.ElementAt(i).Label)
                 {
-                    Assert.Contains(expectedContinuations[i], resultAsList.ElementAt(i).TextEdit.NewText);
+                    Assert.Equal(expectedContinuations[i], resultAsList.ElementAt(i).TextEdit?.NewText);
                 }
             }
         }
