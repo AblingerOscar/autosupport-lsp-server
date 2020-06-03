@@ -1,10 +1,12 @@
 ﻿using autosupport_lsp_server.Serialization;
+using autosupport_lsp_server.Serialization.Annotation;
 using System;
 using System.Xml.Linq;
 using static autosupport_lsp_server.Serialization.Annotation.AnnotationUtils;
 
 namespace autosupport_lsp_server.Symbols.Impl
 {
+    [XLinqName("action")]
     public class Action : IAction
     {
         public string Command { get; private set; } = "";
