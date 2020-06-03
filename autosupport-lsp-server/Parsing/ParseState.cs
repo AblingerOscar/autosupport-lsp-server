@@ -60,13 +60,13 @@ namespace autosupport_lsp_server.Parsing
 
             var sb = Text
                 .Skip((int)start.Line)
-                .Take((int)(end.Line - start.Line))
+                .Take((int)(end.Line - start.Line) + 1)
                 .Aggregate(new StringBuilder(), (sb, str) => sb.Append(str));
 
-            int hangingCharNumber = Text[(int)end.Line].Length - (int)end.Character;
+            int hangingCharNumber = Text[(int)end.Line].Length - (int)end.Character - 1;
 
             return sb.Remove(sb.Length - hangingCharNumber, hangingCharNumber)
-                .Remove(0, (int)Position.Character + 1)
+                .Remove(0, (int)start.Character)
                 .ToString();
         }
 
