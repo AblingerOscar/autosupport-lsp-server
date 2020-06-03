@@ -166,8 +166,8 @@ namespace autosupport_lsp_server.Parsing.Impl
 
             switch (cmd)
             {
-                case "identifier":
-                    if (ruleState.Markers.TryGetValue("identifier", out var pos))
+                case IAction.IDENTIFIER:
+                    if (ruleState.Markers.TryGetValue(IAction.IDENTIFIER, out var pos))
                     {
                         string name = parseState.GetTextBetweenPositions(pos);
                         var identifier = ruleState.Identifiers.FirstOrDefault(i => i.Name == name);
@@ -184,14 +184,13 @@ namespace autosupport_lsp_server.Parsing.Impl
                         {
                             identifier.References.Add(pos);
                         }
-                        return ruleState.Clone().WithoutMarker("identifier");
+                        return ruleState.Clone().WithoutMarker(IAction.IDENTIFIER);
                     }
                     else
-                        return ruleState.Clone().WithMarker("identifier", parseState.Position);
-                default:
-                    return ruleState.Clone();
+                        return ruleState.Clone().WithMarker(IAction.IDENTIFIER, parseState.Position);
             }
 
+            return ruleState.Clone();
         }
 
         private IDictionary<int, IEnumerable<RuleState>> MergeDictionaries(IDictionary<int, IEnumerable<RuleState>> dict1, IDictionary<int, IEnumerable<RuleState>>? dict2)
