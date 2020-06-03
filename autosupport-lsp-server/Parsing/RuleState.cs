@@ -152,7 +152,7 @@ namespace autosupport_lsp_server.Parsing
             private RuleStateBuilder WithMarker(string markerName, Position position)
             {
                 if (ruleState != null)
-                    ruleState.markers.Add(markerName, position);
+                    ruleState.markers.Add(markerName, new Position(position.Line, position.Character));
 
                 return this;
             }
