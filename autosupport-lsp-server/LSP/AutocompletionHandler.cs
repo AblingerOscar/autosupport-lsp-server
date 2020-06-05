@@ -4,7 +4,6 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -90,25 +89,6 @@ namespace autosupport_lsp_server.LSP
                 }
 
                 return keywordsCompletionList;
-            }
-        }
-
-        private class CompletionItemContentEqualityComparer : IEqualityComparer<CompletionItem>
-        {
-            public bool Equals([AllowNull] CompletionItem x, [AllowNull] CompletionItem y)
-            {
-                if (x == null)
-                    return y == null;
-
-                if (y == null)
-                    return false;
-
-                return x.Label == y.Label && x.Kind == y.Kind;
-            }
-
-            public int GetHashCode([DisallowNull] CompletionItem ci)
-            {
-                return $"{ci.Kind}{ci.Label.GetHashCode()}".GetHashCode();
             }
         }
     }
