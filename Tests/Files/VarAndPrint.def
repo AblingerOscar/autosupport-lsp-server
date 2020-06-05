@@ -6,6 +6,8 @@
   <rules>
     <rule name="S">
       <string>Program</string>
+      <nonTerminal referencedRule="Ws"/>
+      <nonTerminal referencedRule="Identifier"/>
       <nonTerminal referencedRule="Ws" />
       <nonTerminal referencedRule="S$1"/>
     </rule>
@@ -55,10 +57,12 @@
       </oneOf>
     </rule>
     <rule name="Identifier">
+      <action>identifier</action>
       <letter />
       <oneOf allowNone="true">
         <option>Identifier$1</option>
       </oneOf>
+      <action>identifier</action>
     </rule>
     <rule name="Identifier$1">
       <letterOrDigit />
