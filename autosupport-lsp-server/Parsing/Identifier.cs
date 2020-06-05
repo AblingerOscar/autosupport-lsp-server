@@ -10,6 +10,8 @@ namespace autosupport_lsp_server.Parsing
         public string Name { get; set; } = "";
         public string Documentation { get; set; } = "";
         public string Environment { get; set; } = "";
+        public CompletionItemKind Kind { get; set; } = CompletionItemKind.Variable;
+
         public Either<string, IdentifierType> Type { get; set; } = IdentifierType.Any;
 
         public Position? Definition { get; set; }
