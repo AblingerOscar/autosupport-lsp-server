@@ -48,22 +48,25 @@ namespace autosupport_lsp_server.Parsing
         }
 
         /// <summary>
-        /// Gets the text between the two positions, both inclusively
+        /// Gets the text between the two positions, with the ned being exclusive
         /// </summary>
-        /// <param name="start">Start position</param>
-        /// <param name="end">End position, inclusively. If null, current position is used</param>
+        /// <param name="start">Start position, inclusively</param>
+        /// <param name="end">End position, exclusively. If null, current position is used</param>
         /// <returns>The text between the two positions</returns>
         internal string GetTextBetweenPositions(Position start, Position? end = null)
         {
             if (end == null)
                 end = Position;
 
+            if (start == end)
+                return "";
+
             var sb = Text
                 .Skip((int)start.Line)
                 .Take((int)(end.Line - start.Line) + 1)
                 .Aggregate(new StringBuilder(), (sb, str) => sb.Append(str));
 
-            int hangingCharNumber = Text[(int)end.Line].Length - (int)end.Character - 1;
+            int hangingCharNumber = Text[(int)end.Line].Length - (int)end.Character;
 
             return sb.Remove(sb.Length - hangingCharNumber, hangingCharNumber)
                 .Remove(0, (int)start.Character)
@@ -113,18 +116,13 @@ namespace autosupport_lsp_server.Parsing
                 Position.Line++;
             }
 
-            IsAtEndOfDocument = PositionIsAtEndOfDocument();
+            IsAtEndOfDocument = PositionIsAfterEndOfDocument();
         }
 
         private bool PositionIsAfterEndOfDocument() =>
             (Position.Line >= Text.Length
                 || (Position.Line == Text.Length - 1
                     && Position.Character >= Text[^1].Length));
-
-        private bool PositionIsAtEndOfDocument() =>
-            (Position.Line >= Text.Length
-                || (Position.Line == Text.Length - 1
-                    && Position.Character >= Text[^1].Length - 1));
 
         public override string? ToString()
         {
