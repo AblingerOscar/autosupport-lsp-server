@@ -38,24 +38,7 @@ namespace autosupport_lsp_server.LSP
 
             var parseResult = GetParseResult(request.Position, uri);
 
-            return MergeParseResultWithKeywords(parseResult);
-        }
-
-        private CompletionList MergeParseResultWithKeywords(Parsing.IParseResult? parseResult)
-        {
-            if (parseResult == null)
-                return KeywordsCompletionList;
-
-            var completions = new List<CompletionItem>(parseResult.PossibleContinuations);
-            var equalityComparator = new CompletionItemContentEqualityComparer();
-
-            foreach (var kw in KeywordsCompletionList)
-            {
-                if (!parseResult.PossibleContinuations.Contains(kw, equalityComparator))
-                    completions.Add(kw);
-            }
-
-            return completions;
+            return parseResult?.PossibleContinuations ?? new CompletionList(KeywordsCompletionList);
         }
 
         private Parsing.IParseResult? GetParseResult(Position position, string uri)

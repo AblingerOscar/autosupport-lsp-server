@@ -97,15 +97,12 @@ namespace autosupport_lsp_server.Parsing.Impl
                 );
         }
 
-
         private void ScheduleNextParseStates(IDictionary<int, IEnumerable<RuleState>>? nextParseStates)
         {
             nextParseStates?.ForEach(parseStateKvp =>
                 parseState.ScheduleNewRuleStatesIn(parseStateKvp.Key, parseStateKvp.Value)
             );
         }
-
-
 
         private IDictionary<int, IEnumerable<RuleState>>? ParseTerminal(RuleState ruleState, ITerminal terminal)
         {
@@ -176,6 +173,10 @@ namespace autosupport_lsp_server.Parsing.Impl
                     if (ruleState.Markers.TryGetValue(IAction.IDENTIFIER, out var pos))
                     {
                         string name = parseState.GetTextBetweenPositions(pos);
+
+                        if (name.Trim() == "")
+                            break;
+
                         var identifier = ruleState.Identifiers.FirstOrDefault(i => i.Name == name);
 
                         if (identifier == null)
@@ -247,53 +248,146 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private CompletionItem[] GetPossibleContinuations()
         {
-            return parseState.RuleStates
-                .Select<RuleState, (CompletionItem? Continuation, RuleState? RuleState)>(rs => (null, rs))
-                .Union(Enumerable.Cast<(CompletionItem? Continuation, RuleState? RuleState)>(possibleContinuations))
-                .SelectMany(GetPossibleContinuationsOfRuleState)
-                .WhereNotNull()
-                .ToArray();
+            List<(ContinuationSource Source, CompletionItem Item)> continuations = new List<(ContinuationSource Source, CompletionItem Item)>();
+
+            // continuations of keywords
+            continuations.AddRange(GetContinuationsOfUnfinishedTerminals(possibleContinuations));
+
+            // all keywords
+            continuations.AddRange(
+                LSPUtils.GetAllKeywordsAsCompletionItems(languageDefinition).Select(cont =>
+                    (ContinuationSource.Keyword, cont)));
+
+            foreach (var ruleState in parseState.RuleStates)
+            {
+                continuations.AddRange(GetUnfinishedIdentifiers(ruleState));
+                continuations.AddRange(GetAllIdentifiersAsCompletionItem(ruleState));
+                continuations.AddRange(GetContinuationsOfNextTerminal(ruleState));
+            }
+
+            return SortContinuations(continuations.Where(cont =>
+                            cont.Item.Label.Trim() != ""
+                            && cont.Item.TextEdit?.NewText != ""))
+                    .Distinct(new CompletionItemContentEqualityComparer())
+                    .ToArray();
         }
 
-        private IEnumerable<CompletionItem?> GetPossibleContinuationsOfRuleState((CompletionItem? Continuation, RuleState? RuleState) state)
+        private IEnumerable<(ContinuationSource Source, CompletionItem Item)> GetContinuationsOfUnfinishedTerminals(IList<(CompletionItem Continuation, RuleState? RuleState)> possibleContinuations)
         {
-            (var continuation, var ruleState) = state;
+            return possibleContinuations.SelectMany(possibleCont =>
+            {
+                if (possibleCont.Continuation.Label.Trim() != "")
+                    // if it's not just whitespace, just return it
+                    return new[] { (ContinuationSource.CompletionOfKeyword, possibleCont.Continuation) };
+                else if (possibleCont.RuleState == null)
+                {   // if it's only whitespace, but there is no further valid rule, do not suggest it
+                    return Enumerable.Empty<(ContinuationSource Source, CompletionItem Item)>();
+                }
+                else
+                {   // if it's only whitespace and there are more valid rules, then find all possible next terminals
+                    //   and if their continuation is not only whitespace, too, then it will be appended and returned
+                    return LSPUtils.FollowUntilNextTerminalOrAction(new LSPUtils.FollowUntilNextTerminalOrActionArgs<string[]>(
+                            ruleState: possibleCont.RuleState,
+                            rules: languageDefinition.Rules,
+                            onTerminal: (ruleState, terminal) => terminal.PossibleContent,
+                            onAction: (ruleState, action) => ruleState.Clone()
+                        ))
+                        .SelectMany(continuations => continuations)
+                        .Where(cont => cont.Trim() != "")
+                        .Select(cont => (ContinuationSource.CompletionOfKeyword, new CompletionItem()
+                        {
+                            Label = cont,
+                            Kind = CompletionItemKind.Keyword,
+                            TextEdit = possibleCont.Continuation.TextEdit == null
+                                ? null
+                                : new TextEdit()
+                                {
+                                    NewText = possibleCont.Continuation.TextEdit.NewText + cont,
+                                    Range = possibleCont.Continuation.TextEdit.Range
+                                }
+                        }));
+                }
+            });
+        }
 
-            if (ruleState == null || ruleState.IsFinished || ruleState.CurrentSymbol == null)
+        private IEnumerable<(ContinuationSource Source, CompletionItem Item)> GetUnfinishedIdentifiers(RuleState ruleState)
+        {
+            if (ruleState.Markers.TryGetValue(IAction.IDENTIFIER, out var pos))
             {
-                yield return continuation;
-            }
-            else
-            {
-                foreach (var possibleNext in ruleState.CurrentSymbol.Match(
-                    terminal =>
-                    {
-                        return terminal.PossibleContent.Select(pc =>
-                            new CompletionItem()
-                            {
-                                Label = pc,
-                                Kind = CompletionItemKind.Keyword
-                            });
-                    },
-                    nonTerminal =>
-                    {
-                        return GetPossibleContinuationsOfRuleState((continuation, ruleState.Clone()
-                                .WithNewRule(languageDefinition.Rules[nonTerminal.ReferencedRule])
-                                .Build()))
-                            .ToArray();
-                    },
-                    action =>
-                    {
-                        return Enumerable.Empty<CompletionItem?>();
-                    },
-                    oneOf =>
-                    {
-                        return Enumerable.Empty<CompletionItem?>();
-                    }))
+                var textSinceMarker = parseState.GetTextBetweenPositions(pos);
+
+                var continuableIdentifiers = ruleState.Identifiers
+                    .Where(identifier => identifier.Name.StartsWith(textSinceMarker));
+
+                foreach (var identifier in continuableIdentifiers)
                 {
-                    yield return possibleNext;
+                    yield return (
+                        ContinuationSource.CompletionOfIdentifier,
+                        new CompletionItem()
+                        {
+                            Label = identifier.Name,
+                            Kind = identifier.Kind,
+                            TextEdit = new TextEdit()
+                            {
+                                NewText = identifier.Name.Substring(textSinceMarker.Length),
+                                Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
+                                    parseState.Position, parseState.Position
+                                    )
+                            }
+                        });
                 }
             }
+        }
+
+        private IEnumerable<(ContinuationSource Source, CompletionItem Item)> GetAllIdentifiersAsCompletionItem(RuleState ruleState)
+        {
+            foreach (var identifier in ruleState.Identifiers)
+            {
+                yield return (
+                    ContinuationSource.Identifier,
+                    new CompletionItem()
+                    {
+                        Label = identifier.Name,
+                        Kind = identifier.Kind
+                    });
+            }
+        }
+
+        private IEnumerable<(ContinuationSource Source, CompletionItem Item)> GetContinuationsOfNextTerminal(RuleState ruleState)
+        {
+            return LSPUtils.FollowUntilNextTerminalOrAction(new LSPUtils.FollowUntilNextTerminalOrActionArgs<IEnumerable<CompletionItem>>(
+                  ruleState,
+                  languageDefinition.Rules,
+                  onTerminal: (rs, terminal) =>
+                    terminal.PossibleContent.Select(possibleContent =>
+                        new CompletionItem()
+                        {
+                            Label = possibleContent,
+                            Kind = CompletionItemKind.Keyword
+                        }),
+                  onAction: (rs, action) => rs.Clone()
+                ))
+                .SelectMany(continuations => continuations)
+                .Select(continuation => (ContinuationSource.NextKeyword, continuation));
+        }
+
+        private enum ContinuationSource
+        {
+            CompletionOfIdentifier = 4,
+            CompletionOfKeyword = 3,
+            NextKeyword = 2,
+            Identifier = 1,
+            Keyword = 0
+        }
+
+        private IList<CompletionItem> SortContinuations(IEnumerable<(ContinuationSource Source, CompletionItem Item)> continuations)
+        {
+            var priorityList = continuations
+                .ToList();
+
+            priorityList.Sort((item1, item2) => (int)item2.Source - (int)item1.Source);
+
+            return priorityList.Select(item => item.Item).ToArray();
         }
     }
 }
