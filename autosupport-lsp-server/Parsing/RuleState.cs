@@ -55,6 +55,7 @@ namespace autosupport_lsp_server.Parsing
         {
             if (ruleState == null)
                 throw new ArgumentException(nameof(ruleState) + " may not be null");
+
             ruleStates = ruleState.ruleStates.Clone();
             markers = new Dictionary<string, Position>(ruleState.markers);
             Identifiers = Identifier.CreateIdentifierSet(ruleState.Identifiers);
@@ -67,7 +68,7 @@ namespace autosupport_lsp_server.Parsing
             if (IsFinished)
                 return $"finished with {ruleStates.Count} rulestates";
             else
-                return $"{CurrentSymbol?.ToString() ?? "<no symbol>"} in rule {CurrentRule.Name} with {ruleStates.Count} rulestates";
+                return $"{CurrentSymbol?.ToString() ?? "<no symbol>"} in rule {CurrentRule}";
         }
 
         internal interface IRuleStateBuilder<T>

@@ -31,5 +31,10 @@ namespace autosupport_lsp_server.Symbols.Impl
         }
 
         private static readonly XLinqClassAnnotationUtil annotation = XLinqOf(typeof(Action));
+
+        public override string? ToString()
+        {
+            return $"action({Command})";
+        }
     }
 }

@@ -35,5 +35,10 @@ namespace autosupport_lsp_server.Symbols.Impl
         }
 
         private static readonly XLinqClassAnnotationUtil annotation = AnnotationUtils.XLinqOf(typeof(Rule));
+
+        public override string? ToString()
+        {
+            return $"{Name} -> {string.Join(' ', Symbols.Select(s => s.ToString()))}.";
+        }
     }
 }
