@@ -16,50 +16,6 @@ namespace Tests.LSP
     /// </summary>
     public class AutocompletionHandlerTest : BaseTest
     {
-        [Theory]
-        [InlineData("")] // empty text
-        [InlineData("InvalidText")] // some text
-        public async void When_Handling_AlwaysAtLeastReturnTheKeywords(string text)
-        {
-            // given
-            string uri = "file:///docuri";
-            CompletionItem[] continuations = new CompletionItem[] {
-                new CompletionItem() {
-                    Label = "foo",
-                    Kind = CompletionItemKind.Variable
-                },
-                new CompletionItem() {
-                    Label = "bar",
-                    Kind = CompletionItemKind.Variable
-                },
-            };
-
-            string[] keywords = new string[]
-            {
-                "keyword1",
-                "keyword2",
-                "bar"
-            };
-
-            var parseResult = ParseResult(possibleContinuations: continuations);
-            var documentStore = DocumentStore(uri, text,
-                onlyRuleSymbols: keywords.Select(kw => new StringTerminal(kw)),
-                parseResult: parseResult.Object);
-
-            var aucoHandler = new AutocompletionHandler(documentStore.Object);
-
-            // when
-            var result = await aucoHandler.Handle(CompletionParams(uri, text), new CancellationToken());
-
-            // then
-            Assert.NotNull(result);
-
-            var labels = result.Select(ci => ci.Label);
-            foreach (var kw in keywords)
-                Assert.Single(result, ci => ci.Label == kw && ci.Kind == CompletionItemKind.Keyword);
-        }
-
-        // –––––––––––– Integration tests –––––––––––– //
         public static readonly string[] VarAndPrintKeywords = new string[]
         {
             "Program", "var", "=", ";", "print"
@@ -95,7 +51,7 @@ namespace Tests.LSP
         [InlineData("", new string[] { "Program" })] // start of program -> correct kw must be first in line
         [InlineData("Pro", new string[] { "gram" })] // start of keyword -> rest of keyword should be suggested
         [InlineData("Program ", new string[0])] // next any identifier -> no special autocompletion
-        [InlineData("Program a var b = 0;", new string[] { "var", "b" })] // defined an identifier -> identifier should be suggested as continuation, but not the program name
+        [InlineData("Program a var b = 0;", new string[] { "var", "b" })] // defined an identifier -> identifier should be suggested as continuation, but not the program name (type check)
         [InlineData("Program a var b = 00; b", new string[] { "print" })] // only one possible kw next -> first in line
         [InlineData("Program a var bar = 0; b", new string[] { "ar" })] // start of identifier -> rest of identifier should be suggested
         public async void When_HandlingContinuableText_ReturnAtLeastAllContinuationsInTheCorrectOrder(string text, string[] expectedContinuations)
@@ -140,7 +96,7 @@ namespace Tests.LSP
             // when
             var result = await aucoHandler.Handle(CompletionParams(uri, text), new CancellationToken());
 
-            // then: expectedContinuations are always the first options
+            // then: the result contains 'var' twice, once as a variable and once as a keyword
             Assert.NotNull(result);
             Assert.Equal(VarAndPrintKeywords.Length + 1, result.Count());
 

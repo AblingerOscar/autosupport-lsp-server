@@ -1,8 +1,10 @@
 ﻿using autosupport_lsp_server.Parsing.Impl;
 using autosupport_lsp_server.Symbols;
+using autosupport_lsp_server.Symbols.Impl.Terminals;
 using Moq;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace Tests.Parsing.Impl
@@ -200,5 +202,44 @@ namespace Tests.Parsing.Impl
             // then
             Assert.True(result.Finished);
         }
+
+        [Theory]
+        [InlineData("")] // empty text
+        [InlineData("InvalidText")] // some text
+        public async void AlwaysAtLeastReturnTheKeywords(string text)
+        {
+            // given
+            CompletionItem[] continuations = new CompletionItem[] {
+                new CompletionItem() {
+                    Label = "foo",
+                    Kind = CompletionItemKind.Variable
+                },
+                new CompletionItem() {
+                    Label = "bar",
+                    Kind = CompletionItemKind.Variable
+                },
+            };
+
+            string[] keywords = new string[]
+            {
+                "keyword1",
+                "keyword2",
+                "bar"
+            };
+
+            var langDef = LanguageDefinition(Rule("", keywords.Select(kw => new StringTerminal(kw)).ToArray()).Object);
+
+            // when
+            var parseResult = new Parser(langDef.Object).Parse(new string[] { text });
+
+            // then
+            Assert.NotNull(parseResult.PossibleContinuations);
+
+            var labels = parseResult.PossibleContinuations.Select(ci => ci.Label);
+
+            foreach (var kw in keywords)
+                Assert.Single(parseResult.PossibleContinuations, ci => ci.Label == kw && ci.Kind == CompletionItemKind.Keyword);
+        }
+
     }
 }
