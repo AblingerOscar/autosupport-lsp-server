@@ -105,39 +105,15 @@ namespace autosupport_lsp_server.Parsing.Impl
             );
         }
 
+
+
         private IDictionary<int, IEnumerable<RuleState>>? ParseTerminal(RuleState ruleState, ITerminal terminal)
         {
             var actualText = parseState.GetNextTextFromPosition(terminal.MinimumNumberOfCharactersToParse);
 
             if (actualText.Length < terminal.MinimumNumberOfCharactersToParse)
             {
-                foreach (var expectedText in terminal.PossibleContent)
-                {
-                    if (expectedText.StartsWith(actualText))
-                    {
-                        TextEdit? textEdit = null;
-
-                        if (expectedText != actualText)
-                        {
-                            textEdit = new TextEdit()
-                            {
-                                Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(parseState.Position, parseState.Position),
-                                NewText = expectedText.Substring(actualText.Length)
-                            };
-                        }
-
-
-                        possibleContinuations.Add((
-                            new CompletionItem()
-                            {
-                                Label = expectedText,
-                                Kind = CompletionItemKind.Keyword,
-                                TextEdit = textEdit
-                            },
-                            ruleState.Clone().WithNextSymbol().TryBuild()
-                            ));
-                    }
-                }
+                SaveAsPossibleContinuation(ruleState, terminal, actualText);
                 return null;
             }
 
@@ -157,6 +133,36 @@ namespace autosupport_lsp_server.Parsing.Impl
             else
             {
                 return null;
+            }
+        }
+
+        private void SaveAsPossibleContinuation(RuleState ruleState, ITerminal terminal, string actualText)
+        {
+            foreach (var expectedText in terminal.PossibleContent)
+            {
+                if (!expectedText.StartsWith(actualText))
+                    continue;
+
+                TextEdit? textEdit = null;
+
+                if (expectedText != actualText)
+                {
+                    textEdit = new TextEdit()
+                    {
+                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(parseState.Position, parseState.Position),
+                        NewText = expectedText.Substring(actualText.Length)
+                    };
+                }
+
+                possibleContinuations.Add((
+                    new CompletionItem()
+                    {
+                        Label = expectedText,
+                        Kind = CompletionItemKind.Keyword,
+                        TextEdit = textEdit
+                    },
+                    ruleState.Clone().WithNextSymbol().TryBuild()
+                    ));
             }
         }
 
