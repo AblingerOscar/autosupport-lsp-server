@@ -51,7 +51,8 @@ namespace Tests.LSP
         [InlineData("", new string[] { "Program" })] // start of program -> correct kw must be first in line
         [InlineData("Pro", new string[] { "gram" })] // start of keyword -> rest of keyword should be suggested
         [InlineData("Program ", new string[0])] // next any identifier -> no special autocompletion
-        [InlineData("Program a var b = 0;", new string[] { "var", "b" })] // defined an identifier -> identifier should be suggested as continuation, but not the program name (type check)
+        [InlineData("Program a var b = 0;", new string[] { "b", "var", "a" })]
+                // defined two identifiers -> identifiers should be suggested as continuation; 'b' has precedence thanks to type
         [InlineData("Program a var b = 00; b", new string[] { "print" })] // only one possible kw next -> first in line
         [InlineData("Program a var bar = 0; b", new string[] { "ar" })] // start of identifier -> rest of identifier should be suggested
         public async void When_HandlingContinuableText_ReturnAtLeastAllContinuationsInTheCorrectOrder(string text, string[] expectedContinuations)
@@ -98,7 +99,8 @@ namespace Tests.LSP
 
             // then: the result contains 'var' twice, once as a variable and once as a keyword
             Assert.NotNull(result);
-            Assert.Equal(VarAndPrintKeywords.Length + 1, result.Count());
+            // two variables ('a' and 'var') where defined and should also be returned
+            Assert.Equal(VarAndPrintKeywords.Length + 2, result.Count());
 
             Assert.Contains(("var", CompletionItemKind.Variable), result.Select(r => (r.TextEdit?.NewText ?? r.Label, r.Kind)));
         }

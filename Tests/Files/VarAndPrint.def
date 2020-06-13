@@ -7,6 +7,7 @@
     <rule name="S">
       <string>Program</string>
       <nonTerminal referencedRule="Ws"/>
+      <action>identifierType set Program</action>
       <nonTerminal referencedRule="Identifier"/>
       <nonTerminal referencedRule="Ws" />
       <nonTerminal referencedRule="S$1"/>
@@ -30,6 +31,7 @@
     <rule name="VarDecl">
       <string>var</string>
       <nonTerminal referencedRule="Ws" />
+      <action>identifierType set Variable</action>
       <nonTerminal referencedRule="Identifier" />
       <nonTerminal referencedRule="Ws" />
       <string>=</string>
@@ -39,6 +41,7 @@
       <string>;</string>
     </rule>
     <rule name="PrintStatement">
+      <action>identifierType set Variable</action>
       <nonTerminal referencedRule="Identifier" />
       <nonTerminal referencedRule="Ws" />
       <string>print</string>
