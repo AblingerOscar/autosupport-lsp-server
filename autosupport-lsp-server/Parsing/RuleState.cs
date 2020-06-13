@@ -7,8 +7,8 @@ namespace autosupport_lsp_server.Parsing
 {
     internal class RuleState
     {
-        private Stack<Tuple<IRule, int>> ruleStates;
-        private Dictionary<string, Position> markers;
+        private readonly Stack<Tuple<IRule, int>> ruleStates;
+        private readonly Dictionary<string, Position> markers;
 
         public IRule CurrentRule => ruleStates.Peek().Item1;
         public ISymbol? CurrentSymbol => ruleStates.Peek().Item2 >= CurrentRule.Symbols.Count
@@ -22,6 +22,7 @@ namespace autosupport_lsp_server.Parsing
         }
 
         public IReadOnlyDictionary<string, Position> Markers => markers;
+        public RuleStateValueStore ValueStore;
 
         public ISet<Identifier> Identifiers { get; private set; }
 
@@ -36,6 +37,7 @@ namespace autosupport_lsp_server.Parsing
             ruleStates.Push(new Tuple<IRule, int>(rule, position));
             markers = new Dictionary<string, Position>();
             Identifiers = Identifier.CreateIdentifierSet();
+            ValueStore = new RuleStateValueStore();
         }
 
         /// <summary>
@@ -49,6 +51,7 @@ namespace autosupport_lsp_server.Parsing
             ruleStates = new Stack<Tuple<IRule, int>>(0);
             markers = new Dictionary<string, Position>();
             Identifiers = Identifier.CreateIdentifierSet();
+            ValueStore = new RuleStateValueStore();
         }
 
         private RuleState(RuleState ruleState)
@@ -59,6 +62,7 @@ namespace autosupport_lsp_server.Parsing
             ruleStates = ruleState.ruleStates.Clone();
             markers = new Dictionary<string, Position>(ruleState.markers);
             Identifiers = Identifier.CreateIdentifierSet(ruleState.Identifiers);
+            ValueStore = new RuleStateValueStore(ruleState.ValueStore);
         }
 
         public IConcreteRuleStateBuilder Clone() => new RuleStateBuilder(this);
@@ -77,6 +81,8 @@ namespace autosupport_lsp_server.Parsing
             T WithNewRule(IRule rule);
             T WithMarker(string markerName, Position position);
             T WithoutMarker(string markerName, Position? position = null);
+            IConcreteRuleStateBuilder WithValue<V>(RuleStateValueStoreKey<V> key, V value) where V : class;
+            IConcreteRuleStateBuilder WithoutValue(IRuleStateValueStoreKey key);
         }
 
         internal interface IConcreteRuleStateBuilder : IRuleStateBuilder<IConcreteRuleStateBuilder>
@@ -173,6 +179,28 @@ namespace autosupport_lsp_server.Parsing
 
             IConcreteRuleStateBuilder IRuleStateBuilder<IConcreteRuleStateBuilder>.WithoutMarker(string markerName, Position? position) => WithoutMarker(markerName, position);
             INullableRuleStateBuilder IRuleStateBuilder<INullableRuleStateBuilder>.WithoutMarker(string markerName, Position? position) => WithoutMarker(markerName, position);
+
+            private RuleStateBuilder WithValue<T>(RuleStateValueStoreKey<T> key, T value) where T : class
+            {
+                if (ruleState != null)
+                    ruleState.ValueStore.Add<T>(key, value);
+
+                return this;
+            }
+
+            IConcreteRuleStateBuilder IRuleStateBuilder<IConcreteRuleStateBuilder>.WithValue<T>(RuleStateValueStoreKey<T> key, T value) => WithValue(key, value);
+            IConcreteRuleStateBuilder IRuleStateBuilder<INullableRuleStateBuilder>.WithValue<T>(RuleStateValueStoreKey<T> key, T value) => WithValue(key, value);
+
+            private RuleStateBuilder WithoutValue(IRuleStateValueStoreKey key)
+            {
+                if (ruleState != null)
+                    ruleState.ValueStore.Remove(key);
+
+                return this;
+            }
+
+            IConcreteRuleStateBuilder IRuleStateBuilder<IConcreteRuleStateBuilder>.WithoutValue(IRuleStateValueStoreKey key) => WithoutValue(key);
+            IConcreteRuleStateBuilder IRuleStateBuilder<INullableRuleStateBuilder>.WithoutValue(IRuleStateValueStoreKey key) => WithoutValue(key);
         }
     }
 }
