@@ -15,6 +15,20 @@ namespace autosupport_lsp_server
             }
         }
 
+        public static string JoinToString<T>(this IEnumerable<T> list, string separator = "\n")
+        {
+            var enumerator = list.GetEnumerator();
+            var sb = new StringBuilder();
+
+            if (enumerator.MoveNext())
+                sb.Append(enumerator.Current);
+
+            while (enumerator.MoveNext())
+                sb.Append(separator).Append(enumerator.Current);
+
+            return sb.ToString();
+        }
+
         // efficient cloning taken from https://stackoverflow.com/a/45200965
         public static Stack<T> Clone<T>(this Stack<T> original)
         {
