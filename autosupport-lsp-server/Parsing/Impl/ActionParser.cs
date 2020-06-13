@@ -18,6 +18,12 @@ namespace autosupport_lsp_server.Parsing.Impl
             {
                 case IAction.IDENTIFIER:
                     return ParsePostAction(parseState, ruleState, action, ParseIdentifierAction);
+                case IAction.IDENTIFIER_TYPE:
+                    if (action.GetArguments()[0] == IAction.IDENTIFIER_TYPE_ARG_SET)
+                        // do immediate action
+                        return ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, action.GetArguments()[1]);
+
+                    return ParsePostAction(parseState, ruleState, action, ParseIdentifierTypeAction);
             }
 
             throw new ArgumentException("Given action is not supported: " + action.ToString());
@@ -44,6 +50,9 @@ namespace autosupport_lsp_server.Parsing.Impl
         {
             var textBetweenMarkers = parseState.GetTextBetweenPositions(startOfMarkings);
 
+
+            ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out string? type);
+
             if (textBetweenMarkers.Trim() != "")
             {
                 var identifier = ruleState.Identifiers.FirstOrDefault(i => i.Name == textBetweenMarkers);
@@ -53,7 +62,8 @@ namespace autosupport_lsp_server.Parsing.Impl
                     ruleState.Identifiers.Add(new Identifier()
                     {
                         Name = textBetweenMarkers,
-                        References = new List<Position>() { startOfMarkings }
+                        References = new List<Position>() { startOfMarkings },
+                        Type = Either.If(type != null, type!, Identifier.IdentifierType.Any)
                     });
                 }
                 else
@@ -62,7 +72,15 @@ namespace autosupport_lsp_server.Parsing.Impl
                 }
             }
 
+            if (type != null)
+                return ruleState.Clone().WithoutValue(RuleStateValueStoreKey.NextType);
+
             return ruleState.Clone();
+        }
+
+        private static IConcreteRuleStateBuilder ParseIdentifierTypeAction(ParseState parseState, RuleState ruleState, IAction action, Position startOfMarkings)
+        {
+            return ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, parseState.GetTextBetweenPositions(startOfMarkings));
         }
     }
 }
