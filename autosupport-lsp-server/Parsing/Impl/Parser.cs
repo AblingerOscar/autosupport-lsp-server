@@ -165,39 +165,7 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IConcreteRuleStateBuilder InterpretAction(RuleState ruleState, IAction action)
         {
-            var cmd = action.GetBaseCommand();
-
-            switch (cmd)
-            {
-                case IAction.IDENTIFIER:
-                    if (ruleState.Markers.TryGetValue(IAction.IDENTIFIER, out var pos))
-                    {
-                        string name = parseState.GetTextBetweenPositions(pos);
-
-                        if (name.Trim() == "")
-                            break;
-
-                        var identifier = ruleState.Identifiers.FirstOrDefault(i => i.Name == name);
-
-                        if (identifier == null)
-                        {
-                            ruleState.Identifiers.Add(new Identifier()
-                            {
-                                Name = name,
-                                References = new List<Position>() { pos }
-                            });
-                        }
-                        else
-                        {
-                            identifier.References.Add(pos);
-                        }
-                        return ruleState.Clone().WithoutMarker(IAction.IDENTIFIER);
-                    }
-                    else
-                        return ruleState.Clone().WithMarker(IAction.IDENTIFIER, parseState.Position);
-            }
-
-            return ruleState.Clone();
+            return ActionParser.ParseAction(parseState, ruleState, action);
         }
 
         private IDictionary<int, IEnumerable<RuleState>> MergeDictionaries(IDictionary<int, IEnumerable<RuleState>> dict1, IDictionary<int, IEnumerable<RuleState>>? dict2)
