@@ -165,7 +165,7 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IConcreteRuleStateBuilder InterpretAction(RuleState ruleState, IAction action)
         {
-            (var cmd, var args) = ExtractCommandAndArgsFromAction(action);
+            var cmd = action.GetBaseCommand();
 
             switch (cmd)
             {
@@ -218,23 +218,6 @@ namespace autosupport_lsp_server.Parsing.Impl
             });
 
             return dict1;
-        }
-
-
-        private (string Cmd, string[]? Args) ExtractCommandAndArgsFromAction(IAction action)
-        {
-            int splitIdx = action.Command.IndexOf(' ');
-
-            if (splitIdx >= 0)
-                return (
-                    Cmd: action.Command.Substring(0, splitIdx),
-                    Args: action.Command.Substring(splitIdx + 1).Split(' ')
-                );
-            else
-                return (
-                    Cmd: action.Command,
-                    Args: null
-                );
         }
 
         private IParseResult MakeParseResult()

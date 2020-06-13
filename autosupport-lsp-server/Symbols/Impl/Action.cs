@@ -11,6 +11,25 @@ namespace autosupport_lsp_server.Symbols.Impl
     {
         public string Command { get; private set; } = "";
 
+        public string GetBaseCommand()
+        {
+            int idx = Command.IndexOf(' ');
+
+            return idx == -1
+                ? Command
+                : Command.Substring(0, idx);
+        }
+
+        public string[] GetArguments()
+        {
+            int idx = Command.IndexOf(' ');
+
+            if (idx == -1)
+                return new string[0];
+            else
+                return Command.Substring(idx + 1).Split(' ');
+        }
+
         public void Match(Action<ITerminal> terminal, Action<INonTerminal> nonTerminal, Action<IAction> action, Action<IOneOf> oneOf) =>
             action.Invoke(this);
 

@@ -4,6 +4,10 @@
     {
         string Command { get; }
 
+        string GetBaseCommand();
+
+        string[] GetArguments();
+
         public const string IDENTIFIER = "identifier";
     }
 }
