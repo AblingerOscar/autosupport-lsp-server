@@ -1,4 +1,5 @@
 ﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -35,16 +36,24 @@ namespace autosupport_lsp_server.Parsing
 
         internal string GetNextTextFromPosition(int minimumNumberOfCharacters)
         {
-            return Text
-                .Skip((int)Position.Line)
-                .AggregateWhile(
-                    new StringBuilder(),
-                    (s1, s2) => s1.Append(Constants.NewLine).Append(s2),
-                    (aggr, newStr) => aggr.Length - (int)Position.Character < minimumNumberOfCharacters)
-                // adding +1 in order to skip the newline added at the start
-                // by the aggregate
-                .Remove(0, (int)Position.Character + 1)
-                .ToString();
+            if (Position.Line >= Text.Length || Position.Character < 0 || Position.Character > Text[Position.Line].Length)
+                throw new ArgumentOutOfRangeException($"Position ({Position.Line}, {Position.Character}) not in text");
+
+            StringBuilder text = new StringBuilder();
+
+            if (Position.Character == Text[Position.Line].Length) // Cursor after line
+                text.Append(Constants.NewLine);
+            else
+                text.Append(Text[Position.Line].Substring((int)Position.Character));
+
+            var currLine = Position.Line + 1;
+            while (text.Length < minimumNumberOfCharacters && currLine < Text.Length)
+            {
+                text.Append(Text[currLine]);
+                ++currLine;
+            }
+
+            return text.ToString();
         }
 
         /// <summary>
@@ -103,7 +112,8 @@ namespace autosupport_lsp_server.Parsing
             currentCharacterCount += numberOfCharacters;
             Position.Character += numberOfCharacters;
 
-            while (Position.Character >= Text[(int)Position.Line].Length)
+            // > instead of >= as position can be after the last character
+            while (Position.Character > Text[(int)Position.Line].Length)
             {
                 if (PositionIsAfterEndOfDocument())
                 {

@@ -51,7 +51,7 @@ namespace autosupport_lsp_server.LSP
 
             var textUpToPosition = documentText.Take((int)position.Line + 1).ToArray();
 
-            if (textUpToPosition.Length > 0)
+            if (textUpToPosition.Length > 0 && position.Character != textUpToPosition[^1].Length)
                 textUpToPosition[^1] = textUpToPosition[^1].Substring(0, (int)position.Character);
 
             return new Parser(documentStore.LanguageDefinition).Parse(textUpToPosition);
