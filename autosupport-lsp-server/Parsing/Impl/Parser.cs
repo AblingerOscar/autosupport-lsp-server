@@ -193,8 +193,18 @@ namespace autosupport_lsp_server.Parsing.Impl
             return new ParseResult(
                     finished: (parseState?.IsAtEndOfDocument) ?? false,
                     possibleContinuations: GetPossibleContinuations(),
-                    errors: new IError[0]
+                    errors: new IError[0],
+                    identifiers: GetAllIdentifiers()
                 );
+        }
+
+        private Identifier[] GetAllIdentifiers()
+        {
+            return (parseState?.RuleStates ?? Enumerable.Empty<RuleState>())
+                .Union(possibleContinuations.Select(pc => pc.RuleState))
+                .WhereNotNull()
+                .SelectMany(rs => rs?.Identifiers)
+                .ToArray();
         }
 
         private CompletionItem[] GetPossibleContinuations()

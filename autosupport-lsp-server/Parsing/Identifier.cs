@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace autosupport_lsp_server.Parsing
 {
-    internal class Identifier
+    public class Identifier
     {
         public string Name { get; set; } = "";
         public string Documentation { get; set; } = "";
@@ -18,7 +18,7 @@ namespace autosupport_lsp_server.Parsing
         public Position? Implementation { get; set; }
         public List<Position> References { get; set; } = new List<Position>();
 
-        internal enum IdentifierType
+        public enum IdentifierType
         {
             Any
         }
