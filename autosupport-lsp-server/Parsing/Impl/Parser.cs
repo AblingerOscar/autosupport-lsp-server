@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text;
 using static autosupport_lsp_server.Parsing.RuleState;
 
 namespace autosupport_lsp_server.Parsing.Impl
@@ -61,8 +62,10 @@ namespace autosupport_lsp_server.Parsing.Impl
                     ParseRuleState(ruleState);
                 }
 
+                logger.AppendLine("===== Next step");
                 parseState.NextStep();
             }
+            logger.AppendLine("Done.");
         }
 
         private void ParseRuleState(RuleState ruleState)
@@ -73,6 +76,8 @@ namespace autosupport_lsp_server.Parsing.Impl
             var newParseStates = GetPossibleNextStatesOfSymbol(ruleState);
             ScheduleNextParseStates(newParseStates);
         }
+           
+        private StringBuilder logger = new StringBuilder();
 
         private IDictionary<int, IEnumerable<RuleState>>? GetPossibleNextStatesOfSymbol(RuleState ruleState)
         {
@@ -90,7 +95,16 @@ namespace autosupport_lsp_server.Parsing.Impl
                         onTerminal: ParseTerminal,
                         onAction: InterpretAction
                     ))
-                .WhereNotNull();
+                .WhereNotNull()
+                .ToList();
+
+            foreach (var dict in nextStates)
+            {
+                foreach (var kvp in dict)
+                {
+                    logger.AppendLine($"{kvp.Key}: {kvp.Value.JoinToString(",\n\t\t")}");
+                }
+            }
 
             return nextStates.Aggregate<IDictionary<int, IEnumerable<RuleState>>?, IDictionary<int, IEnumerable<RuleState>>>(
                 new Dictionary<int, IEnumerable<RuleState>>(), MergeDictionaries
@@ -110,12 +124,16 @@ namespace autosupport_lsp_server.Parsing.Impl
 
             if (actualText.Length < terminal.MinimumNumberOfCharactersToParse)
             {
+                logger.AppendLine($"<{actualText}> to short for {terminal} (needs at least {terminal.MinimumNumberOfCharactersToParse}, has {actualText.Length})");
+
                 SaveAsPossibleContinuation(ruleState, terminal, actualText);
                 return null;
             }
 
             if (terminal.TryParse(actualText))
             {
+                logger.AppendLine($"{terminal} successfully parsed (at least the start of) <{actualText}>");
+
                 return new Dictionary<int, IEnumerable<RuleState>>(1)
                 {
                     {
@@ -129,6 +147,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             }
             else
             {
+                logger.AppendLine($"{terminal} failed to parse <{actualText}>");
                 return null;
             }
         }
