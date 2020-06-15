@@ -53,8 +53,15 @@ namespace Tests.LSP
         [InlineData("Program ", new string[0])] // next any identifier -> no special autocompletion
         [InlineData("Program a var b = 0;", new string[] { "b", "var", "a" })]
                 // defined two identifiers -> identifiers should be suggested as continuation; 'b' has precedence thanks to type
-        [InlineData("Program a var b = 00; b", new string[] { "print" })] // only one possible kw next -> first in line
-        [InlineData("Program a var bar = 0; b", new string[] { "ar" })] // start of identifier -> rest of identifier should be suggested
+        [InlineData("Program a \nvar b = 0;", new string[] { "b", "var", "a" })] // same as previous one, but this time over two lines
+        [InlineData("Program a \nvar b = 0;\n", new string[] { "b", "var", "a" })] // same as previous one, but this time over two lines (and trailing newline)
+        [InlineData("Program a \nvar b = 00; \nb", new string[] { "print" })] // only one possible kw next -> first in line
+        [InlineData("Program a \r\nvar bar = 0; \r\nb", new string[] { "ar" })] // start of identifier -> rest of identifier should be suggested
+        [InlineData(@"Program a
+var b = 0;
+b print;
+
+b print;", new string[] { "b", "a", "var" })]
         public async void When_HandlingContinuableText_ReturnAtLeastAllContinuationsInTheCorrectOrder(string text, string[] expectedContinuations)
         {
             // given
