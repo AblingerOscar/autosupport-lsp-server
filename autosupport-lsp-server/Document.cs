@@ -42,6 +42,20 @@ namespace autosupport_lsp_server
             ParseResult = parser.Parse(Text.ToArray());
         }
 
+        internal Identifier[] GetIdentifiersAtPosition(Position pos)
+        {
+            if (ParseResult == null)
+                return new Identifier[0];
+
+            return ParseResult.Identifiers
+                .Where(iden =>
+                    iden.References.Any(reference => 
+                        reference.Line == pos.Line
+                        && reference.Character <= pos.Character
+                        && reference.Character + iden.Name.Length > pos.Character))
+                .ToArray();
+        }
+
         private void ApplyPartialChange(TextDocumentContentChangeEvent change)
         {
             var start = change.Range.Start;

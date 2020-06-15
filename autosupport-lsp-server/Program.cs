@@ -33,8 +33,9 @@ namespace autosupport_lsp_server
                           .SetMinimumLevel(LogLevel.Trace))
                     .WithServices(serviceCollection =>
                         RegisterServices(serviceCollection, documentStore))
-                    .WithHandler<LSP.TextDocumentSyncHandler>()
+                    .WithHandler<TextDocumentSyncHandler>()
                     .WithHandler<AutocompletionHandler>()
+                    .WithHandler<ReferencesHandler>()
                     ;
             });
 
