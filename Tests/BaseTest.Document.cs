@@ -7,7 +7,6 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
 namespace Tests
 {
@@ -159,7 +158,16 @@ namespace Tests
             return new CompletionParams()
             {
                 TextDocument = new TextDocumentIdentifier() { Uri = new Uri(uri) },
-                Position = new Position(0, text.Length)
+                Position = new Position(text.LongCount(c => c == '\n'), text.Split('\n')[^1].Length)
+            };
+        }
+
+        protected ReferenceParams ReferenceParams(string uri, Position position)
+        {
+            return new ReferenceParams()
+            {
+                TextDocument = new TextDocumentIdentifier() { Uri = new Uri(uri) },
+                Position = position
             };
         }
     }
