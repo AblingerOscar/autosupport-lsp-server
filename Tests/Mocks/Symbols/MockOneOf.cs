@@ -21,5 +21,10 @@ namespace Tests.Mocks.Symbols
         }
 
         public abstract XElement SerializeToXLinq();
+
+        public override string? ToString()
+        {
+            return "Mock OneOf";
+        }
     }
 }

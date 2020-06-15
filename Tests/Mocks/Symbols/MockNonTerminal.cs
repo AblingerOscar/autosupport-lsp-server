@@ -17,5 +17,10 @@ namespace Tests.Mocks.Symbols
         {
             return nonTerminal.Invoke(this);
         }
+
+        public override string? ToString()
+        {
+            return "Mock NonTerminal";
+        }
     }
 }

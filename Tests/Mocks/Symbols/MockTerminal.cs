@@ -20,5 +20,10 @@ namespace Tests.Mocks.Symbols
         {
             return terminal.Invoke(this);
         }
+
+        public override string? ToString()
+        {
+            return "Mock Terminal";
+        }
     }
 }
