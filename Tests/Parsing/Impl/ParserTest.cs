@@ -3,6 +3,7 @@ using autosupport_lsp_server.Symbols;
 using autosupport_lsp_server.Symbols.Impl.Terminals;
 using Moq;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
@@ -11,6 +12,8 @@ namespace Tests.Parsing.Impl
 {
     public class ParserTest : BaseTest
     {
+        private readonly Uri uri = new Uri("file:///");
+
         [Fact]
         void When_RuleWithOneTerminalThatParsesCorrectly_ThenFinish()
         {
@@ -33,7 +36,7 @@ namespace Tests.Parsing.Impl
 
             // when
             var result = new Parser(languageDefinition.Object)
-                .Parse(new string[] { parseString });
+                .Parse(uri, new string[] { parseString });
 
             // then
             Assert.True(result.Finished);
@@ -61,7 +64,7 @@ namespace Tests.Parsing.Impl
 
             // when
             var result = new Parser(languageDefinition.Object)
-                .Parse(new string[] { firstLine });
+                .Parse(uri, new string[] { firstLine });
 
             // then
             terminal.Verify(t => t.TryParse(It.IsAny<string>()), Times.Never());
@@ -104,7 +107,7 @@ namespace Tests.Parsing.Impl
 
             // when
             var result = new Parser(languageDefinition.Object)
-                .Parse(new string[] { parseString });
+                .Parse(uri, new string[] { parseString });
 
             // then
             Assert.True(result.Finished);
@@ -150,7 +153,7 @@ namespace Tests.Parsing.Impl
 
             // when
             var result = new Parser(languageDefinition.Object)
-                .Parse(new string[] { " " });
+                .Parse(uri, new string[] { " " });
 
             // then
             Assert.True(result.Finished);
@@ -197,7 +200,7 @@ namespace Tests.Parsing.Impl
 
             // when
             var result = new Parser(languageDefinition.Object)
-                .Parse(new string[] { "12" });
+                .Parse(uri, new string[] { "12" });
 
             // then
             Assert.True(result.Finished);
@@ -230,7 +233,7 @@ namespace Tests.Parsing.Impl
             var langDef = LanguageDefinition(Rule("", keywords.Select(kw => new StringTerminal(kw)).ToArray()).Object);
 
             // when
-            var parseResult = new Parser(langDef.Object).Parse(new string[] { text });
+            var parseResult = new Parser(langDef.Object).Parse(uri, new string[] { text });
 
             // then
             Assert.NotNull(parseResult.PossibleContinuations);

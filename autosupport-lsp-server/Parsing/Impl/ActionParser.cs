@@ -1,10 +1,13 @@
-﻿using autosupport_lsp_server.Shared;
+﻿using autosupport_lsp_server.LSP;
+using autosupport_lsp_server.Shared;
 using autosupport_lsp_server.Symbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using static autosupport_lsp_server.Parsing.RuleState;
+
+using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace autosupport_lsp_server.Parsing.Impl
 {
@@ -62,13 +65,16 @@ namespace autosupport_lsp_server.Parsing.Impl
                     ruleState.Identifiers.Add(new Identifier()
                     {
                         Name = textBetweenMarkers,
-                        References = new List<Position>() { startOfMarkings },
-                        Type = Either.If(type != null, type!, Identifier.IdentifierType.Any)
+                        References = new List<Reference>() {
+                            new Reference(parseState.Uri, new Range(startOfMarkings, parseState.Position.Clone()))
+                        },
+                        Type = Either.If(type != null, type!, Identifier.IdentifierType.Any),
                     });
                 }
                 else
                 {
-                    identifier.References.Add(startOfMarkings);
+                    identifier.References.Add(
+                        new Reference(parseState.Uri, new Range(startOfMarkings, parseState.Position.Clone())));
                 }
             }
 

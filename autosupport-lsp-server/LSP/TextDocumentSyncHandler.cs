@@ -39,21 +39,23 @@ namespace autosupport_lsp_server.LSP
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var documentUri = request.TextDocument.Uri.ToString();
+            var uri = request.TextDocument.Uri;
+            var uriStr = uri.ToString();
             bool didCreateNewDocument = false;
-            if (!documentStore.Documents.ContainsKey(documentUri))
+
+            if (!documentStore.Documents.ContainsKey(uriStr))
             {
-                documentStore.Documents[documentUri] = Document.CreateEmptyDocument(documentUri, documentStore.CreateDefaultParser());
+                documentStore.Documents[uriStr] = Document.CreateEmptyDocument(uri, documentStore.CreateDefaultParser());
                 didCreateNewDocument = true;
             }
 
             foreach (var change in request.ContentChanges)
             {
-                documentStore.Documents[documentUri].ApplyChange(change);
+                documentStore.Documents[uriStr].ApplyChange(change);
 
                 if (cancellationToken.IsCancellationRequested && didCreateNewDocument)
                 {
-                    documentStore.Documents.Remove(documentUri);
+                    documentStore.Documents.Remove(uriStr);
                 }
                 cancellationToken.ThrowIfCancellationRequested();
             }
@@ -63,8 +65,10 @@ namespace autosupport_lsp_server.LSP
 
         public async Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
         {
-            var documentUri = request.TextDocument.Uri.ToString();
-            documentStore.Documents.Add(documentUri, Document.FromText(documentUri, request.TextDocument.Text, documentStore.CreateDefaultParser()));
+            var documentUri = request.TextDocument.Uri;
+            documentStore.Documents.Add(
+                documentUri.ToString(),
+                Document.FromText(documentUri, request.TextDocument.Text, documentStore.CreateDefaultParser()));
 
             return Unit.Value;
         }

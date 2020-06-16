@@ -2,10 +2,7 @@
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,7 +10,7 @@ namespace autosupport_lsp_server.LSP
 {
     public class ReferencesHandler: IReferencesHandler
     {
-        private IDocumentStore documentStore;
+        private readonly IDocumentStore documentStore;
 
         public ReferencesHandler(IDocumentStore documentStore)
         {
@@ -34,23 +31,21 @@ namespace autosupport_lsp_server.LSP
             var task = new Task<LocationContainer>(() =>
             {
                 var uri = request.TextDocument.Uri.ToString();
-                var identifiers = documentStore.Documents[uri].GetIdentifiersAtPosition(request.Position);
+                var selectedIdentifiers = documentStore.Documents[uri].GetIdentifiersAtPosition(request.Position);
 
                 var references = documentStore.Documents
-                    .SelectMany(doc => doc.Value.ParseResult?.Identifiers.Select(iden => (Uri: doc.Key, Identifier: iden)))
-                    .Distinct(kvp => (kvp.Uri, kvp.Identifier.Name, kvp.Identifier.Type))
-                    .Where(kvp => identifiers.Any(identifier => identifier.Name == kvp.Identifier.Name && identifier.Type == kvp.Identifier.Type))
-                    .SelectMany(kvp => kvp.Identifier.References.Select(reference => (kvp.Uri, Reference: reference, kvp.Identifier.Name)));
+                    .SelectMany(doc => doc.Value.ParseResult?.Identifiers ?? Enumerable.Empty<Identifier>())
+                    .Where(identifier =>
+                        selectedIdentifiers.Any(selectedIdent =>
+                            identifier.Name == selectedIdent.Name && identifier.Type == selectedIdent.Type))
+                    .SelectMany(identifier => identifier.References);
 
                 return new LocationContainer(
                     references
                     .Select(reference => new Location()
                     {
-                        Uri = new Uri(reference.Uri),
-                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
-                            reference.Reference,
-                            new Position(reference.Reference.Line, reference.Reference.Character + reference.Name.Length)
-                            )
+                        Uri = reference.Uri,
+                        Range = reference.Range
                     }));
             },
             cancellationToken);

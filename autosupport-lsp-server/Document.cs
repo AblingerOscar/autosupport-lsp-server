@@ -1,4 +1,5 @@
-﻿using autosupport_lsp_server.Parsing;
+﻿using autosupport_lsp_server.LSP;
+using autosupport_lsp_server.Parsing;
 using autosupport_lsp_server.Parsing.Impl;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
@@ -9,13 +10,13 @@ namespace autosupport_lsp_server
 {
     public class Document
     {
-        private Document(string uri, IParser parser)
+        private Document(Uri uri, IParser parser)
         {
             Uri = uri;
             this.parser = parser;
         }
 
-        internal string Uri { get; }
+        internal Uri Uri { get; }
         internal IList<string> Text { get; private set; } = new List<string>();
         public IParseResult? ParseResult { get; private set; }
 
@@ -39,7 +40,7 @@ namespace autosupport_lsp_server
 
         private void Reparse()
         {
-            ParseResult = parser.Parse(Text.ToArray());
+            ParseResult = parser.Parse(Uri, Text.ToArray());
         }
 
         internal Identifier[] GetIdentifiersAtPosition(Position pos)
@@ -48,11 +49,7 @@ namespace autosupport_lsp_server
                 return new Identifier[0];
 
             return ParseResult.Identifiers
-                .Where(iden =>
-                    iden.References.Any(reference => 
-                        reference.Line == pos.Line
-                        && reference.Character <= pos.Character
-                        && reference.Character + iden.Name.Length > pos.Character))
+                .Where(iden => iden.References.Any(reference => pos.IsIn(reference.Range)))
                 .ToArray();
         }
 
@@ -104,12 +101,12 @@ namespace autosupport_lsp_server
             }
         }
 
-        internal static Document CreateEmptyDocument(string uri, IParser parser)
+        internal static Document CreateEmptyDocument(Uri uri, IParser parser)
         {
             return new Document(uri, parser);
         }
 
-        internal static Document FromText(string uri, string text, IParser parser)
+        internal static Document FromText(Uri uri, string text, IParser parser)
         {
             var doc = new Document(uri, parser)
             {

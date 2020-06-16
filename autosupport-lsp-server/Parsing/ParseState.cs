@@ -8,8 +8,9 @@ namespace autosupport_lsp_server.Parsing
 {
     internal class ParseState
     {
-        internal ParseState(string[] text, Position position, IList<RuleState> ruleStates)
+        internal ParseState(Uri uri, string[] text, Position position, IList<RuleState> ruleStates)
         {
+            Uri = uri;
             Text = text;
             Position = position;
             RuleStates = ruleStates;
@@ -24,7 +25,7 @@ namespace autosupport_lsp_server.Parsing
         private long currentCharacterCount;
         private readonly IDictionary<long, List<RuleState>> scheduledRuleStates;
 
-
+        internal Uri Uri { get; }
 
         internal string[] Text { get; }
         internal Position Position { get; }

@@ -16,7 +16,7 @@ namespace autosupport_lsp_server.Parsing
 
         public Position? Definition { get; set; }
         public Position? Implementation { get; set; }
-        public List<Position> References { get; set; } = new List<Position>();
+        public List<Reference> References { get; set; } = new List<Reference>();
 
         public enum IdentifierType
         {

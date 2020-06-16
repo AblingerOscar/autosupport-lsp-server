@@ -23,31 +23,31 @@ namespace autosupport_lsp_server.Parsing.Impl
 
             errors = new List<IError>();
             possibleContinuations = new List<(CompletionItem Continuation, RuleState? RuleState)>();
-            parseState = new ParseState(new string[0], new Position(), new List<RuleState>(0));
+            parseState = new ParseState(new Uri("nothing://"), new string[0], new Position(), new List<RuleState>(0));
         }
 
-        public IParseResult Parse(string[] text)
+        public IParseResult Parse(Uri uri, string[] text)
         {
-            SetupDefaultValues(text);
+            SetupDefaultValues(uri, text);
             ParseUntilEndOrFailed();
             return MakeParseResult();
         }
 
-        private void SetupDefaultValues(string[] text)
+        private void SetupDefaultValues(Uri uri, string[] text)
         {
             errors.Clear();
             possibleContinuations.Clear();
-            parseState = GetInitializedParseState(text);
+            parseState = GetInitializedParseState(uri, text);
         }
 
-        private ParseState GetInitializedParseState(string[] text)
+        private ParseState GetInitializedParseState(Uri uri, string[] text)
         {
             var ruleStates =
                 (from startRuleName in languageDefinition.StartRules
                  select new RuleState(languageDefinition.Rules[startRuleName]))
                  .ToList();
 
-            return new ParseState(text, new Position(0, 0), ruleStates);
+            return new ParseState(uri, text, new Position(0, 0), ruleStates);
         }
 
         private void ParseUntilEndOrFailed()

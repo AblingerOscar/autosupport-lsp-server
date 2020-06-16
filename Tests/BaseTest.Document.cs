@@ -16,7 +16,7 @@ namespace Tests
         {
             var parser = new Mock<IParser>();
 
-            parser.Setup(p => p.Parse(It.IsAny<string[]>())).Returns(ParseResult().Object);
+            parser.Setup(p => p.Parse(new Uri("file:://noopDoc"), It.IsAny<string[]>())).Returns(ParseResult().Object);
 
             return parser.Object;
         }
@@ -95,12 +95,13 @@ namespace Tests
             IParseResult parseResult
             )
         {
-            var parser = Parser(parseResult).Object;
+            var uri = new Uri(documentUri);
+            var parser = Parser(uri, parseResult).Object;
 
             return DocumentStore(
                 new Dictionary<string, Document>()
                 {
-                    { documentUri, Document.FromText(documentUri, text, parser) }
+                    { documentUri, Document.FromText(uri, text, parser) }
                 },
                 LanguageDefinition(Rule("S", onlyRuleSymbols.ToArray()).Object).Object,
                 parser
@@ -118,7 +119,7 @@ namespace Tests
             return DocumentStore(
                 new Dictionary<string, Document>()
                 {
-                    { documentUri, Document.FromText(documentUri, text, docParser) }
+                    { documentUri, Document.FromText(new Uri(documentUri), text, docParser) }
                 },
                 languageDefinition,
                 defaultParser
@@ -126,13 +127,17 @@ namespace Tests
         }
 
         protected Mock<IParser> Parser(
+                Uri? uri = null,
                 IParseResult? parseResult = null
             )
         {
             var parser = new Mock<IParser>();
 
+            if (uri == null)
+                uri = new Uri("file://");
+
             if (parseResult != null)
-                parser.Setup(p => p.Parse(It.IsAny<string[]>())).Returns(parseResult);
+                parser.Setup(p => p.Parse(uri, It.IsAny<string[]>())).Returns(parseResult);
 
             return parser;
         }

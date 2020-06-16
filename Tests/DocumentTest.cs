@@ -1,5 +1,6 @@
 using autosupport_lsp_server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using System;
 using System.Collections.Generic;
 using Xunit;
 
@@ -7,8 +8,8 @@ namespace Tests
 {
     public class DocumentTest : BaseTest
     {
-        const string uri = "uri";
-        IList<string> text = new List<string>()
+        private readonly Uri uri = new Uri("file://uri");
+        private readonly IList<string> text = new List<string>()
         {
             "First line",
             "Second line",

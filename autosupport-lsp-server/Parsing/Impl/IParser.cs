@@ -1,7 +1,9 @@
-﻿namespace autosupport_lsp_server.Parsing.Impl
+﻿using System;
+
+namespace autosupport_lsp_server.Parsing.Impl
 {
     public interface IParser
     {
-        IParseResult Parse(string[] text);
+        IParseResult Parse(Uri uri, string[] text);
     }
 }
