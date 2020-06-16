@@ -27,6 +27,8 @@ namespace autosupport_lsp_server.Parsing.Impl
                         return ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, action.GetArguments()[1]);
 
                     return ParsePostAction(parseState, ruleState, action, ParseIdentifierTypeAction);
+                case IAction.DECLARATION:
+                    return ParseDeclaration(ruleState);
             }
 
             throw new ArgumentException("Given action is not supported: " + action.ToString());
@@ -69,12 +71,16 @@ namespace autosupport_lsp_server.Parsing.Impl
                             new Reference(parseState.Uri, new Range(startOfMarkings, parseState.Position.Clone()))
                         },
                         Type = Either.If(type != null, type!, Identifier.IdentifierType.Any),
+                        Declaration = GetIdentifierDeclaration(parseState, ruleState, startOfMarkings)
                     });
                 }
                 else
                 {
                     identifier.References.Add(
                         new Reference(parseState.Uri, new Range(startOfMarkings, parseState.Position.Clone())));
+
+                    if (ruleState.ValueStore.ContainsKey(RuleStateValueStoreKey.IsDeclaration))
+                        identifier.Declaration = GetIdentifierDeclaration(parseState, ruleState, startOfMarkings);
                 }
             }
 
@@ -84,9 +90,22 @@ namespace autosupport_lsp_server.Parsing.Impl
             return ruleState.Clone();
         }
 
+        private static DeclarationReference? GetIdentifierDeclaration(ParseState parseState, RuleState ruleState, Position startOfMarkings)
+        {
+            if (ruleState.ValueStore.ContainsKey(RuleStateValueStoreKey.IsDeclaration))
+                return new DeclarationReference(parseState.Uri, new Range(startOfMarkings, parseState.Position), null);
+
+            return null;
+        }
+
         private static IConcreteRuleStateBuilder ParseIdentifierTypeAction(ParseState parseState, RuleState ruleState, IAction action, Position startOfMarkings)
         {
             return ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, parseState.GetTextBetweenPositions(startOfMarkings));
+        }
+
+        private static IConcreteRuleStateBuilder ParseDeclaration(RuleState ruleState)
+        {
+            return ruleState.Clone().WithValue(RuleStateValueStoreKey.IsDeclaration);
         }
     }
 }

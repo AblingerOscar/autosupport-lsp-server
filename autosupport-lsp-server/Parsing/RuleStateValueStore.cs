@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using static autosupport_lsp_server.Parsing.IRuleStateValueStoreKey;
+using static autosupport_lsp_server.Parsing.RuleStateValueStoreKey;
 
 namespace autosupport_lsp_server.Parsing
 {
@@ -18,6 +18,11 @@ namespace autosupport_lsp_server.Parsing
         }
 
         public int Count => values.Count;
+
+        public void Add(RuleStateValueStoreKey<NoValue> key)
+        {
+            values.Add(key, NoValue.Instance);
+        }
 
         public void Add<T>(RuleStateValueStoreKey<T> key, T value) where T : class
         {
@@ -45,6 +50,17 @@ namespace autosupport_lsp_server.Parsing
             return castValue;
         }
 
+        public bool TryGetValue<T>(RuleStateValueStoreKey<T> key, [MaybeNullWhen(false)] out T value)
+        {
+            value = default;
+
+            if (!values.TryGetValue(key, out object? obj) || !(obj is T castObj))
+                return false;
+
+            value = castObj;
+            return true;
+        }
+
         public IEnumerator<KeyValuePair<IRuleStateValueStoreKey, object>> GetEnumerator()
         {
             return values.GetEnumerator();
@@ -60,17 +76,6 @@ namespace autosupport_lsp_server.Parsing
             return values.Remove(item);
         }
 
-        public bool TryGetValue<T>(RuleStateValueStoreKey<T> key, [MaybeNullWhen(false)] out T value)
-        {
-            value = default;
-
-            if (!values.TryGetValue(key, out object? obj) || !(obj is T castObj))
-                return false;
-
-            value = castObj;
-            return true;
-        }
-
         IEnumerator IEnumerable.GetEnumerator()
         {
             return ((IEnumerable)values).GetEnumerator();
@@ -80,8 +85,13 @@ namespace autosupport_lsp_server.Parsing
     internal interface IRuleStateValueStoreKey { }
 
     internal static class RuleStateValueStoreKey {
+        public struct NoValue {
+            public static NoValue Instance = new NoValue();
+        }
+
 #pragma warning disable CS0618 // Type or member is obsolete
         public static readonly RuleStateValueStoreKey<string> NextType = new RuleStateValueStoreKey<string>(0);
+        public static readonly RuleStateValueStoreKey<NoValue> IsDeclaration = new RuleStateValueStoreKey<NoValue>(0);
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 

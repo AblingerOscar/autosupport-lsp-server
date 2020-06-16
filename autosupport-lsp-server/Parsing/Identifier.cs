@@ -14,7 +14,7 @@ namespace autosupport_lsp_server.Parsing
 
         public Either<string, IdentifierType> Type { get; set; } = IdentifierType.Any;
 
-        public Position? Definition { get; set; }
+        public DeclarationReference? Declaration { get; set; }
         public Position? Implementation { get; set; }
         public List<Reference> References { get; set; } = new List<Reference>();
 

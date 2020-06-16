@@ -13,5 +13,7 @@
         public const string IDENTIFIER_TYPE = "identifierType";
         public const string IDENTIFIER_TYPE_ARG_SET = "set";
         public const string IDENTIFIER_TYPE_ARG_INNER = "inner";
+
+        public const string DECLARATION = "declaration";
     }
 }
