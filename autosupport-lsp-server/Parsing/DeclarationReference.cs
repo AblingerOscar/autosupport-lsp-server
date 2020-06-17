@@ -7,7 +7,7 @@ namespace autosupport_lsp_server.Parsing
 {
     public class DeclarationReference : Reference
     {
-        public DeclarationReference(Uri uri, Range range, Range enclosingDeclarationRange) : base(uri, range)
+        public DeclarationReference(Uri uri, Range range, Range? enclosingDeclarationRange) : base(uri, range)
         {
             EnclosingDeclarationRange = enclosingDeclarationRange;
         }
@@ -17,7 +17,7 @@ namespace autosupport_lsp_server.Parsing
         /// comment, documentation, parameters etc.
         /// This information is typically used to highlight the range in the editor.
         /// </summary>
-        public Range EnclosingDeclarationRange { get; }
+        public Range? EnclosingDeclarationRange { get; }
 
         public override bool Equals(object? obj)
         {
