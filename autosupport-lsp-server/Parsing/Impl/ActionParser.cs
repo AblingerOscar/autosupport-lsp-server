@@ -55,8 +55,9 @@ namespace autosupport_lsp_server.Parsing.Impl
         {
             var textBetweenMarkers = parseState.GetTextBetweenPositions(startOfMarkings);
 
-
             ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out string? type);
+
+            var declaration = GetIdentifierDeclaration(parseState, ruleState, startOfMarkings);
 
             if (textBetweenMarkers.Trim() != "")
             {
@@ -71,7 +72,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                             new Reference(parseState.Uri, new Range(startOfMarkings, parseState.Position.Clone()))
                         },
                         Type = Either.If(type != null, type!, Identifier.IdentifierType.Any),
-                        Declaration = GetIdentifierDeclaration(parseState, ruleState, startOfMarkings)
+                        Declaration = declaration
                     });
                 }
                 else
@@ -79,15 +80,20 @@ namespace autosupport_lsp_server.Parsing.Impl
                     identifier.References.Add(
                         new Reference(parseState.Uri, new Range(startOfMarkings, parseState.Position.Clone())));
 
-                    if (ruleState.ValueStore.ContainsKey(RuleStateValueStoreKey.IsDeclaration))
-                        identifier.Declaration = GetIdentifierDeclaration(parseState, ruleState, startOfMarkings);
+                    if (declaration != null)
+                        identifier.Declaration = declaration;
                 }
             }
 
-            if (type != null)
-                return ruleState.Clone().WithoutValue(RuleStateValueStoreKey.NextType);
+            var nextRuleState = ruleState.Clone();
 
-            return ruleState.Clone();
+            if (type != null)
+                nextRuleState = nextRuleState.WithoutValue(RuleStateValueStoreKey.NextType);
+
+            if (declaration != null)
+                nextRuleState = nextRuleState.WithoutValue(RuleStateValueStoreKey.IsDeclaration);
+
+            return nextRuleState;
         }
 
         private static DeclarationReference? GetIdentifierDeclaration(ParseState parseState, RuleState ruleState, Position startOfMarkings)
