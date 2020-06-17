@@ -16,7 +16,7 @@ namespace Tests
         {
             var parser = new Mock<IParser>();
 
-            parser.Setup(p => p.Parse(new Uri("file:://noopDoc"), It.IsAny<string[]>())).Returns(ParseResult().Object);
+            parser.Setup(p => p.Parse(new Uri("file://noopDoc"), It.IsAny<string[]>())).Returns(ParseResult().Object);
 
             return parser.Object;
         }
