@@ -49,14 +49,9 @@
       <string>;</string>
     </rule>
     <rule name="Ws">
-      <oneOf allowNone="true">
-        <option>Ws$1</option>
-      </oneOf>
-    </rule>
-    <rule name="Ws$1">
       <whitespace />
       <oneOf allowNone="true">
-        <option>Ws$1</option>
+        <option>Ws</option>
       </oneOf>
     </rule>
     <rule name="Identifier">
