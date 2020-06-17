@@ -141,16 +141,12 @@ namespace autosupport_lsp_server.Parsing
 
             sb.AppendLine($"Position ({Position.Line}, {Position.Character}) with {RuleStates.Count} ruleStates. ");
 
-            if (Text.Length <= Position.Line || Text[Position.Line].Length <= Position.Character)
-            {
+            if (Text.Length > Position.Line && Text[Position.Line].Length == Position.Character)
+                sb.AppendLine(Text[Position.Line] + "|");
+            else if (Text.Length <= Position.Line || Text[Position.Line].Length <= Position.Character)
                 sb.Append("(Position OOB)");
-            }
             else
-            {
                 sb.AppendLine(Text[Position.Line].Insert((int)Position.Character, "|"));
-                Enumerable.Repeat(" ", (int)Position.Character).ForEach(s => sb.Append(s));
-                sb.Append("^");
-            }
 
             return sb.ToString();
         }
