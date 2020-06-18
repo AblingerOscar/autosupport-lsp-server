@@ -36,6 +36,7 @@ namespace autosupport_lsp_server
                     .WithHandler<TextDocumentSyncHandler>()
                     .WithHandler<AutocompletionHandler>()
                     .WithHandler<ReferencesHandler>()
+                    .WithHandler<DeclarationHandler>()
                     ;
             });
 
