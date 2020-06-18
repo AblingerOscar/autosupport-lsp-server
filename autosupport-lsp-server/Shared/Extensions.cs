@@ -17,7 +17,7 @@ namespace autosupport_lsp_server
 
         public static string JoinToString<T>(this IEnumerable<T> list, string separator = "\n")
         {
-            var enumerator = list.GetEnumerator();
+            using var enumerator = list.GetEnumerator();
             var sb = new StringBuilder();
 
             if (enumerator.MoveNext())
