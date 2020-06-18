@@ -76,6 +76,20 @@ namespace autosupport_lsp_server.Parsing
                 return $"{CurrentSymbol?.ToString() ?? "<no symbol>"} in rule {CurrentRule}";
         }
 
+        public override bool Equals(object? obj)
+        {
+            return obj is RuleState state &&
+                   EqualityComparer<Stack<Tuple<IRule, int>>>.Default.Equals(ruleStates, state.ruleStates) &&
+                   EqualityComparer<Dictionary<string, Position>>.Default.Equals(markers, state.markers) &&
+                   EqualityComparer<RuleStateValueStore>.Default.Equals(ValueStore, state.ValueStore) &&
+                   EqualityComparer<ISet<Identifier>>.Default.Equals(Identifiers, state.Identifiers);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(ruleStates, markers, ValueStore, Identifiers);
+        }
+
         internal interface IRuleStateBuilder<T>
         {
             INullableRuleStateBuilder WithNextSymbol();
