@@ -20,24 +20,25 @@
     </rule>
     <rule name="S$2">
       <nonTerminal referencedRule="VarDecl"/>
-      <nonTerminal referencedRule="Ws"/>
+      <nonTerminal referencedRule="OptionalWs"/>
       <nonTerminal referencedRule="S$1"/>
     </rule>
     <rule name="S$3">
       <nonTerminal referencedRule="PrintStatement"/>
-      <nonTerminal referencedRule="Ws"/>
+      <nonTerminal referencedRule="OptionalWs"/>
       <nonTerminal referencedRule="S$1"/>
     </rule>
     <rule name="VarDecl">
       <string>var</string>
       <nonTerminal referencedRule="Ws" />
+      <action>declaration</action>
       <action>identifierType set Variable</action>
       <nonTerminal referencedRule="Identifier" />
-      <nonTerminal referencedRule="Ws" />
+      <nonTerminal referencedRule="OptionalWs"/>
       <string>=</string>
-      <nonTerminal referencedRule="Ws" />
+      <nonTerminal referencedRule="OptionalWs"/>
       <nonTerminal referencedRule="Number"/>
-      <nonTerminal referencedRule="Ws" />
+      <nonTerminal referencedRule="OptionalWs" />
       <string>;</string>
     </rule>
     <rule name="PrintStatement">
@@ -45,8 +46,13 @@
       <nonTerminal referencedRule="Identifier" />
       <nonTerminal referencedRule="Ws" />
       <string>print</string>
-      <nonTerminal referencedRule="Ws"/>
+      <nonTerminal referencedRule="OptionalWs"/>
       <string>;</string>
+    </rule>
+    <rule name="OptionalWs">
+      <oneOf allowNone="true">
+        <option>Ws</option>
+      </oneOf>
     </rule>
     <rule name="Ws">
       <whitespace />
