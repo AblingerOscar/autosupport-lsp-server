@@ -1,4 +1,5 @@
-﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+﻿using autosupport_lsp_server.LSP;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
@@ -10,6 +11,15 @@ namespace autosupport_lsp_server.Parsing
         public DeclarationReference(Uri uri, Range range, Range? enclosingDeclarationRange) : base(uri, range)
         {
             EnclosingDeclarationRange = enclosingDeclarationRange;
+        }
+
+        public DeclarationReference(DeclarationReference other) : base(other)
+        {
+            if (other.EnclosingDeclarationRange != null)
+                EnclosingDeclarationRange = new Range(
+                    other.EnclosingDeclarationRange.Start.Clone(),
+                    other.EnclosingDeclarationRange.End.Clone()
+                    );
         }
 
         /// <summary>

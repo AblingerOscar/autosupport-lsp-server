@@ -1,4 +1,5 @@
-﻿using System;
+﻿using autosupport_lsp_server.LSP;
+using System;
 using System.Collections.Generic;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
@@ -10,6 +11,12 @@ namespace autosupport_lsp_server.Parsing
         {
             Uri = uri;
             Range = range;
+        }
+
+        public Reference(DeclarationReference other)
+        {
+            Uri = other.Uri;
+            Range = new Range(other.Range.Start.Clone(), other.Range.End.Clone());
         }
 
         public Uri Uri { get; }

@@ -89,7 +89,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                         References = new List<Reference>() {
                             new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone()))
                         },
-                        Type = Either.If(type != null, type!, Identifier.IdentifierType.Any),
+                        Types = new IdentifierType(type),
                         Declaration = declaration
                     });
                 }

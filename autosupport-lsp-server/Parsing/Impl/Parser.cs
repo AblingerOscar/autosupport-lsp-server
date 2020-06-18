@@ -308,8 +308,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                 .FirstOrDefault((rule) => rule.HasValue
                             && rule.Value.RuleState.Markers.TryGetValue(IAction.IDENTIFIER, out var position)
                             && ident.Name.StartsWith(parseState.GetTextBetweenPositions(position))
-                            && (rule.Value.PossibleTypes == null
-                                || ident.Type.Match(str => rule.Value.PossibleTypes.Contains(str), any => true)));
+                            && ident.Types.IsCompatibleWithAnyOf(rule.Value.PossibleTypes));
 
             leadupWhitespace = nextRule.HasValue ? nextRule.Value.LeadupString : "";
             return nextRule.HasValue;
@@ -361,7 +360,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             {
                 Label = ident.Name,
                 Kind = ident.Kind,
-                Detail = ident.Type.ToString(),
+                Detail = ident.Types.ToString(),
                 TextEdit = startPosition == null
                     ? null
                     : new TextEdit()

@@ -33,12 +33,17 @@ namespace autosupport_lsp_server.LSP
                 var uri = request.TextDocument.Uri.ToString();
                 var selectedIdentifiers = documentStore.Documents[uri].GetIdentifiersAtPosition(request.Position);
 
-                var references = documentStore.Documents
-                    .SelectMany(doc => doc.Value.ParseResult?.Identifiers ?? Enumerable.Empty<Identifier>())
-                    .Where(identifier =>
-                        selectedIdentifiers.Any(selectedIdent =>
-                            identifier.Name == selectedIdent.Name && identifier.Type == selectedIdent.Type))
-                    .SelectMany(identifier => identifier.References);
+                var identifierComparer = new Identifier.IdentifierComparer();
+                var allIdentifiers =
+                    Identifier.MergeIdentifiers(
+                        documentStore.Documents
+                            .SelectMany(doc => doc.Value.ParseResult?.Identifiers ?? Enumerable.Empty<Identifier>()));
+
+                var references = allIdentifiers
+                        .Where(identifier =>
+                            selectedIdentifiers.Any(selectedIdent =>
+                                identifierComparer.Equals(identifier, selectedIdent)))
+                        .SelectMany(identifier => identifier.References);
 
                 return new LocationContainer(
                     references
