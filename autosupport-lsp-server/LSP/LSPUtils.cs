@@ -29,20 +29,7 @@ namespace autosupport_lsp_server.LSP
 
         public static IEnumerable<CompletionItem> GetAllKeywordsAsCompletionItems(IAutosupportLanguageDefinition languageDefinition)
         {
-            return languageDefinition.Rules
-                .SelectMany(rule =>
-                    rule.Value.Symbols)
-                .Select(symbol =>
-                    symbol.Match(
-                        terminal: terminal =>
-                            terminal is StringTerminal stringTerminal
-                                ? stringTerminal.String
-                                : null,
-                        nonTerminal: (_) => null,
-                        oneOf: (_) => null,
-                        action: (_) => null))
-                .Where(str => str != null)
-                .Distinct()
+            return GetAllKeywords(languageDefinition)
                 .Select(str =>
                 {
                     return new CompletionItem()
@@ -51,6 +38,23 @@ namespace autosupport_lsp_server.LSP
                         Kind = CompletionItemKind.Keyword
                     };
                 });
+        }
+
+        public static IEnumerable<string> GetAllKeywords(IAutosupportLanguageDefinition languageDefinition)
+        {
+            return languageDefinition.Rules
+                .SelectMany(rule => rule.Value.Symbols)
+                .Select(symbol =>
+                    symbol.Match(
+                        terminal: terminal =>
+                            terminal is StringTerminal stringTerminal
+                                ? stringTerminal.String
+                                : null,
+                            nonTerminal: (_) => null,
+                            oneOf: (_) => null,
+                            action: (_) => null))
+                .WhereNotNull()
+                .Distinct();
         }
 
         internal class FollowUntilNextTerminalOrActionArgs<T>
