@@ -3,11 +3,15 @@ using autosupport_lsp_server.Symbols;
 using autosupport_lsp_server.Symbols.Impl.Terminals;
 using Moq;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using Sprache;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Xunit;
+using Position = OmniSharp.Extensions.LanguageServer.Protocol.Models.Position;
 
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2, PublicKey=0024000004800000940000000602000000240000525341310004000001000100c547cac37abd99c8db225ef2f6c8a3602f3b3606cc9891605d02baa56104f4cfc0734aa39b93bf7852f7d9266654753cc297e7d2edfe0bac1cdcf9f717241550e0a7b191195b7667bb4f64bcb8e2121380fd1d9d46ad2d92d2d15605093924cceaf74c4861eff62abf69b9291ed0a340e113be11e6a7d3113e92484cf7045cc7")]
 namespace Tests.Parsing.Impl
 {
     public class ParserTest : BaseTest
@@ -43,12 +47,12 @@ namespace Tests.Parsing.Impl
         }
 
         [Theory]
-        [InlineData("", "aterminal")]
-        [InlineData("a", "terminal")]
-        void When_MoreInputIsExpectedFromTerminal_ThenHavePossibleContinuations(string firstLine, string expectedContinuation)
+        [InlineData("")]
+        [InlineData("a")]
+        void When_MoreInputIsExpectedFromTerminal_ThenHavePossibleContinuations(string firstLine)
         {
             // given
-            var terminal = Terminal(
+            var terminal = StringTerminal(
                     "aterminal",
                     false
                 );
@@ -67,11 +71,16 @@ namespace Tests.Parsing.Impl
                 .Parse(uri, new string[] { firstLine });
 
             // then
-            terminal.Verify(t => t.TryParse(It.IsAny<string>()), Times.Never());
             Assert.NotEmpty(result.PossibleContinuations);
 
             var firstChoiceContinuation = result.PossibleContinuations[0];
-            Assert.Equal(expectedContinuation, firstChoiceContinuation.TextEdit?.NewText ?? firstChoiceContinuation.Label);
+            Assert.Equal("aterminal", firstChoiceContinuation.Label);
+
+            if (firstChoiceContinuation.TextEdit != null)
+            {
+                Assert.Equal(new Position(0, 0), firstChoiceContinuation.TextEdit.Range.Start);
+                Assert.Equal(new Position(0, firstLine.Length), firstChoiceContinuation.TextEdit.Range.End);
+            }
         }
 
         [Fact]
@@ -244,5 +253,35 @@ namespace Tests.Parsing.Impl
                 Assert.Single(parseResult.PossibleContinuations, ci => ci.Label == kw && ci.Kind == CompletionItemKind.Keyword);
         }
 
+        private Mock<MockStringTerminal> StringTerminal(string content, bool? shouldParse = null)
+        {
+            var mock = new Mock<MockStringTerminal>(content, shouldParse)
+            {
+                CallBase = true
+            };
+
+            return mock;
+        }
+
+
+        internal class MockStringTerminal : StringTerminal
+        {
+            private bool? shouldParse;
+
+            public MockStringTerminal(string str, bool? shouldParse) : base(str)
+            {
+                this.shouldParse = shouldParse;
+            }
+
+            protected override Parser<string> Parser {
+                get {
+                    if (shouldParse.HasValue)
+                        return shouldParse.Value
+                            ? Parser.Return(String)
+                            : (Parser<string>)Parser.Return(String).Not();
+                    return base.Parser;
+                }
+            }
+        }
     }
 }

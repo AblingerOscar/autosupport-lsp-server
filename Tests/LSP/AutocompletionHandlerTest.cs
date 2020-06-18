@@ -2,7 +2,6 @@
 using autosupport_lsp_server.LSP;
 using autosupport_lsp_server.Parsing.Impl;
 using autosupport_lsp_server.Serialization;
-using autosupport_lsp_server.Symbols.Impl.Terminals;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System.Linq;
 using System.Threading;
@@ -55,13 +54,16 @@ namespace Tests.LSP
                 // defined two identifiers -> identifiers should be suggested as continuation; 'b' has precedence thanks to type
         [InlineData("Program a \nvar b = 0;", new string[] { "b", "var", "a" })] // same as previous one, but this time over two lines
         [InlineData("Program a \nvar b = 0;\n", new string[] { "b", "var", "a" })] // same as previous one, but this time over two lines (and trailing newline)
-        [InlineData("Program a \nvar b = 00; \nb", new string[] { "print" })] // only one possible kw next -> first in line
+        [InlineData("Program a \nvar b = 00; \nb", new string[] { " print" })] // only one possible kw next -> first in line
         [InlineData("Program a \r\nvar bar = 0; \r\nb", new string[] { "ar" })] // start of identifier -> rest of identifier should be suggested
         [InlineData(@"Program a
 var b = 0;
 b print;
 
-b print;", new string[] { "b", "a", "var" })]
+b print;", new string[] { "b", "var", "a" })]
+        [InlineData(@"Program a
+var foo = 0;
+var bar = 15;", new string[] { "foo", "bar", "var", "a" })]
         public async void When_HandlingContinuableText_ReturnAtLeastAllContinuationsInTheCorrectOrder(string text, string[] expectedContinuations)
         {
             // given
@@ -81,12 +83,18 @@ b print;", new string[] { "b", "a", "var" })]
             {
                 // Label may not be the same as the continuation e.g. completion may be 'ar', but label 'var',
                 //      because 'v' is already present in the file -> contains not equal
-                Assert.Contains(expectedContinuations[i], resultAsList.ElementAt(i).Label);
+                Assert.Contains(expectedContinuations[i].Trim(), resultAsList.ElementAt(i).Label);
 
-                // if they're not the same, however, TextEdit has to exist and contain the exact Continuation
+                // if they're not the same, however, TextEdit has to exist and while having the same text, has
+                //      to have a correct range, which results in the correct continuation
                 if (expectedContinuations[i] != resultAsList.ElementAt(i).Label)
                 {
-                    Assert.Equal(expectedContinuations[i], resultAsList.ElementAt(i).TextEdit?.NewText);
+                    var textEdit = resultAsList.ElementAt(i).TextEdit;
+
+                    Assert.NotNull(textEdit);
+                    Assert.Contains(expectedContinuations[i], textEdit?.NewText);
+                    Assert.Equal(textEdit!.Range.End.Line, textEdit.Range.End.Line);
+                    Assert.Equal(expectedContinuations[i], textEdit?.NewText.Substring((int)(textEdit.Range.End.Character - textEdit.Range.Start.Character)));
                 }
             }
         }
