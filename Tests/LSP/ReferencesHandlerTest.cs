@@ -48,8 +48,6 @@ var print;", 3)]
             // then: expectedContinuations are always the first options
             Assert.NotNull(result);
 
-            result.Select(l => ($"{l.Range.Start.Line},{l.Range.Start.Character}", $"{l.Range.End.Line},{l.Range.End.Character}"));
-
             foreach (var item in result)
             {
                 Assert.Equal(uri, item.Uri.ToString());
