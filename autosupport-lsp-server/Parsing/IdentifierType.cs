@@ -34,8 +34,7 @@ namespace autosupport_lsp_server.Parsing
         public IdentifierType(IdentifierType types) : this(types.RawTypes) { }
 
         public override bool Equals(object? obj)
-            => obj is IdentifierType type &&
-                   EqualityComparer<ISet<string>>.Default.Equals(RawTypes, type.RawTypes);
+            => obj is IdentifierType type && RawTypes.SetEquals(type.RawTypes);
 
         public override int GetHashCode() => HashCode.Combine(RawTypes);
         public override string? ToString() => RawTypes.JoinToString();
