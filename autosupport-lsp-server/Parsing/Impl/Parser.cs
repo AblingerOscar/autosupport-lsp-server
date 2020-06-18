@@ -4,9 +4,12 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using static autosupport_lsp_server.Parsing.RuleState;
+
+using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace autosupport_lsp_server.Parsing.Impl
 {
@@ -14,7 +17,10 @@ namespace autosupport_lsp_server.Parsing.Impl
     {
         private readonly IAutosupportLanguageDefinition languageDefinition;
         private readonly IList<IError> errors;
-        private readonly IList<(CompletionItem Continuation, RuleState? RuleState)> possibleContinuations;
+        /// <summary>
+        /// List of rule states that didn't continue, because the Input stopped, not because it was invalid
+        /// </summary>
+        private readonly IList<(Position Position, RuleState RuleState)> unfinishedRuleStates;
         private ParseState parseState;
 
         public Parser(IAutosupportLanguageDefinition autosupportLanguageDefinition)
@@ -22,7 +28,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             languageDefinition = autosupportLanguageDefinition;
 
             errors = new List<IError>();
-            possibleContinuations = new List<(CompletionItem Continuation, RuleState? RuleState)>();
+            unfinishedRuleStates = new List<(Position Position, RuleState RuleState)>();
             parseState = new ParseState(new Uri("nothing://"), new string[0], new Position(), new List<RuleState>(0));
         }
 
@@ -36,7 +42,7 @@ namespace autosupport_lsp_server.Parsing.Impl
         private void SetupDefaultValues(Uri uri, string[] text)
         {
             errors.Clear();
-            possibleContinuations.Clear();
+            unfinishedRuleStates.Clear();
             parseState = GetInitializedParseState(uri, text);
         }
 
@@ -76,8 +82,8 @@ namespace autosupport_lsp_server.Parsing.Impl
             var newParseStates = GetPossibleNextStatesOfSymbol(ruleState);
             ScheduleNextParseStates(newParseStates);
         }
-           
-        private StringBuilder logger = new StringBuilder();
+
+        private readonly StringBuilder logger = new StringBuilder();
 
         private IDictionary<int, IEnumerable<RuleState>>? GetPossibleNextStatesOfSymbol(RuleState ruleState)
         {
@@ -124,13 +130,16 @@ namespace autosupport_lsp_server.Parsing.Impl
 
             if (actualText.Length < terminal.MinimumNumberOfCharactersToParse)
             {
-                logger.AppendLine($"<{actualText}> to short for {terminal} (needs at least {terminal.MinimumNumberOfCharactersToParse}, has {actualText.Length})");
-
-                SaveAsPossibleContinuation(ruleState, terminal, actualText);
+                SaveUnfinishedRuleStateIfContinuationIsPossible(ruleState, terminal, actualText);
                 return null;
             }
+            else if (!terminal.TryParse(actualText))
+            {
+                logger.AppendLine($"{terminal} failed to parse <{actualText}>");
 
-            if (terminal.TryParse(actualText))
+                return null;
+            }
+            else
             {
                 logger.AppendLine($"{terminal} successfully parsed (at least the start of) <{actualText}>");
 
@@ -145,40 +154,17 @@ namespace autosupport_lsp_server.Parsing.Impl
                     }
                 };
             }
-            else
-            {
-                logger.AppendLine($"{terminal} failed to parse <{actualText}>");
-                return null;
-            }
         }
 
-        private void SaveAsPossibleContinuation(RuleState ruleState, ITerminal terminal, string actualText)
+        private void SaveUnfinishedRuleStateIfContinuationIsPossible(RuleState ruleState, ITerminal terminal, string textUntilNow)
         {
-            foreach (var expectedText in terminal.PossibleContent)
+            logger.AppendLine($"<{textUntilNow}> too short for {terminal} (needs at least {terminal.MinimumNumberOfCharactersToParse}, has {textUntilNow.Length})");
+
+            if (terminal.PossibleContent.Any(possibleContent => possibleContent.StartsWith(textUntilNow)))
             {
-                if (!expectedText.StartsWith(actualText))
-                    continue;
+                logger.AppendLine($"Added {terminal} to {nameof(unfinishedRuleStates)}");
 
-                TextEdit? textEdit = null;
-
-                if (expectedText != actualText)
-                {
-                    textEdit = new TextEdit()
-                    {
-                        Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(parseState.Position, parseState.Position),
-                        NewText = expectedText.Substring(actualText.Length)
-                    };
-                }
-
-                possibleContinuations.Add((
-                    new CompletionItem()
-                    {
-                        Label = expectedText,
-                        Kind = CompletionItemKind.Keyword,
-                        TextEdit = textEdit
-                    },
-                    ruleState.Clone().WithNextSymbol().TryBuild()
-                    ));
+                unfinishedRuleStates.Add((parseState.Position.Clone(), ruleState));
             }
         }
 
@@ -210,188 +196,286 @@ namespace autosupport_lsp_server.Parsing.Impl
         private IParseResult MakeParseResult()
         {
             return new ParseResult(
-                    finished: (parseState?.IsAtEndOfDocument) ?? false,
+                    finished: parseState.IsAtEndOfDocument,
                     possibleContinuations: GetPossibleContinuations(),
                     errors: new IError[0],
                     identifiers: GetAllIdentifiers()
                 );
         }
 
-        private Identifier[] GetAllIdentifiers()
-        {
-            return (parseState?.RuleStates ?? Enumerable.Empty<RuleState>())
-                .Union(possibleContinuations.Select(pc => pc.RuleState))
-                .WhereNotNull()
-                .SelectMany(rs => rs?.Identifiers)
-                .ToArray();
-        }
-
         private CompletionItem[] GetPossibleContinuations()
         {
-            List<CompletionItemPrioritizationItem> continuations = new List<CompletionItemPrioritizationItem>();
+            var identifiers = GetAllIdentifiers();
+            var continuableRules = GetContinuableRules().ToList();
+            var nextRules = GetNextRules().ToList();
 
-            // continuations of keywords
-            continuations.AddRange(GetContinuationsOfUnfinishedTerminals(possibleContinuations));
+            var halfFinishedIdentifiers = new List<CompletionItem>();
+            var nextUpTypeCompatibleIdentifiers = new List<CompletionItem>();
+            var nextUpTypeIncompatibleIdentifiers = new List<CompletionItem>();
+            var otherIdentifiers = new List<CompletionItem>();
 
-            // all keywords
-            continuations.AddRange(
-                LSPUtils.GetAllKeywordsAsCompletionItems(languageDefinition)
-                    .Select(cont =>
-                        new CompletionItemPrioritizationItem(
-                            ContinuationType.Keyword, cont
-                        )));
+            var halfFinishedKeywords = new List<CompletionItem>();
+            var nextUpKeywords = new List<CompletionItem>();
+            var otherKeywords = new List<CompletionItem>();
 
-            foreach (var ruleState in parseState.RuleStates)
+            foreach (var ident in identifiers)
             {
-                continuations.AddRange(GetUnfinishedIdentifiers(ruleState));
-                continuations.AddRange(GetNextIdentifiers(ruleState));
-                continuations.AddRange(GetAllIdentifiersAsCompletionItem(ruleState));
-                continuations.AddRange(GetContinuationsOfNextTerminal(ruleState));
+                if (IsHalfFinished(continuableRules, ident, out var startPosition))
+                    halfFinishedIdentifiers.Add(IdentifierToCompletionItem(ident, startPosition));
+                else if (IsNextUpIdentifierOfCompatibleType(nextRules, ident, out var leadupWhitespace))
+                    nextUpTypeCompatibleIdentifiers.Add(IdentifierToCompletionItem(ident, null, leadupWhitespace + ident.Name));
+                else if (IsNextUp(nextRules, ident, out leadupWhitespace))
+                    nextUpTypeIncompatibleIdentifiers.Add(IdentifierToCompletionItem(ident, null, leadupWhitespace + ident.Name));
+                else
+                    otherIdentifiers.Add(IdentifierToCompletionItem(ident));
             }
 
-            continuations.RemoveAll(cont =>
-                            cont.CompletionItem.Label.Trim() == ""
-                            || cont.CompletionItem.TextEdit?.NewText == "");
+            var keywords = LSPUtils.GetAllKeywords(languageDefinition);
 
-            continuations.Sort();
+            foreach (var kw in keywords)
+            {
+                if (IsHalfFinishedKeyword(kw, out var startPosition))
+                    halfFinishedKeywords.Add(KeywordToCompletionItem(kw, startPosition));
+                else if (IsNextUpKeyword(nextRules, kw, out var leadupWhitespace))
+                    nextUpKeywords.Add(KeywordToCompletionItem(leadupWhitespace + kw));
+                else
+                    otherKeywords.Add(KeywordToCompletionItem(kw));
+            }
 
-            return continuations
-                .Select(cont => cont.CompletionItem)
-                .Distinct(new CompletionItemContentEqualityComparer())
+            var continations = halfFinishedIdentifiers
+                .Union(halfFinishedKeywords)
+                .Union(nextUpTypeCompatibleIdentifiers)
+                .Union(nextUpKeywords)
+                .Union(nextUpTypeIncompatibleIdentifiers)
+                .Union(otherIdentifiers)
+                .Union(otherKeywords)
+                .ToArray();
+
+            AddFilterTextToContinuations(continations);
+
+            return continations;
+        }
+
+        private void AddFilterTextToContinuations(CompletionItem[] continations)
+        {
+            for (int i = 0; i < continations.Length; ++i)
+            {
+                continations[i].SortText = i.ToString();
+            }
+        }
+
+        private Identifier[] GetAllIdentifiers()
+        {
+            return Identifier.CreateIdentifierSet(
+                    parseState.RuleStates
+                        .Union(unfinishedRuleStates.Select(urs => urs.RuleState))
+                        .SelectMany(rs => rs.Identifiers))
                 .ToArray();
         }
 
-        private IEnumerable<CompletionItemPrioritizationItem> GetContinuationsOfUnfinishedTerminals(IList<(CompletionItem Continuation, RuleState? RuleState)> possibleContinuations)
+
+        private IEnumerable<(Position Position, RuleState)> GetContinuableRules()
         {
-            return possibleContinuations.SelectMany(possibleCont =>
-            {
-                if (possibleCont.Continuation.Label.Trim() != "")
-                    // if it's not just whitespace, just return it
-                    return new[] { 
-                        new CompletionItemPrioritizationItem(ContinuationType.CompletionOfKeyword, possibleCont.Continuation)
-                    };
-                else if (possibleCont.RuleState == null)
-                {   // if it's only whitespace, but there is no further valid rule, do not suggest it
-                    return Enumerable.Empty<CompletionItemPrioritizationItem>();
-                }
-                else
-                {   // if it's only whitespace and there are more valid rules, then find all possible next terminals
-                    //   and if their continuation is not only whitespace, too, then it will be appended and returned
-                    return LSPUtils.FollowUntilNextTerminalOrAction(new LSPUtils.FollowUntilNextTerminalOrActionArgs<string[]>(
-                            ruleState: possibleCont.RuleState,
-                            rules: languageDefinition.Rules,
-                            onTerminal: (ruleState, terminal) => terminal.PossibleContent,
-                            onAction: (ruleState, action) => ruleState.Clone()
-                        ))
-                        .SelectMany(continuations => continuations)
-                        .Where(cont => cont.Trim() != "")
-                        .Select(cont =>
-                        new CompletionItemPrioritizationItem(ContinuationType.CompletionOfKeyword, new CompletionItem()
-                        {
-                            Label = cont,
-                            Kind = CompletionItemKind.Keyword,
-                            TextEdit = possibleCont.Continuation.TextEdit == null
-                                ? null
-                                : new TextEdit()
-                                {
-                                    NewText = possibleCont.Continuation.TextEdit.NewText + cont,
-                                    Range = possibleCont.Continuation.TextEdit.Range
-                                }
-                        }));
-                }
-            });
+            return parseState.RuleStates
+                .Select(rs => (parseState.Position, rs))
+                .Union(unfinishedRuleStates);
         }
 
-        private IEnumerable<CompletionItemPrioritizationItem> GetUnfinishedIdentifiers(RuleState ruleState)
+        private bool IsHalfFinished(IEnumerable<(Position Position, RuleState RuleState)> continuableRules, Identifier ident, [MaybeNullWhen(false)] out Position startPosition)
         {
-            if (ruleState.Markers.TryGetValue(IAction.IDENTIFIER, out var pos))
+            foreach (var continuableRule in continuableRules)
             {
-                var textSinceMarker = parseState.GetTextBetweenPositions(pos);
-
-                var continuableIdentifiers = ruleState.Identifiers
-                    .Where(identifier => identifier.Name.StartsWith(textSinceMarker));
-
-                foreach (var identifier in continuableIdentifiers)
+                if (continuableRule.RuleState.Markers.TryGetValue(IAction.IDENTIFIER, out var position))
                 {
-                    yield return new CompletionItemPrioritizationItem(
-                        ContinuationType.CompletionOfIdentifier,
-                        new CompletionItem()
-                        {
-                            Label = identifier.Name,
-                            Kind = identifier.Kind,
-                            TextEdit = new TextEdit()
-                            {
-                                NewText = identifier.Name.Substring(textSinceMarker.Length),
-                                Range = new OmniSharp.Extensions.LanguageServer.Protocol.Models.Range(
-                                    parseState.Position, parseState.Position
-                                    )
-                            }
-                        },
-                        ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out string? nextType) && identifier.Type == nextType);
-                }
-            }
-        }
+                    string textSinceMarker = parseState.GetTextBetweenPositions(position);
 
-        private IEnumerable<CompletionItemPrioritizationItem> GetNextIdentifiers(RuleState ruleState)
-        {
-            if (!ruleState.Markers.ContainsKey(IAction.IDENTIFIER))
-            {
-                var newRuleStates = LSPUtils.FollowUntilNextTerminalOrAction(new LSPUtils.FollowUntilNextTerminalOrActionArgs<RuleState>(
-                    ruleState,
-                    languageDefinition.Rules,
-                    onTerminal: (ruleState, terminal) => ruleState,
-                    onAction: InterpretAction
-                    ));
-
-
-                foreach (var newRuleState in newRuleStates)
-                {
-                    if (newRuleState != null && newRuleState.Markers.ContainsKey(IAction.IDENTIFIER))
+                    if (ident.Name.StartsWith(textSinceMarker) && ident.Name != textSinceMarker)
                     {
-                        foreach (var item in GetUnfinishedIdentifiers(newRuleState))
-                        {
-                            if (item.IsExpectedType.HasValue && item.IsExpectedType.Value)
-                            {
-                                item.ContinuationSource = ContinuationType.NextIdentifier;
-                                yield return item;
-                            }
-                        }
+                        startPosition = position;
+                        return true;
                     }
                 }
             }
+
+            startPosition = null;
+            return false;
         }
 
-        private IEnumerable<CompletionItemPrioritizationItem> GetAllIdentifiersAsCompletionItem(RuleState ruleState)
+        private bool IsNextUpIdentifierOfCompatibleType(IEnumerable<NextRule> nextRules, Identifier ident, out string leadupWhitespace)
         {
-            foreach (var identifier in ruleState.Identifiers)
+            var nextRule = nextRules
+                .Select(nr => new NextRule?(nr))
+                .FirstOrDefault((rule) => rule.HasValue
+                            && rule.Value.RuleState.Markers.TryGetValue(IAction.IDENTIFIER, out var position)
+                            && ident.Name.StartsWith(parseState.GetTextBetweenPositions(position))
+                            && (rule.Value.PossibleTypes == null
+                                || ident.Type.Match(str => rule.Value.PossibleTypes.Contains(str), any => true)));
+
+            leadupWhitespace = nextRule.HasValue ? nextRule.Value.LeadupString : "";
+            return nextRule.HasValue;
+        }
+
+        private bool IsNextUp(IEnumerable<NextRule> nextRules, Identifier ident, out string leadupWhitespace)
+        {
+            var nextRule = nextRules
+                .Select(nr => new NextRule?(nr))
+                .FirstOrDefault((rule) => rule.HasValue
+                            && rule.Value.RuleState.Markers.TryGetValue(IAction.IDENTIFIER, out var position)
+                            && ident.Name.StartsWith(parseState.GetTextBetweenPositions(position)));
+
+            leadupWhitespace = nextRule.HasValue ? nextRule.Value.LeadupString : "";
+            return nextRule.HasValue;
+        }
+
+        private bool IsHalfFinishedKeyword(string kw, [MaybeNullWhen(false)] out Position startPosition)
+        {
+            foreach (var unfinishedRuleState in unfinishedRuleStates)
             {
-                yield return new CompletionItemPrioritizationItem(
-                    ContinuationType.Identifier,
-                    new CompletionItem()
-                    {
-                        Label = identifier.Name,
-                        Kind = identifier.Kind
-                    });
+                if (kw.StartsWith(parseState.GetTextBetweenPositions(unfinishedRuleState.Position)))
+                {
+                    startPosition = unfinishedRuleState.Position;
+                    return true;
+                }
             }
+
+            startPosition = null;
+            return false;
         }
 
-        private IEnumerable<CompletionItemPrioritizationItem> GetContinuationsOfNextTerminal(RuleState ruleState)
+        private static bool IsNextUpKeyword(IEnumerable<NextRule> nextRules, string kw, out string leadupWhitespace)
         {
-            return LSPUtils.FollowUntilNextTerminalOrAction(new LSPUtils.FollowUntilNextTerminalOrActionArgs<IEnumerable<CompletionItemPrioritizationItem>>(
-                  ruleState,
-                  languageDefinition.Rules,
-                  onTerminal: (rs, terminal) =>
-                    terminal.PossibleContent.Select(possibleContent =>
-                        new CompletionItemPrioritizationItem(
-                            ContinuationType.NextKeyword,
-                            new CompletionItem()
-                            {
-                                Label = possibleContent,
-                                Kind = CompletionItemKind.Keyword
-                            })),
-                  onAction: (rs, action) => rs.Clone()
-                ))
-                .SelectMany(continuations => continuations);
+            var nextRule = nextRules
+                .Select(nr => new NextRule?(nr))
+                .FirstOrDefault(rule => rule.HasValue && rule.Value.PossibleContent.Contains(kw));
+
+            leadupWhitespace = nextRule.HasValue ? nextRule.Value.LeadupString : "";
+            return nextRule.HasValue;
+        }
+
+        private CompletionItem IdentifierToCompletionItem(Identifier ident, Position? startPosition = null, string? newText = null)
+        {
+            if (startPosition == null && newText != null)
+                startPosition = GetLastPosition();
+
+            return new CompletionItem()
+            {
+                Label = ident.Name,
+                Kind = ident.Kind,
+                Detail = ident.Type.ToString(),
+                TextEdit = startPosition == null
+                    ? null
+                    : new TextEdit()
+                    {
+                        NewText = newText ?? ident.Name,
+                        Range = new Range(startPosition, GetLastPosition())
+                    }
+            };
+        }
+
+        private CompletionItem KeywordToCompletionItem(string keyword, Position? startPosition = null)
+        {
+            if (startPosition == null && keyword.Trim() != keyword)
+                startPosition = GetLastPosition();
+
+            return new CompletionItem()
+            {
+                Label = keyword.Trim(),
+                Kind = CompletionItemKind.Keyword,
+                TextEdit = startPosition == null
+                    ? null
+                    : new TextEdit()
+                    {
+                        NewText = keyword,
+                        Range = new Range(startPosition, GetLastPosition())
+                    }
+            };
+        }
+
+        private Position GetLastPosition()
+        {
+            if (parseState.Text.Length == 0)
+                return new Position(0, 0);
+
+            return new Position(
+                    parseState.Text.Length - 1,
+                    parseState.Text[^1].Length
+                );
+        }
+
+        private readonly struct NextRule
+        {
+            public readonly RuleState RuleState;
+            public readonly string LeadupString;
+            public readonly string[] PossibleContent;
+            /// <summary>
+            /// null means any type is valid if identifiers are syntactically valid
+            /// </summary>
+            public readonly string[]? PossibleTypes;
+
+            public NextRule(RuleState ruleState, string leadupString, string[] possibleContent, string[]? possibleTypes)
+            {
+                RuleState = ruleState;
+                LeadupString = leadupString;
+                PossibleContent = possibleContent;
+                PossibleTypes = possibleTypes;
+            }
+
+            public NextRule WithoutEmptyPossibleContent()
+                => new NextRule(RuleState, LeadupString, PossibleContent.Where(content => content.Trim() != "").ToArray(), PossibleTypes);
+        }
+
+        private IEnumerable<NextRule> GetNextRules()
+        {
+            var nextRules = GetNextRulesWithLeadup(parseState.RuleStates.Select(rs => rs.Clone().WithNextSymbol().TryBuild()).WhereNotNull(), "").ToList();
+
+            nextRules.Sort((nr1, nr2) => nr1.LeadupString.Length - nr2.LeadupString.Length);
+            return nextRules;
+        }
+
+        private IEnumerable<NextRule> GetNextRulesWithLeadup(IEnumerable<RuleState> ruleStates, string leadup)
+        {
+            var nextRules = ruleStates.SelectMany(rs =>
+                            LSPUtils.FollowUntilNextTerminalOrAction(
+                                new LSPUtils.FollowUntilNextTerminalOrActionArgs<NextRule>(
+                                    ruleState: rs,
+                                    rules: languageDefinition.Rules,
+                                    onTerminal: (rs, terminal) =>
+                                    {
+                                        string[]? possibleTypes = null;
+
+                                        if (rs.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out var nextType))
+                                            possibleTypes = new[] { nextType };
+
+                                        return new NextRule(rs, leadup, terminal.PossibleContent, possibleTypes);
+                                    },
+                                    onAction: (rs, action) => ActionParser.ParseAction(parseState, rs, action)
+                                )));
+
+            foreach (var nextRule in nextRules)
+            {
+                if (nextRule.PossibleContent.Any(content => content.Trim() != ""))
+                {
+                    yield return nextRule.WithoutEmptyPossibleContent();
+                }
+                else if (nextRule.PossibleContent.Length == 0)
+                {
+                    // if it doesn't have any possible content, but is in the middle of an identifier, return anyways
+                    if (nextRule.RuleState.Markers.ContainsKey(IAction.IDENTIFIER))
+                        yield return nextRule;
+                }
+                else if (nextRule.PossibleContent.Any(content => content.Length + leadup.Length > 2))
+                {
+                    // stop forward look to stop infinite recursion with 'Rule -> whitespace OneOf(Rule)'
+                }
+                else
+                {
+                    var nextRuleState = nextRule.RuleState.Clone().WithNextSymbol().TryBuild();
+
+                    if (nextRuleState != null)
+                        foreach (var newNextRule in GetNextRulesWithLeadup(new[] { nextRuleState }, leadup + nextRule.PossibleContent[0]))
+                            yield return newNextRule;
+                }
+            }
         }
     }
 }
