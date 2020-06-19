@@ -36,7 +36,7 @@ namespace autosupport_lsp_server.Parsing
         public override bool Equals(object? obj)
             => obj is IdentifierType type && RawTypes.SetEquals(type.RawTypes);
 
-        public override int GetHashCode() => HashCode.Combine(RawTypes);
+        public override int GetHashCode() => HashCode.Combine(RawTypes.Count());
         public override string? ToString() => RawTypes.JoinToString();
 
         public static implicit operator IdentifierType(string type) => new IdentifierType(type);
