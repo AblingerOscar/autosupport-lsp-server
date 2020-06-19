@@ -14,6 +14,11 @@ namespace autosupport_lsp_server.Parsing
         public string Environment { get; set; } = "";
         public CompletionItemKind Kind { get; set; } = CompletionItemKind.Variable;
 
+        /// <summary>
+        /// If true the identifier can be used before declared.
+        /// In C# an example would be class methods or classes themselves
+        /// </summary>
+        public bool UseBeforeDeclare { get; set; } = false;
         public IdentifierType Types { get; set; } = new IdentifierType();
 
         public IReferenceWithEnclosingRange? Declaration { get; set; }
