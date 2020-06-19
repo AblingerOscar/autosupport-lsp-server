@@ -16,9 +16,9 @@ namespace autosupport_lsp_server.Parsing
 
         public IdentifierType Types { get; set; } = new IdentifierType();
 
-        public DeclarationReference? Declaration { get; set; }
-        public Position? Implementation { get; set; }
-        public List<Reference> References { get; set; } = new List<Reference>();
+        public IReferenceWithEnclosingRange? Declaration { get; set; }
+        public IReferenceWithEnclosingRange? Implementation { get; set; }
+        public List<IReference> References { get; set; } = new List<IReference>();
 
         public Identifier() { }
 
@@ -31,10 +31,10 @@ namespace autosupport_lsp_server.Parsing
             UseBeforeDeclare = other.UseBeforeDeclare;
             Types = new IdentifierType(other.Types);
             if (other.Declaration != null)
-                Declaration = new DeclarationReference(other.Declaration);
+                Declaration = new ReferenceWithEnclosingRange(other.Declaration);
             if (other.Implementation != null)
-                Implementation = other.Implementation.Clone();
-            References = new List<Reference>(other.References);
+                Implementation = new ReferenceWithEnclosingRange(other.Implementation);
+            References = new List<IReference>(other.References);
         }
 
         public static string GlobalEnvironment => "global|";

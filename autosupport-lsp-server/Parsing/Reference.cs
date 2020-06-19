@@ -1,11 +1,12 @@
 ﻿using autosupport_lsp_server.LSP;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace autosupport_lsp_server.Parsing
 {
-    public class Reference
+    public readonly struct Reference : IReference
     {
         public Reference(Uri uri, Range range)
         {
@@ -13,10 +14,10 @@ namespace autosupport_lsp_server.Parsing
             Range = range;
         }
 
-        public Reference(DeclarationReference other)
+        public Reference(IReference other)
         {
             Uri = other.Uri;
-            Range = new Range(other.Range.Start.Clone(), other.Range.End.Clone());
+            Range = other.Range.Clone();
         }
 
         public Uri Uri { get; }
@@ -24,7 +25,7 @@ namespace autosupport_lsp_server.Parsing
 
         public override bool Equals(object? obj)
         {
-            return obj is DeclarationReference reference
+            return obj is Reference reference
                    && base.Equals(obj)
                    && EqualityComparer<Uri>.Default.Equals(Uri, reference.Uri)
                    && EqualityComparer<Range>.Default.Equals(Range, reference.Range);

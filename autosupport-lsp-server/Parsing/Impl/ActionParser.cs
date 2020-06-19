@@ -86,7 +86,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                     ruleState.Identifiers.Add(new Identifier()
                     {
                         Name = textBetweenMarkers,
-                        References = new List<Reference>() {
+                        References = new List<IReference>() {
                             new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone()))
                         },
                         Types = new IdentifierType(type),
@@ -114,10 +114,10 @@ namespace autosupport_lsp_server.Parsing.Impl
             return nextRuleState;
         }
 
-        private static DeclarationReference? GetIdentifierDeclaration(ParserInformation parseInfo, RuleState ruleState, Position startOfMarkings)
+        private static IReferenceWithEnclosingRange? GetIdentifierDeclaration(ParserInformation parseInfo, RuleState ruleState, Position startOfMarkings)
         {
             if (ruleState.ValueStore.ContainsKey(RuleStateValueStoreKey.IsDeclaration))
-                return new DeclarationReference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone()), null);
+                return new ReferenceWithEnclosingRange(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone()), null);
 
             return null;
         }

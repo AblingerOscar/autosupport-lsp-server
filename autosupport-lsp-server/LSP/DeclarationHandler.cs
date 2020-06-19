@@ -76,7 +76,7 @@ namespace autosupport_lsp_server.LSP
                 return new LocationLink()
                 {
                     OriginSelectionRange = originalReference.Range,
-                    TargetRange = identifier.Declaration.EnclosingDeclarationRange,
+                    TargetRange = identifier.Declaration.EnclosingRange,
                     TargetSelectionRange = identifier.Declaration.Range,
                     TargetUri = identifier.Declaration.Uri
 
