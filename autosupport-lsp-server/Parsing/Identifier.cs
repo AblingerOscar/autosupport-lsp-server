@@ -95,16 +95,7 @@ namespace autosupport_lsp_server.Parsing
             }
 
             public override int GetHashCode([DisallowNull] Identifier obj)
-            {
-                unchecked
-                {
-                    int hash = (int)2166136261;
-                    hash = (hash * 16777619) ^ obj.Name.GetHashCode();
-                    hash = (hash * 16777619) ^ obj.Environment.GetHashCode();
-                    hash = (hash * 16777619) ^ obj.Types.GetHashCode();
-                    return hash;
-                }
-            }
+                => HashCode.Combine(obj.Name, obj.Environment, obj.Types, obj.Kind);
         }
 
     }
