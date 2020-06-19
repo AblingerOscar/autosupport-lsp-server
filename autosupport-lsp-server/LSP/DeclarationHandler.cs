@@ -3,6 +3,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -45,11 +46,22 @@ namespace autosupport_lsp_server.LSP
 
                 var selectedIdentifiers = documentStore.Documents[uri].GetIdentifiersAtPosition(request.Position);
 
-                return selectedIdentifiers
+                return MergeWithSameIdentifiersOfOtherDocuments(selectedIdentifiers)
                     .Select(iden => TransformToLocationOrLocationLink(request.Position, iden))
                     .WhereNotNull()
                     .ToList();
             };
+        }
+
+        private IEnumerable<Identifier> MergeWithSameIdentifiersOfOtherDocuments(Identifier[] selectedIdentifiers)
+        {
+            var identifierComparer = new Identifier.IdentifierComparer();
+            return Identifier.MergeIdentifiers(
+                documentStore.Documents
+                    .Select(doc => doc.Value.ParseResult?.Identifiers)
+                    .WhereNotNull()
+                    .ToArray())
+                .Where(identifier => selectedIdentifiers.Any(selIden => identifierComparer.Equals(selIden, identifier)));
         }
 
         private LocationOrLocationLink? TransformToLocationOrLocationLink(Position requestPosition, Identifier identifier)
