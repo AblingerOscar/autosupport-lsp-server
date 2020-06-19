@@ -32,6 +32,7 @@
       <string>var</string>
       <nonTerminal referencedRule="Ws" />
       <action>declaration</action>
+      <action>implementation</action>
       <action>identifierType set Variable</action>
       <nonTerminal referencedRule="Identifier" />
       <nonTerminal referencedRule="OptionalWs"/>
