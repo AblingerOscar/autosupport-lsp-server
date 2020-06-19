@@ -35,7 +35,7 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         internal static IConcreteRuleStateBuilder ParseAction(ParserInformation parseInfo, RuleState ruleState, IAction action)
         {
-            switch(action.GetBaseCommand())
+            switch (action.GetBaseCommand())
             {
                 case IAction.IDENTIFIER:
                     return ParsePostAction(parseInfo, ruleState, action, ParseIdentifierAction);
@@ -45,6 +45,10 @@ namespace autosupport_lsp_server.Parsing.Impl
                         return ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, action.GetArguments()[1]);
 
                     return ParsePostAction(parseInfo, ruleState, action, ParseIdentifierTypeAction);
+                case IAction.IDENTIFIER_KIND:
+                    if (action.GetArguments()[0] == IAction.IDENTIFIER_KIND_ARG_SET)
+                        return ruleState.Clone().WithValue(RuleStateValueStoreKey.NextKind, action.GetArguments()[1]);
+                    throw new ArgumentException($"Given action is not supported without parameter '{IAction.IDENTIFIER_KIND_ARG_SET}': {action}");
                 case IAction.DECLARATION:
                     return ParseDeclaration(ruleState);
                 case IAction.IMPLEMENTATION:
@@ -75,8 +79,13 @@ namespace autosupport_lsp_server.Parsing.Impl
         {
             var textBetweenMarkers = parseInfo.GetTextUpToPosition(startOfMarkings);
 
-            ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out string? type);
+            CompletionItemKind? kind = null;
 
+            if (ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextKind, out string? kindStr))
+                kind = LSPUtils.String2Kind(kindStr);
+
+            ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out string? type);
+            
             var declaration = GetIdentifierDeclaration(parseInfo, ruleState, startOfMarkings);
             var implementation = GetIdentifierImplementation(parseInfo, ruleState, startOfMarkings);
 
@@ -93,6 +102,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                             new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone()))
                         },
                         Types = new IdentifierType(type),
+                        Kind = kind ?? CompletionItemKind.Variable,
                         Declaration = declaration,
                         Implementation = implementation
                     });
@@ -101,6 +111,9 @@ namespace autosupport_lsp_server.Parsing.Impl
                 {
                     identifier.References.Add(
                         new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone())));
+
+                    if (kind != null)
+                        identifier.Kind = kind.Value;
 
                     if (declaration != null)
                         identifier.Declaration = declaration;
@@ -111,6 +124,9 @@ namespace autosupport_lsp_server.Parsing.Impl
             }
 
             var nextRuleState = ruleState.Clone();
+
+            if (kind != null)
+                nextRuleState = nextRuleState.WithoutValue(RuleStateValueStoreKey.NextKind);
 
             if (type != null)
                 nextRuleState = nextRuleState.WithoutValue(RuleStateValueStoreKey.NextType);

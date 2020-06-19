@@ -14,6 +14,9 @@
         public const string IDENTIFIER_TYPE_ARG_SET = "set";
         public const string IDENTIFIER_TYPE_ARG_INNER = "inner";
 
+        public const string IDENTIFIER_KIND = "identifierKind";
+        public const string IDENTIFIER_KIND_ARG_SET = "set";
+
         public const string DECLARATION = "declaration";
         
         public const string IMPLEMENTATION = "implementation";

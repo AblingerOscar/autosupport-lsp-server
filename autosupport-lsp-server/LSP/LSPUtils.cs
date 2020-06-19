@@ -171,5 +171,71 @@ namespace autosupport_lsp_server.LSP
                 Uri = targetReference.Uri
             };
         }
+
+        public static CompletionItemKind String2Kind(string kind)
+        {
+            return kind switch
+            {
+                "Text" => CompletionItemKind.Text,
+                "Method" => CompletionItemKind.Method,
+                "Function" => CompletionItemKind.Function,
+                "Constructor" => CompletionItemKind.Constructor,
+                "Field" => CompletionItemKind.Field,
+                "Variable" => CompletionItemKind.Variable,
+                "Class" => CompletionItemKind.Class,
+                "Interface" => CompletionItemKind.Interface,
+                "Module" => CompletionItemKind.Module,
+                "Property" => CompletionItemKind.Property,
+                "Unit" => CompletionItemKind.Unit,
+                "Value" => CompletionItemKind.Value,
+                "Enum" => CompletionItemKind.Enum,
+                "Keyword" => CompletionItemKind.Keyword,
+                "Snippet" => CompletionItemKind.Snippet,
+                "Color" => CompletionItemKind.Color,
+                "File" => CompletionItemKind.File,
+                "Reference" => CompletionItemKind.Reference,
+                "Folder" => CompletionItemKind.Folder,
+                "EnumMember" => CompletionItemKind.EnumMember,
+                "Constant" => CompletionItemKind.Constant,
+                "Struct" => CompletionItemKind.Struct,
+                "Event" => CompletionItemKind.Event,
+                "Operator" => CompletionItemKind.Operator,
+                "TypeParameter" => CompletionItemKind.TypeParameter,
+                _ => throw new System.ArgumentException($"Could not convert {kind} into the correct {nameof(CompletionItemKind)}"),
+            };
+        }
+
+        public static string Kind2String(CompletionItemKind kind)
+        {
+            return kind switch
+            {
+                CompletionItemKind.Text => "Text" ,
+                CompletionItemKind.Method => "Method" ,
+                CompletionItemKind.Function => "Function" ,
+                CompletionItemKind.Constructor => "Constructor" ,
+                CompletionItemKind.Field => "Field" ,
+                CompletionItemKind.Variable => "Variable" ,
+                CompletionItemKind.Class => "Class" ,
+                CompletionItemKind.Interface => "Interface" ,
+                CompletionItemKind.Module => "Module" ,
+                CompletionItemKind.Property => "Property" ,
+                CompletionItemKind.Unit => "Unit" ,
+                CompletionItemKind.Value => "Value" ,
+                CompletionItemKind.Enum => "Enum" ,
+                CompletionItemKind.Keyword => "Keyword" ,
+                CompletionItemKind.Snippet => "Snippet" ,
+                CompletionItemKind.Color => "Color" ,
+                CompletionItemKind.File => "File" ,
+                CompletionItemKind.Reference => "Reference" ,
+                CompletionItemKind.Folder => "Folder" ,
+                CompletionItemKind.EnumMember => "EnumMember" ,
+                CompletionItemKind.Constant => "Constant" ,
+                CompletionItemKind.Struct => "Struct" ,
+                CompletionItemKind.Event => "Event" ,
+                CompletionItemKind.Operator => "Operator" ,
+                CompletionItemKind.TypeParameter => "TypeParameter" ,
+                _ => throw new System.ArgumentException($"Could not convert supposed {nameof(CompletionItemKind)} {kind} into a string"),
+            };
+        }
     }
 }
