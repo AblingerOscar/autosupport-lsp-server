@@ -16,5 +16,10 @@ namespace autosupport_lsp_server.LSP
         {
             return new Position(position.Line, position.Character);
         }
+
+        public static Range Clone(this Range range)
+        {
+            return new Range(range.Start.Clone(), range.End.Clone());
+        }
     }
 }
