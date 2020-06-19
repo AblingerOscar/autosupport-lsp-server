@@ -92,6 +92,7 @@ namespace autosupport_lsp_server.Parsing
 #pragma warning disable CS0618 // Type or member is obsolete
         public static readonly RuleStateValueStoreKey<string> NextType = new RuleStateValueStoreKey<string>(0);
         public static readonly RuleStateValueStoreKey<NoValue> IsDeclaration = new RuleStateValueStoreKey<NoValue>(1);
+        public static readonly RuleStateValueStoreKey<NoValue> IsImplementation = new RuleStateValueStoreKey<NoValue>(2);
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 

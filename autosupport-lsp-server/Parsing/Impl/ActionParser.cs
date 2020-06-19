@@ -47,6 +47,8 @@ namespace autosupport_lsp_server.Parsing.Impl
                     return ParsePostAction(parseInfo, ruleState, action, ParseIdentifierTypeAction);
                 case IAction.DECLARATION:
                     return ParseDeclaration(ruleState);
+                case IAction.IMPLEMENTATION:
+                    return ParseImplementation(ruleState);
             }
 
             throw new ArgumentException("Given action is not supported: " + action.ToString());
@@ -76,6 +78,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out string? type);
 
             var declaration = GetIdentifierDeclaration(parseInfo, ruleState, startOfMarkings);
+            var implementation = GetIdentifierImplementation(parseInfo, ruleState, startOfMarkings);
 
             if (textBetweenMarkers.Trim() != "")
             {
@@ -90,7 +93,8 @@ namespace autosupport_lsp_server.Parsing.Impl
                             new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone()))
                         },
                         Types = new IdentifierType(type),
-                        Declaration = declaration
+                        Declaration = declaration,
+                        Implementation = implementation
                     });
                 }
                 else
@@ -100,6 +104,9 @@ namespace autosupport_lsp_server.Parsing.Impl
 
                     if (declaration != null)
                         identifier.Declaration = declaration;
+
+                    if (implementation != null)
+                        identifier.Implementation = implementation;
                 }
             }
 
@@ -111,6 +118,9 @@ namespace autosupport_lsp_server.Parsing.Impl
             if (declaration != null)
                 nextRuleState = nextRuleState.WithoutValue(RuleStateValueStoreKey.IsDeclaration);
 
+            if (implementation != null)
+                nextRuleState = nextRuleState.WithoutValue(RuleStateValueStoreKey.IsImplementation);
+
             return nextRuleState;
         }
 
@@ -121,15 +131,22 @@ namespace autosupport_lsp_server.Parsing.Impl
 
             return null;
         }
+        
+        private static IReferenceWithEnclosingRange? GetIdentifierImplementation(ParserInformation parseInfo, RuleState ruleState, Position startOfMarkings)
+        {
+            if (ruleState.ValueStore.ContainsKey(RuleStateValueStoreKey.IsImplementation))
+                return new ReferenceWithEnclosingRange(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone()), null);
+
+            return null;
+        }
 
         private static IConcreteRuleStateBuilder ParseIdentifierTypeAction(ParserInformation parseInfo, RuleState ruleState, IAction action, Position startOfMarkings)
-        {
-            return ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, parseInfo.GetTextUpToPosition(startOfMarkings));
-        }
+            => ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, parseInfo.GetTextUpToPosition(startOfMarkings));
 
         private static IConcreteRuleStateBuilder ParseDeclaration(RuleState ruleState)
-        {
-            return ruleState.Clone().WithValue(RuleStateValueStoreKey.IsDeclaration);
-        }
+            => ruleState.Clone().WithValue(RuleStateValueStoreKey.IsDeclaration);
+
+        private static IConcreteRuleStateBuilder ParseImplementation(RuleState ruleState)
+            => ruleState.Clone().WithValue(RuleStateValueStoreKey.IsImplementation);
     }
 }

@@ -15,5 +15,7 @@
         public const string IDENTIFIER_TYPE_ARG_INNER = "inner";
 
         public const string DECLARATION = "declaration";
+        
+        public const string IMPLEMENTATION = "implementation";
     }
 }
