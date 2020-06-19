@@ -62,7 +62,7 @@ namespace autosupport_lsp_server.Parsing
                             existingIdentifier.Declaration = identifier.Declaration;
 
                         if (existingIdentifier.References == null)
-                            existingIdentifier.References = identifier.References;
+                            existingIdentifier.References = new List<IReference>(identifier.References);
                         else
                             existingIdentifier.References.AddRange(identifier.References);
 
