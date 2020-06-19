@@ -33,7 +33,6 @@ namespace autosupport_lsp_server.LSP
         public Task<LocationOrLocationLinks> Handle(DeclarationParams request, CancellationToken cancellationToken)
         {
             var task = new Task<LocationOrLocationLinks>(GetDeclarationLocations(request), cancellationToken);
-
             task.Start();
             return task;
         }
@@ -46,47 +45,16 @@ namespace autosupport_lsp_server.LSP
 
                 var selectedIdentifiers = documentStore.Documents[uri].GetIdentifiersAtPosition(request.Position);
 
-                return MergeWithSameIdentifiersOfOtherDocuments(selectedIdentifiers)
-                    .Select(iden => TransformToLocationOrLocationLink(request.Position, iden))
+                return LSPUtils.GetCrossDocumentsMergedIdentifiersOf(documentStore.Documents.Values, selectedIdentifiers)
+                    .Select(iden =>
+                        iden.Declaration == null
+                            ? null
+                            : LSPUtils.TransformToLocationOrLocationLink(
+                                iden.References.First(reference => request.Position.IsIn(reference.Range)),
+                                iden.Declaration,
+                                capability.LinkSupport))
                     .WhereNotNull()
                     .ToList();
-            };
-        }
-
-        private IEnumerable<Identifier> MergeWithSameIdentifiersOfOtherDocuments(Identifier[] selectedIdentifiers)
-        {
-            var identifierComparer = new Identifier.IdentifierComparer();
-            return Identifier.MergeIdentifiers(
-                documentStore.Documents
-                    .Select(doc => doc.Value.ParseResult?.Identifiers)
-                    .WhereNotNull()
-                    .ToArray())
-                .Where(identifier => selectedIdentifiers.Any(selIden => identifierComparer.Equals(selIden, identifier)));
-        }
-
-        private LocationOrLocationLink? TransformToLocationOrLocationLink(Position requestPosition, Identifier identifier)
-        {
-            if (identifier.Declaration == null)
-                return null;
-
-            if (capability.LinkSupport)
-            {
-                var originalReference = identifier.References.First(reference => requestPosition.IsIn(reference.Range));
-
-                return new LocationLink()
-                {
-                    OriginSelectionRange = originalReference.Range,
-                    TargetRange = identifier.Declaration.EnclosingRange,
-                    TargetSelectionRange = identifier.Declaration.Range,
-                    TargetUri = identifier.Declaration.Uri
-
-                };
-            }
-
-            return new Location()
-            {
-                Range = identifier.Declaration.Range,
-                Uri = identifier.Declaration.Uri
             };
         }
 

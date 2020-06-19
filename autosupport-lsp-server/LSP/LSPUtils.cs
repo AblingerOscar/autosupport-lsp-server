@@ -139,5 +139,37 @@ namespace autosupport_lsp_server.LSP
                         new FollowUntilNextTerminalOrActionArgs<T>(nrs, args.Rules, args.OnTerminal, args.OnAction)));
             };
         }
+
+        public static IEnumerable<Identifier> GetCrossDocumentsMergedIdentifiersOf(IEnumerable<Document> documents, Identifier[] selectedIdentifiers)
+        {
+            var identifierComparer = new Identifier.IdentifierComparer();
+            return Identifier.MergeIdentifiers(
+                    documents
+                        .Select(doc => (doc.ParseResult?.Identifiers))
+                        .WhereNotNull()
+                        .ToArray())
+                .Where(identifier => selectedIdentifiers.Any(selIden => identifierComparer.Equals(selIden, identifier)));
+        }
+
+        public static LocationOrLocationLink? TransformToLocationOrLocationLink(IReference originalReference, IReferenceWithEnclosingRange targetReference, bool hasLinkSupport)
+        {
+            if (hasLinkSupport)
+            {
+                return new LocationLink()
+                {
+                    OriginSelectionRange = originalReference.Range,
+                    TargetRange = targetReference.EnclosingRange,
+                    TargetSelectionRange = targetReference.Range,
+                    TargetUri = targetReference.Uri
+
+                };
+            }
+
+            return new Location()
+            {
+                Range = targetReference.Range,
+                Uri = targetReference.Uri
+            };
+        }
     }
 }
