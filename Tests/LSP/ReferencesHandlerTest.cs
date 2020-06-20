@@ -3,11 +3,13 @@ using autosupport_lsp_server.LSP;
 using autosupport_lsp_server.Parsing.Impl;
 using autosupport_lsp_server.Serialization;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Xml.Linq;
 using Xunit;
+using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace Tests.LSP
 {
@@ -60,6 +62,64 @@ var print;", 3)]
             }
 
             Assert.Empty(otherPositions);
+        }
+
+        [Fact]
+        public async void FindReferencesInMultipleDocuments()
+        {
+            // given
+            var text1 = @"Program prog1
+variable print;";
+            var text2 = @"Program prog2
+var variable = 0;";
+            var document1Uri = new Uri("file:///program1");
+            var document2Uri = new Uri("file:///program2");
+            var parser = new Parser(VarAndPrintLanguageDefintion);
+            var docStore = DocumentStore(
+                new Dictionary<string, Document>()
+                {
+                    { document1Uri.ToString(), Document.FromText(document1Uri, text1, parser) },
+                    { document2Uri.ToString(), Document.FromText(document2Uri, text2, parser) }
+                },
+                VarAndPrintLanguageDefintion,
+                parser);
+
+            var searchPosition = new Position(1, 0);
+            var expectedLocations = new List<Location>() {
+                new Location() {
+                    Uri = document1Uri,
+                    Range = new Range(searchPosition, new Position(searchPosition.Line, searchPosition.Character + 8))
+                },
+                new Location()
+                {
+                    Uri = document2Uri,
+                    Range = new Range(new Position(1, 4), new Position(1, 4 + 8))
+                }
+            };
+
+            var handler = new ReferencesHandler(docStore.Object);
+
+            // when
+            var result = await handler.Handle(ReferenceParams(document1Uri.ToString(), searchPosition), new CancellationToken());
+
+            // then
+            var resultAsList = result.ToList();
+
+            Assert.Equal(2, resultAsList.Count);
+
+            foreach (var item in result)
+            {
+                var positionIdx = expectedLocations.IndexOf(item);
+
+                Assert.NotEqual(-1, positionIdx);
+
+                Assert.Equal(expectedLocations[positionIdx].Uri, item.Uri);
+                Assert.Equal(expectedLocations[positionIdx].Range, item.Range);
+
+                expectedLocations.RemoveAt(positionIdx);
+            }
+
+            Assert.Empty(expectedLocations);
         }
     }
 }
