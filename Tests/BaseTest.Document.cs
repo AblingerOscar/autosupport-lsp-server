@@ -143,7 +143,7 @@ namespace Tests
         }
 
         protected Mock<IParseResult> ParseResult(
-                IError[]? errors = null,
+                Error[]? errors = null,
                 CompletionItem[]? possibleContinuations = null
             )
         {

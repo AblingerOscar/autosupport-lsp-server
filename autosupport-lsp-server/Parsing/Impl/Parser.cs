@@ -16,7 +16,7 @@ namespace autosupport_lsp_server.Parsing.Impl
     internal class Parser : IParser
     {
         private readonly IAutosupportLanguageDefinition languageDefinition;
-        private readonly IList<IError> errors;
+        private readonly IList<Error> errors;
         /// <summary>
         /// List of rule states that didn't continue, because the Input stopped, not because it was invalid
         /// </summary>
@@ -27,7 +27,7 @@ namespace autosupport_lsp_server.Parsing.Impl
         {
             languageDefinition = autosupportLanguageDefinition;
 
-            errors = new List<IError>();
+            errors = new List<Error>();
             unfinishedRuleStates = new List<(Position Position, RuleState RuleState)>();
             parseState = new ParseState(new Uri("nothing://"), new string[0], new Position(), new List<RuleState>(0));
         }
@@ -198,7 +198,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             return new ParseResult(
                     finished: parseState.IsAtEndOfDocument,
                     possibleContinuations: GetPossibleContinuations(),
-                    errors: new IError[0],
+                    errors: errors.ToArray(),
                     identifiers: GetAllIdentifiers()
                 );
         }

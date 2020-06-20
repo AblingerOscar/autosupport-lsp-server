@@ -8,7 +8,7 @@ namespace autosupport_lsp_server.Parsing
 
         CompletionItem[] PossibleContinuations { get; }
 
-        IError[] Errors { get; }
+        Error[] Errors { get; }
         Identifier[] Identifiers { get; }
     }
 }
