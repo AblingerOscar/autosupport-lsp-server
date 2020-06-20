@@ -45,6 +45,7 @@
       <string>;</string>
     </rule>
     <rule name="PrintStatement">
+      <action>identifierKind set Variable</action>
       <action>identifierType set Variable</action>
       <nonTerminal referencedRule="Identifier" />
       <nonTerminal referencedRule="Ws" />
