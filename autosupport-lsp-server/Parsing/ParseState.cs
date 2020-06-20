@@ -1,4 +1,5 @@
-﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+﻿using autosupport_lsp_server.LSP;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -139,7 +140,7 @@ namespace autosupport_lsp_server.Parsing
         {
             var sb = new StringBuilder();
 
-            sb.AppendLine($"Position ({Position.Line}, {Position.Character}) with {RuleStates.Count} ruleStates. ");
+            sb.AppendLine($"Position {Position.ToNiceString()} with {RuleStates.Count} ruleStates. ");
 
             if (Text.Length > Position.Line && Text[Position.Line].Length == Position.Character)
                 sb.AppendLine(Text[Position.Line] + "|");

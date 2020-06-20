@@ -38,7 +38,7 @@ namespace autosupport_lsp_server.Parsing
 
         public override string? ToString()
         {
-            return $"{Uri}: ({Range.Start.Line},{Range.Start.Character})-({Range.End.Line},{Range.End.Character})";
+            return $"{Uri}: {Range.ToNiceString()}";
         }
     }
 }

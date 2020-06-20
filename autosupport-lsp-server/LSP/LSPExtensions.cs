@@ -17,9 +17,19 @@ namespace autosupport_lsp_server.LSP
             return new Position(position.Line, position.Character);
         }
 
+        public static string ToNiceString(this Position position)
+        {
+            return $"({position.Line}, {position.Character})";
+        }
+
         public static Range Clone(this Range range)
         {
             return new Range(range.Start.Clone(), range.End.Clone());
+        }
+
+        public static string ToNiceString(this Range range)
+        {
+            return $"{range.Start}-{range.End}";
         }
     }
 }
