@@ -1,6 +1,5 @@
 ﻿using autosupport_lsp_server.Parsing;
 using autosupport_lsp_server.Symbols;
-using autosupport_lsp_server.Symbols.Impl;
 using autosupport_lsp_server.Symbols.Impl.Terminals;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
@@ -153,8 +152,8 @@ namespace autosupport_lsp_server.LSP
 
         public static LocationOrLocationLink? TransformToLocationOrLocationLink(IReference originalReference, IReferenceWithEnclosingRange targetReference, bool hasLinkSupport)
         {
-            if (hasLinkSupport)
-            {
+            if (hasLinkSupport && targetReference.EnclosingRange != null)
+            {  
                 return new LocationLink()
                 {
                     OriginSelectionRange = originalReference.Range,
