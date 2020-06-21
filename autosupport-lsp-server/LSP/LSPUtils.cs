@@ -63,17 +63,20 @@ namespace autosupport_lsp_server.LSP
 
             public Func<RuleState, ITerminal, T> OnTerminal;
             public Func<RuleState, IAction, IRuleStateBuilder> OnAction;
+            public Func<RuleState, T> OnFinishedRuleState;
 
             public FollowUntilNextTerminalOrActionArgs(
                 RuleState ruleState,
                 IDictionary<string, IRule> rules,
                 Func<RuleState, ITerminal, T> onTerminal,
-                Func<RuleState, IAction, IRuleStateBuilder> onAction)
+                Func<RuleState, IAction, IRuleStateBuilder> onAction,
+                Func<RuleState, T> onFinishedRuleState)
             {
                 RuleState = ruleState;
                 Rules = rules;
                 OnTerminal = onTerminal;
                 OnAction = onAction;
+                OnFinishedRuleState = onFinishedRuleState;
             }
         }
 
@@ -81,10 +84,10 @@ namespace autosupport_lsp_server.LSP
         public static IEnumerable<T> FollowUntilNextTerminalOrAction<T>(FollowUntilNextTerminalOrActionArgs<T> args)
         {
             if (args.RuleState.IsFinished || args.RuleState.CurrentSymbol == null)
-                return Enumerable.Empty<T>();
+                return new[] { args.OnFinishedRuleState(args.RuleState) };
 
             return args.RuleState.CurrentSymbol.Match(
-                    terminal: nt => (new T[] { args.OnTerminal(args.RuleState, nt) }),
+                    terminal: nt => (new[] { args.OnTerminal(args.RuleState, nt) }),
                     nonTerminal: FollowThroughNonTerminal(args),
                     action: FollowThroughAction(args),
                     oneOf: FollowThroughOneOf(args)
@@ -99,7 +102,8 @@ namespace autosupport_lsp_server.LSP
                         args.RuleState.Clone().WithNewRule(args.Rules[nt.ReferencedRule]).Build(),
                         args.Rules,
                         args.OnTerminal,
-                        args.OnAction));
+                        args.OnAction,
+                        args.OnFinishedRuleState));
         }
 
         private static Func<IAction, IEnumerable<T>> FollowThroughAction<T>(FollowUntilNextTerminalOrActionArgs<T> args)
@@ -112,7 +116,8 @@ namespace autosupport_lsp_server.LSP
                         ruleStateBuilder.WithNextSymbol().Build(),
                         args.Rules,
                         args.OnTerminal,
-                        args.OnAction));
+                        args.OnAction,
+                        args.OnFinishedRuleState));
             };
         }
 
@@ -134,7 +139,7 @@ namespace autosupport_lsp_server.LSP
 
                 return newRuleStates
                     .SelectMany(nrs => FollowUntilNextTerminalOrAction(
-                        new FollowUntilNextTerminalOrActionArgs<T>(nrs, args.Rules, args.OnTerminal, args.OnAction)));
+                        new FollowUntilNextTerminalOrActionArgs<T>(nrs, args.Rules, args.OnTerminal, args.OnAction, args.OnFinishedRuleState)));
             };
         }
 

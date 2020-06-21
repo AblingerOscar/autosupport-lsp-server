@@ -16,18 +16,27 @@ namespace autosupport_lsp_server.Parsing.Impl
     internal class Parser : IParser
     {
         private readonly IAutosupportLanguageDefinition languageDefinition;
-        private readonly IList<Error> errors;
         /// <summary>
         /// List of rule states that didn't continue, because the Input stopped, not because it was invalid
         /// </summary>
         private readonly IList<(Position Position, RuleState RuleState)> unfinishedRuleStates;
         private ParseState parseState;
 
+        /// <summary>
+        /// If true and the input text ends, then no error should be reported
+        /// </summary>
+        private bool endOfInputIsValidNext = false;
+        /// <summary>
+        /// All expected continuations of the last iteration, that were not successfully parsed
+        /// </summary>
+        private readonly IList<string> invalidExpectedLastInput = new List<string>();
+
+        private readonly StringBuilder logger = new StringBuilder();
+
         public Parser(IAutosupportLanguageDefinition autosupportLanguageDefinition)
         {
             languageDefinition = autosupportLanguageDefinition;
 
-            errors = new List<Error>();
             unfinishedRuleStates = new List<(Position Position, RuleState RuleState)>();
             parseState = new ParseState(new Uri("nothing://"), new string[0], new Position(), new List<RuleState>(0));
         }
@@ -41,7 +50,6 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private void SetupDefaultValues(Uri uri, string[] text)
         {
-            errors.Clear();
             unfinishedRuleStates.Clear();
             parseState = GetInitializedParseState(uri, text);
         }
@@ -63,6 +71,9 @@ namespace autosupport_lsp_server.Parsing.Impl
 
             while (!parseState.HasFinishedParsing && !parseState.IsAtEndOfDocument)
             {
+                endOfInputIsValidNext = false;
+                invalidExpectedLastInput.Clear();
+
                 foreach (var ruleState in parseState.RuleStates)
                 {
                     ParseRuleState(ruleState);
@@ -71,6 +82,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                 logger.AppendLine("===== Next step");
                 parseState.NextStep();
             }
+
             logger.AppendLine("Done.");
         }
 
@@ -82,8 +94,6 @@ namespace autosupport_lsp_server.Parsing.Impl
             var newParseStates = GetPossibleNextStatesOfSymbol(ruleState);
             ScheduleNextParseStates(newParseStates);
         }
-
-        private readonly StringBuilder logger = new StringBuilder();
 
         private IDictionary<int, IEnumerable<RuleState>>? GetPossibleNextStatesOfSymbol(RuleState ruleState)
         {
@@ -99,7 +109,8 @@ namespace autosupport_lsp_server.Parsing.Impl
                         ruleState,
                         rules: languageDefinition.Rules,
                         onTerminal: ParseTerminal,
-                        onAction: InterpretAction
+                        onAction: InterpretAction,
+                        onFinishedRuleState: rs => new Dictionary<int, IEnumerable<RuleState>>(1) { { 0, new[] { rs } } }
                     ))
                 .WhereNotNull()
                 .ToList();
@@ -119,9 +130,12 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private void ScheduleNextParseStates(IDictionary<int, IEnumerable<RuleState>>? nextParseStates)
         {
-            nextParseStates?.ForEach(parseStateKvp =>
-                parseState.ScheduleNewRuleStatesIn(parseStateKvp.Key, parseStateKvp.Value)
-            );
+            nextParseStates?.ForEach(parseStateKvp => {
+                if (parseStateKvp.Key == 0)
+                    endOfInputIsValidNext = true;
+                else
+                    parseState.ScheduleNewRuleStatesIn(parseStateKvp.Key, parseStateKvp.Value);
+            });
         }
 
         private IDictionary<int, IEnumerable<RuleState>>? ParseTerminal(RuleState ruleState, ITerminal terminal)
@@ -192,17 +206,96 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IParseResult MakeParseResult()
         {
+            var allIdentifiers = GetAllIdentifiers();
+            var possibleContinuations = GetPossibleContinuations(allIdentifiers);
+
+            var errors = parseState.RuleStates
+                .SelectMany(rs => rs.Errors);
+            var structuralError = GetStructuralParseError(possibleContinuations);
+
+            if (structuralError.HasValue)
+                errors = errors.Append(structuralError.Value);
+
             return new ParseResult(
                     finished: parseState.IsAtEndOfDocument,
-                    possibleContinuations: GetPossibleContinuations(),
+                    possibleContinuations: possibleContinuations,
                     errors: errors.ToArray(),
-                    identifiers: GetAllIdentifiers()
+                    identifiers: allIdentifiers
                 );
         }
 
-        private CompletionItem[] GetPossibleContinuations()
+        private Error? GetStructuralParseError(CompletionItem[] possibleContinuations)
         {
-            var identifiers = GetAllIdentifiers();
+            if (parseState.IsAtEndOfDocument && !parseState.HasFinishedParsing)
+            {
+                // potentially unfinished syntax: there still might be an RuleState that finished last iteration -> Text is fine as-is
+                if (!endOfInputIsValidNext && !CurrentCanRuleStatesFinishWithoutAdditionalInput())
+                {
+                    var possibleContinuationsStrings = possibleContinuations
+                        .Select(pc => pc.Kind == CompletionItemKind.Keyword ? pc.Label : pc.Kind.ToString())
+                        .Distinct()
+                        .ToList();
+
+                    return new Error(
+                            parseState.Uri,
+                            new Range(parseState.Position, GetLastPosition()),
+                            DiagnosticSeverity.Error,
+                            GetErrorMessage(possibleContinuationsStrings, "end of input")
+                        );
+                }
+                else
+                    return null;
+            }
+            else if (!parseState.IsAtEndOfDocument && parseState.HasFinishedParsing)
+            {
+                // too much text or wrong text
+                if (endOfInputIsValidNext)
+                    invalidExpectedLastInput.Add("end of input");
+
+                return new Error(
+                        parseState.Uri,
+                        new Range(parseState.Position, GetLastPosition()),
+                        DiagnosticSeverity.Error,
+                        GetErrorMessage(invalidExpectedLastInput)
+                    );
+            }
+            else
+                return null;
+        }
+
+        private bool CurrentCanRuleStatesFinishWithoutAdditionalInput()
+            => parseState.RuleStates.Any(rs =>
+                LSPUtils.FollowUntilNextTerminalOrAction(new LSPUtils.FollowUntilNextTerminalOrActionArgs<bool>(
+                    ruleState: rs,
+                    rules: languageDefinition.Rules,
+                    onTerminal: (rs, testc) => false,
+                    onAction: InterpretAction,
+                    onFinishedRuleState: rs => true
+                ))
+            .Any(b => b == true));
+
+        private string GetErrorMessage(IList<string> potentialNextContinuations)
+        {
+            string nextText = parseState.GetNextTextFromPosition(15);
+
+            if (nextText.Length == 15)
+                nextText = nextText.Substring(0, 14) + '…';
+
+            return GetErrorMessage(potentialNextContinuations, nextText);
+        }
+
+        private static string GetErrorMessage(IList<string> potentialNextContinuations, string nextText)
+        {
+            return potentialNextContinuations.Count switch
+            {
+                0 => $"Unexpected '{nextText}'",
+                1 => $"Expected '{potentialNextContinuations.First()}', but got {nextText}",
+                _ => $"Expected one of '{potentialNextContinuations.JoinToString("', '")}', but got {nextText}"
+            };
+        }
+
+        private CompletionItem[] GetPossibleContinuations(Identifier[] identifiers)
+        {
             var continuableRules = GetContinuableRules().ToList();
             var nextRules = GetNextRules().ToList();
 
@@ -356,7 +449,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             return new CompletionItem()
             {
                 Label = ident.Name,
-                Kind = ident.Kind,
+                Kind = ident.Kind ?? CompletionItemKind.Variable,
                 Detail = ident.Types.ToString(),
                 TextEdit = startPosition == null
                     ? null
@@ -437,7 +530,7 @@ namespace autosupport_lsp_server.Parsing.Impl
         {
             var nextRules = ruleStates.SelectMany(rs =>
                             LSPUtils.FollowUntilNextTerminalOrAction(
-                                new LSPUtils.FollowUntilNextTerminalOrActionArgs<NextRule>(
+                                new LSPUtils.FollowUntilNextTerminalOrActionArgs<NextRule?>(
                                     ruleState: rs,
                                     rules: languageDefinition.Rules,
                                     onTerminal: (rs, terminal) =>
@@ -449,8 +542,10 @@ namespace autosupport_lsp_server.Parsing.Impl
 
                                         return new NextRule(rs, leadup, terminal.PossibleContent, possibleTypes);
                                     },
-                                    onAction: (rs, action) => ActionParser.ParseAction(parseState, rs, action)
-                                )));
+                                    onAction: (rs, action) => ActionParser.ParseAction(parseState, rs, action),
+                                    onFinishedRuleState: rs => null
+                                )))
+                .WhereNotNull();
 
             foreach (var nextRule in nextRules)
             {

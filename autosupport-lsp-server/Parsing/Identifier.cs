@@ -1,5 +1,4 @@
-﻿using autosupport_lsp_server.LSP;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -12,13 +11,13 @@ namespace autosupport_lsp_server.Parsing
         public string Name { get; set; } = "";
         public string Documentation { get; set; } = "";
         public string Environment { get; set; } = "";
-        public CompletionItemKind Kind { get; set; } = CompletionItemKind.Variable;
+        public CompletionItemKind? Kind { get; set; } = null;
 
         /// <summary>
-        /// If true the identifier can be used before declared.
+        /// If true the identifier can be used before it is declared.
         /// In C# an example would be class methods or classes themselves
         /// </summary>
-        public bool UseBeforeDeclare { get; set; } = false;
+        public bool AllowsUseBeforeDeclared { get; set; } = false;
         public IdentifierType Types { get; set; } = new IdentifierType();
 
         public IReferenceWithEnclosingRange? Declaration { get; set; }
@@ -33,7 +32,7 @@ namespace autosupport_lsp_server.Parsing
             Documentation = other.Documentation;
             Environment = other.Environment;
             Kind = other.Kind;
-            UseBeforeDeclare = other.UseBeforeDeclare;
+            AllowsUseBeforeDeclared = other.AllowsUseBeforeDeclared;
             Types = new IdentifierType(other.Types);
             if (other.Declaration != null)
                 Declaration = new ReferenceWithEnclosingRange(other.Declaration);

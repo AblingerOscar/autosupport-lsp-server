@@ -1,10 +1,10 @@
 ﻿using autosupport_lsp_server.LSP;
-using autosupport_lsp_server.Shared;
 using autosupport_lsp_server.Symbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static autosupport_lsp_server.Parsing.Error;
 using static autosupport_lsp_server.Parsing.RuleState;
 
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
@@ -78,6 +78,7 @@ namespace autosupport_lsp_server.Parsing.Impl
         private static IRuleStateBuilder ParseIdentifierAction(ParserInformation parseInfo, RuleState ruleState, IAction action, Position startOfMarkings)
         {
             var textBetweenMarkers = parseInfo.GetTextUpToPosition(startOfMarkings);
+            var errors = new List<Error>();
 
             CompletionItemKind? kind = null;
 
@@ -85,7 +86,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                 kind = LSPUtils.String2Kind(kindStr);
 
             ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out string? type);
-            
+
             var declaration = GetIdentifierDeclaration(parseInfo, ruleState, startOfMarkings);
             var implementation = GetIdentifierImplementation(parseInfo, ruleState, startOfMarkings);
 
@@ -100,9 +101,9 @@ namespace autosupport_lsp_server.Parsing.Impl
                         Name = textBetweenMarkers,
                         References = new List<IReference>() {
                             new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone()))
-                        },
+                       },
                         Types = new IdentifierType(type),
-                        Kind = kind ?? CompletionItemKind.Variable,
+                        Kind = kind,
                         Declaration = declaration,
                         Implementation = implementation
                     });
@@ -113,13 +114,49 @@ namespace autosupport_lsp_server.Parsing.Impl
                         new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone())));
 
                     if (kind != null)
-                        identifier.Kind = kind.Value;
+                    {
+                        if (identifier.Kind == null)
+                            identifier.Kind = kind.Value;
+                        else if (kind != identifier.Kind)
+                            errors.Add(new Error(
+                                    parseInfo.Uri,
+                                    new Range(startOfMarkings, parseInfo.Position.Clone()),
+                                    DiagnosticSeverity.Error,
+                                    $"Expected {kind}, but found {identifier.Kind}"
+                                ));
+                    }
+
 
                     if (declaration != null)
-                        identifier.Declaration = declaration;
+                    {
+                        if (identifier.Declaration == null)
+                            identifier.Declaration = declaration;
+                        else if (identifier.Declaration != null)
+                            errors.Add(new Error(
+                                    parseInfo.Uri,
+                                    new Range(startOfMarkings, parseInfo.Position.Clone()),
+                                    DiagnosticSeverity.Error,
+                                    $"{identifier.Name} is already declared",
+                                    new ConnectedError(
+                                        identifier.Declaration.Uri,
+                                        identifier.Declaration.Range,
+                                        $"Declaration of {identifier.Name}"
+                                        )
+                                ));
+                    }
 
                     if (implementation != null)
-                        identifier.Implementation = implementation;
+                    {
+                        if (identifier.Implementation == null)
+                            identifier.Implementation = implementation;
+                        else if (identifier.Implementation != null)
+                            errors.Add(new Error(
+                                    parseInfo.Uri,
+                                    new Range(startOfMarkings, parseInfo.Position.Clone()),
+                                    DiagnosticSeverity.Error,
+                                    $"{identifier.Name} is already implemented"
+                                ));
+                    }
                 }
             }
 
@@ -137,7 +174,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             if (implementation != null)
                 nextRuleState = nextRuleState.WithoutValue(RuleStateValueStoreKey.IsImplementation);
 
-            return nextRuleState;
+            return nextRuleState.WithAdditionalErrors(errors);
         }
 
         private static IReferenceWithEnclosingRange? GetIdentifierDeclaration(ParserInformation parseInfo, RuleState ruleState, Position startOfMarkings)
@@ -147,7 +184,7 @@ namespace autosupport_lsp_server.Parsing.Impl
 
             return null;
         }
-        
+
         private static IReferenceWithEnclosingRange? GetIdentifierImplementation(ParserInformation parseInfo, RuleState ruleState, Position startOfMarkings)
         {
             if (ruleState.ValueStore.ContainsKey(RuleStateValueStoreKey.IsImplementation))

@@ -10,6 +10,7 @@ namespace autosupport_lsp_server.Parsing
     {
         private readonly Stack<Tuple<IRule, int>> ruleStates;
         private readonly Dictionary<string, Position> markers;
+        private readonly List<Error> errors;
 
         private IRule? CurrentRule
             => ruleStates.TryPeek(out var tuple) ? tuple.Item1 : null;
@@ -32,6 +33,7 @@ namespace autosupport_lsp_server.Parsing
             }
         }
 
+        public IReadOnlyList<Error> Errors => errors;
         public IReadOnlyDictionary<string, Position> Markers => markers;
         public RuleStateValueStore ValueStore;
 
@@ -44,6 +46,7 @@ namespace autosupport_lsp_server.Parsing
             if (rule == null)
                 throw new ArgumentException("Rule may not be null");
 
+            errors = new List<Error>();
             ruleStates = new Stack<Tuple<IRule, int>>();
             ruleStates.Push(new Tuple<IRule, int>(rule, position));
             markers = new Dictionary<string, Position>();
@@ -51,15 +54,10 @@ namespace autosupport_lsp_server.Parsing
             ValueStore = new RuleStateValueStore();
         }
 
-        /// <summary>
-        /// Returns a RuleState that indicates a finished rule (aka no CurrentRule and IsFinished is true)
-        /// The only valid next symbol for this state is EOF
-        /// </summary>
-        public static RuleState FinishedRuleState => new RuleState();
-
         private RuleState()
         {
             ruleStates = new Stack<Tuple<IRule, int>>(0);
+            errors = new List<Error>();
             markers = new Dictionary<string, Position>();
             Identifiers = Identifier.CreateIdentifierSet();
             ValueStore = new RuleStateValueStore();
@@ -71,6 +69,7 @@ namespace autosupport_lsp_server.Parsing
                 throw new ArgumentException(nameof(ruleState) + " may not be null");
 
             ruleStates = ruleState.ruleStates.Clone();
+            errors = new List<Error>(ruleState.errors);
             markers = new Dictionary<string, Position>(ruleState.markers);
             Identifiers = Identifier.CreateIdentifierSet(ruleState.Identifiers);
             ValueStore = new RuleStateValueStore(ruleState.ValueStore);
@@ -113,7 +112,7 @@ namespace autosupport_lsp_server.Parsing
             
             RuleState Build();
         }
-
+        
         private class RuleStateBuilder : IRuleStateBuilder
         {
             private readonly RuleState ruleState;
