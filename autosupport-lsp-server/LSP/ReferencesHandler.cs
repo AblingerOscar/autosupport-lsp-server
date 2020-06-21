@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace autosupport_lsp_server.LSP
 {
-    public class ReferencesHandler: IReferencesHandler
+    public class ReferencesHandler : IReferencesHandler
     {
         private readonly IDocumentStore documentStore;
 

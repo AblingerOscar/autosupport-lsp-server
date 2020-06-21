@@ -2,7 +2,7 @@
 
 namespace autosupport_lsp_server.Parsing
 {
-    public interface IReferenceWithEnclosingRange: IReference
+    public interface IReferenceWithEnclosingRange : IReference
     {
         /// <summary>
         /// Includes not only the identifier itself, but also enclosing relevant information like

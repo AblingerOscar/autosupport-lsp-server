@@ -49,7 +49,7 @@ namespace autosupport_lsp_server
             }
             return seed;
         }
- 
+
         public static IEnumerable<T> Distinct<T, K>(this IEnumerable<T> source, Func<T, K> selector, IEqualityComparer<K>? equalityComparer = null)
         {
             var passedKeys = new HashSet<K>(equalityComparer);

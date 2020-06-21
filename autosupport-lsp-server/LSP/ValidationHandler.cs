@@ -2,9 +2,7 @@
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 using ILanguageServer = OmniSharp.Extensions.LanguageServer.Server.ILanguageServer;
@@ -27,7 +25,7 @@ namespace autosupport_lsp_server.LSP
             if (documentStore.Documents.TryGetValue(uri.ToString(), out var document))
             {
                 var documentSpecificDiagnostics = GetDocumentSpecificErrors(uri, document);
-                
+
                 var allDocuments = Identifier.MergeIdentifiers(
                         documentStore.Documents.Values.Select(doc => doc.ParseResult?.Identifiers).WhereNotNull().ToArray());
                 var declarationErrors = GetDeclarationErrorsOfIdentifiersForUri(allDocuments);

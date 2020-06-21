@@ -157,7 +157,7 @@ namespace autosupport_lsp_server.LSP
         public static LocationOrLocationLink? TransformToLocationOrLocationLink(IReference originalReference, IReferenceWithEnclosingRange targetReference, bool hasLinkSupport)
         {
             if (hasLinkSupport && targetReference.EnclosingRange != null)
-            {  
+            {
                 return new LocationLink()
                 {
                     OriginSelectionRange = originalReference.Range,
@@ -212,31 +212,31 @@ namespace autosupport_lsp_server.LSP
         {
             return kind switch
             {
-                CompletionItemKind.Text => "Text" ,
-                CompletionItemKind.Method => "Method" ,
-                CompletionItemKind.Function => "Function" ,
-                CompletionItemKind.Constructor => "Constructor" ,
-                CompletionItemKind.Field => "Field" ,
-                CompletionItemKind.Variable => "Variable" ,
-                CompletionItemKind.Class => "Class" ,
-                CompletionItemKind.Interface => "Interface" ,
-                CompletionItemKind.Module => "Module" ,
-                CompletionItemKind.Property => "Property" ,
-                CompletionItemKind.Unit => "Unit" ,
-                CompletionItemKind.Value => "Value" ,
-                CompletionItemKind.Enum => "Enum" ,
-                CompletionItemKind.Keyword => "Keyword" ,
-                CompletionItemKind.Snippet => "Snippet" ,
-                CompletionItemKind.Color => "Color" ,
-                CompletionItemKind.File => "File" ,
-                CompletionItemKind.Reference => "Reference" ,
-                CompletionItemKind.Folder => "Folder" ,
-                CompletionItemKind.EnumMember => "EnumMember" ,
-                CompletionItemKind.Constant => "Constant" ,
-                CompletionItemKind.Struct => "Struct" ,
-                CompletionItemKind.Event => "Event" ,
-                CompletionItemKind.Operator => "Operator" ,
-                CompletionItemKind.TypeParameter => "TypeParameter" ,
+                CompletionItemKind.Text => "Text",
+                CompletionItemKind.Method => "Method",
+                CompletionItemKind.Function => "Function",
+                CompletionItemKind.Constructor => "Constructor",
+                CompletionItemKind.Field => "Field",
+                CompletionItemKind.Variable => "Variable",
+                CompletionItemKind.Class => "Class",
+                CompletionItemKind.Interface => "Interface",
+                CompletionItemKind.Module => "Module",
+                CompletionItemKind.Property => "Property",
+                CompletionItemKind.Unit => "Unit",
+                CompletionItemKind.Value => "Value",
+                CompletionItemKind.Enum => "Enum",
+                CompletionItemKind.Keyword => "Keyword",
+                CompletionItemKind.Snippet => "Snippet",
+                CompletionItemKind.Color => "Color",
+                CompletionItemKind.File => "File",
+                CompletionItemKind.Reference => "Reference",
+                CompletionItemKind.Folder => "Folder",
+                CompletionItemKind.EnumMember => "EnumMember",
+                CompletionItemKind.Constant => "Constant",
+                CompletionItemKind.Struct => "Struct",
+                CompletionItemKind.Event => "Event",
+                CompletionItemKind.Operator => "Operator",
+                CompletionItemKind.TypeParameter => "TypeParameter",
                 _ => throw new System.ArgumentException($"Could not convert supposed {nameof(CompletionItemKind)} {kind} into a string"),
             };
         }

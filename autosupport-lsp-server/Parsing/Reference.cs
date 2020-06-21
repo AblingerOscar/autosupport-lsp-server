@@ -1,7 +1,6 @@
 ﻿using autosupport_lsp_server.LSP;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace autosupport_lsp_server.Parsing

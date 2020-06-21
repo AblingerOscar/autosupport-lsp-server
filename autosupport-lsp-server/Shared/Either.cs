@@ -14,17 +14,17 @@ namespace autosupport_lsp_server.Shared
 
         public static implicit operator Either<TLeft, TRight>(TRight right) => new Either<TLeft, TRight>(right);
 
-        public static bool operator== (Either<TLeft, TRight> either, TLeft other) => either.isLeft && either.left!.Equals(other);
-        public static bool operator!= (Either<TLeft, TRight> either, TLeft other) => !either.isLeft || !either.left!.Equals(other);
+        public static bool operator ==(Either<TLeft, TRight> either, TLeft other) => either.isLeft && either.left!.Equals(other);
+        public static bool operator !=(Either<TLeft, TRight> either, TLeft other) => !either.isLeft || !either.left!.Equals(other);
 
-        public static bool operator== (Either<TLeft, TRight> either, TRight other) => !either.isLeft && either.right!.Equals(other);
-        public static bool operator!= (Either<TLeft, TRight> either, TRight other) => either.isLeft || !either.right!.Equals(other);
+        public static bool operator ==(Either<TLeft, TRight> either, TRight other) => !either.isLeft && either.right!.Equals(other);
+        public static bool operator !=(Either<TLeft, TRight> either, TRight other) => either.isLeft || !either.right!.Equals(other);
 
-        public static bool operator== (TLeft other, Either<TLeft, TRight> either) => either.isLeft && either.left!.Equals(other);
-        public static bool operator!= (TLeft other, Either<TLeft, TRight> either) => !either.isLeft || !either.left!.Equals(other);
+        public static bool operator ==(TLeft other, Either<TLeft, TRight> either) => either.isLeft && either.left!.Equals(other);
+        public static bool operator !=(TLeft other, Either<TLeft, TRight> either) => !either.isLeft || !either.left!.Equals(other);
 
-        public static bool operator== (TRight other, Either<TLeft, TRight> either) => !either.isLeft && either.right!.Equals(other);
-        public static bool operator!= (TRight other, Either<TLeft, TRight> either) => either.isLeft || !either.right!.Equals(other);
+        public static bool operator ==(TRight other, Either<TLeft, TRight> either) => !either.isLeft && either.right!.Equals(other);
+        public static bool operator !=(TRight other, Either<TLeft, TRight> either) => either.isLeft || !either.right!.Equals(other);
 
 #pragma warning disable CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
         public Either(TLeft left)

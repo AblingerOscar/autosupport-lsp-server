@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace autosupport_lsp_server.Parsing.Impl
 {
-    public class CompletionItemPrioritizationItem: IComparable<CompletionItemPrioritizationItem>
+    public class CompletionItemPrioritizationItem : IComparable<CompletionItemPrioritizationItem>
     {
         public CompletionItemPrioritizationItem(ContinuationType continuationSource, CompletionItem completionItem, bool? isExpectedType = null)
         {
