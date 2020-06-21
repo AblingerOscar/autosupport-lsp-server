@@ -90,25 +90,29 @@ namespace autosupport_lsp_server.Parsing
         }
 
 #pragma warning disable CS0618 // Type or member is obsolete
-        public static readonly RuleStateValueStoreKey<string> NextType = new RuleStateValueStoreKey<string>(0);
-        public static readonly RuleStateValueStoreKey<string> NextKind = new RuleStateValueStoreKey<string>(1);
-        public static readonly RuleStateValueStoreKey<NoValue> IsDeclaration = new RuleStateValueStoreKey<NoValue>(2);
-        public static readonly RuleStateValueStoreKey<NoValue> IsImplementation = new RuleStateValueStoreKey<NoValue>(3);
+        public static readonly RuleStateValueStoreKey<string> NextType = new RuleStateValueStoreKey<string>(0, nameof(NextType));
+        public static readonly RuleStateValueStoreKey<string> NextKind = new RuleStateValueStoreKey<string>(1, nameof(NextKind));
+        public static readonly RuleStateValueStoreKey<NoValue> IsDeclaration = new RuleStateValueStoreKey<NoValue>(2, nameof(IsDeclaration));
+        public static readonly RuleStateValueStoreKey<NoValue> IsImplementation = new RuleStateValueStoreKey<NoValue>(3, nameof(IsImplementation));
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 
-    internal struct RuleStateValueStoreKey<T>: IRuleStateValueStoreKey
+    internal readonly struct RuleStateValueStoreKey<T>: IRuleStateValueStoreKey
     {
         private readonly byte id;
+        private readonly string name;
 
         [Obsolete("only use the static methods of " + nameof(RuleStateValueStoreKey))]
-        internal RuleStateValueStoreKey(byte id)
+        internal RuleStateValueStoreKey(byte id, string name)
         {
             this.id = id;
+            this.name = name;
         }
 
         public override bool Equals(object? obj) => obj is RuleStateValueStoreKey<T> that && id == that.id;
 
         public override int GetHashCode() => id;
+
+        public override string? ToString() => name;
     }
 }
