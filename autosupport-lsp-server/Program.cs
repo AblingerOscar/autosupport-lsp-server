@@ -17,7 +17,7 @@ namespace autosupport_lsp_server
             if (!TrySetupDocumentStore(args, out IDocumentStore? documentStore))
             {
                 Console.WriteLine("[ERROR]: The server could not be set up: There seems to be something wrong with your languageDefinition file");
-                return; // TODO: somehow tell client that it failed and will always fail
+                return; // TODO: somehow tell client that it failed and will always fail (e.g. starting a server that only sends an error over window/showMessage)
             }
 
             if (documentStore == null)
@@ -37,6 +37,7 @@ namespace autosupport_lsp_server
                     .WithHandler<AutocompletionHandler>()
                     .WithHandler<ReferencesHandler>()
                     .WithHandler<DeclarationHandler>()
+                    .WithHandler<ImplementationHandler>()
                     ;
             });
 
