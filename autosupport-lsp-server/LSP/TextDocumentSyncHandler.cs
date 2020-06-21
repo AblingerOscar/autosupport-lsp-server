@@ -14,11 +14,13 @@ namespace autosupport_lsp_server.LSP
     {
         private readonly TextDocumentSyncKind syncKind = TextDocumentSyncKind.Incremental;
         private SynchronizationCapability? capability;
-        private IDocumentStore documentStore;
+        private readonly IDocumentStore documentStore;
+        private readonly ValidationHandler validationHandler;
 
-        public TextDocumentSyncHandler(IDocumentStore documentStore)
+        public TextDocumentSyncHandler(IDocumentStore documentStore, ValidationHandler validationHandler)
         {
             this.documentStore = documentStore;
+            this.validationHandler = validationHandler;
         }
 
         public TextDocumentChangeRegistrationOptions GetRegistrationOptions()
@@ -35,7 +37,22 @@ namespace autosupport_lsp_server.LSP
             return new TextDocumentAttributes(uri, documentStore.LanguageDefinition.LanguageId);
         }
 
-        public async Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken)
+        public Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken)
+        {
+            var task = new Task<Unit>(() =>
+            {
+                ApplyChangeToDocument(request, cancellationToken);
+                validationHandler.RunValidation(request.TextDocument.Uri, cancellationToken);
+                return Unit.Value;
+            },
+            cancellationToken);
+
+            task.Start();
+
+            return task;
+        }
+
+        private Unit ApplyChangeToDocument(DidChangeTextDocumentParams request, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -63,14 +80,27 @@ namespace autosupport_lsp_server.LSP
             return Unit.Value;
         }
 
-        public async Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
+        public Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
         {
-            var documentUri = request.TextDocument.Uri;
-            documentStore.Documents.Add(
-                documentUri.ToString(),
-                Document.FromText(documentUri, request.TextDocument.Text, documentStore.CreateDefaultParser()));
+            var task = new Task<Unit>(() =>
+                {
+                    var documentUri = request.TextDocument.Uri;
+                    if (documentStore.Documents.TryGetValue(documentUri.ToString(), out var document))
+                        document.UpdateText(request.TextDocument.Text);
+                    else
+                        documentStore.Documents.Add(
+                            documentUri.ToString(),
+                            Document.FromText(documentUri, request.TextDocument.Text, documentStore.CreateDefaultParser()));
 
-            return Unit.Value;
+                    validationHandler.RunValidation(documentUri, cancellationToken);
+
+                    return Unit.Value;
+                },
+                cancellationToken);
+
+            task.Start();
+
+            return task;
         }
 
         public Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken)
@@ -80,7 +110,15 @@ namespace autosupport_lsp_server.LSP
 
         public Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken)
         {
-            return Unit.Task;
+            var task = new Task<Unit>(() =>
+            {
+                validationHandler.RunValidation(request.TextDocument.Uri, cancellationToken);
+
+                return Unit.Value;
+            }, cancellationToken);
+
+            task.Start();
+            return task;
         }
 
         public void SetCapability(SynchronizationCapability capability)

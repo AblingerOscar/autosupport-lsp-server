@@ -47,6 +47,7 @@ namespace autosupport_lsp_server
         private static void RegisterServices(IServiceCollection serviceCollection, IDocumentStore documentStore)
         {
             serviceCollection.AddSingleton(documentStore);
+            serviceCollection.AddSingleton<ValidationHandler>();
         }
 
         private static bool TrySetupDocumentStore(string[] args, out IDocumentStore? documentStore)

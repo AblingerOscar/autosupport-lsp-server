@@ -4,6 +4,13 @@ namespace autosupport_lsp_server.LSP
 {
     public static class LSPExtensions
     {
+        public static bool IsBefore(this Position pos1, Position pos2)
+        {
+            return pos1.Line != pos2.Line
+                ? pos1.Line < pos2.Line
+                : pos1.Character < pos2.Character;
+        }
+
         public static bool IsIn(this Position position, Range range)
         {
             return range.Start.Line <= position.Line

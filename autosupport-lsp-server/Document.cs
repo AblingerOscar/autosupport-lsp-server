@@ -22,6 +22,12 @@ namespace autosupport_lsp_server
 
         private readonly IParser parser;
 
+        internal void UpdateText(string text)
+        {
+            Text = ConvertTextToList(text);
+            Reparse();
+        }
+
         internal void ApplyChange(TextDocumentContentChangeEvent change)
         {
             if (change.Range == null)
