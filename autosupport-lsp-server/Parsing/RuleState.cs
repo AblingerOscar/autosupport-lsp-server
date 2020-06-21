@@ -2,7 +2,9 @@
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using static autosupport_lsp_server.Parsing.RuleStateValueStoreKey;
+using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace autosupport_lsp_server.Parsing
 {
@@ -38,6 +40,11 @@ namespace autosupport_lsp_server.Parsing
         public RuleStateValueStore ValueStore;
 
         public ISet<Identifier> Identifiers { get; private set; }
+
+        public Range[]? FoldingRanges
+            => ValueStore.TryGetValue(RuleStateValueStoreKey.FoldingRanges, out var ranges)
+                ? ranges.ToArray()
+                : null;
 
         public RuleState(IRule rule, int position = 0)
         {
@@ -105,14 +112,15 @@ namespace autosupport_lsp_server.Parsing
             IRuleStateBuilder WithNewRule(IRule rule);
             IRuleStateBuilder WithMarker(string markerName, Position position);
             IRuleStateBuilder WithoutMarker(string markerName);
+            IRuleStateBuilder WithUpdatedValue<V>(RuleStateValueStoreKey<V> key, V value) where V : class;
             IRuleStateBuilder WithValue<V>(RuleStateValueStoreKey<V> key, V value) where V : class;
             IRuleStateBuilder WithValue(RuleStateValueStoreKey<NoValue> key);
             IRuleStateBuilder WithoutValue(IRuleStateValueStoreKey key);
             IRuleStateBuilder WithAdditionalErrors(IEnumerable<Error> errors);
-            
+
             RuleState Build();
         }
-        
+
         private class RuleStateBuilder : IRuleStateBuilder
         {
             private readonly RuleState ruleState;
@@ -160,7 +168,7 @@ namespace autosupport_lsp_server.Parsing
                 return this;
             }
 
-            public  IRuleStateBuilder WithMarker(string markerName, Position position)
+            public IRuleStateBuilder WithMarker(string markerName, Position position)
             {
                 if (!ruleState.IsFinished)
                     ruleState.markers.Add(markerName, new Position(position.Line, position.Character));
@@ -172,6 +180,14 @@ namespace autosupport_lsp_server.Parsing
             {
                 if (!ruleState.IsFinished)
                     ruleState.markers.Remove(markerName);
+
+                return this;
+            }
+
+            public IRuleStateBuilder WithUpdatedValue<V>(RuleStateValueStoreKey<V> key, V value) where V : class
+            {
+                if (!ruleState.IsFinished)
+                    ruleState.ValueStore.Update(key, value);
 
                 return this;
             }

@@ -23,13 +23,9 @@ namespace autosupport_lsp_server.Parsing.Impl
         private ParseState parseState;
 
         /// <summary>
-        /// If true and the input text ends, then no error should be reported
+        /// List of RuleStates that finished last iteration
         /// </summary>
-        private bool endOfInputIsValidNext = false;
-        /// <summary>
-        /// All expected continuations of the last iteration, that were not successfully parsed
-        /// </summary>
-        private readonly IList<string> invalidExpectedLastInput = new List<string>();
+        private IList<RuleState> ruleStatesThatFinishedLastIteration;
 
         private readonly StringBuilder logger = new StringBuilder();
 
@@ -39,6 +35,7 @@ namespace autosupport_lsp_server.Parsing.Impl
 
             unfinishedRuleStates = new List<(Position Position, RuleState RuleState)>();
             parseState = new ParseState(new Uri("nothing://"), new string[0], new Position(), new List<RuleState>(0));
+            ruleStatesThatFinishedLastIteration = new List<RuleState>();
         }
 
         public IParseResult Parse(Uri uri, string[] text)
@@ -71,8 +68,7 @@ namespace autosupport_lsp_server.Parsing.Impl
 
             while (!parseState.HasFinishedParsing && !parseState.IsAtEndOfDocument)
             {
-                endOfInputIsValidNext = false;
-                invalidExpectedLastInput.Clear();
+                ruleStatesThatFinishedLastIteration.Clear();
 
                 foreach (var ruleState in parseState.RuleStates)
                 {
@@ -130,9 +126,10 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private void ScheduleNextParseStates(IDictionary<int, IEnumerable<RuleState>>? nextParseStates)
         {
-            nextParseStates?.ForEach(parseStateKvp => {
+            nextParseStates?.ForEach(parseStateKvp =>
+            {
                 if (parseStateKvp.Key == 0)
-                    endOfInputIsValidNext = true;
+                    parseStateKvp.Value.ForEach(ruleStatesThatFinishedLastIteration.Add);
                 else
                     parseState.ScheduleNewRuleStatesIn(parseStateKvp.Key, parseStateKvp.Value);
             });
@@ -220,7 +217,12 @@ namespace autosupport_lsp_server.Parsing.Impl
                     finished: parseState.IsAtEndOfDocument,
                     possibleContinuations: possibleContinuations,
                     errors: errors.ToArray(),
-                    identifiers: allIdentifiers
+                    identifiers: allIdentifiers,
+                    foldingRanges: parseState.RuleStates
+                        .Union(ruleStatesThatFinishedLastIteration)
+                        .SelectMany(rs => rs.FoldingRanges ?? Enumerable.Empty<Range>())
+                        .WhereNotNull()
+                        .ToArray()
                 );
         }
 
@@ -229,7 +231,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             if (parseState.IsAtEndOfDocument && !parseState.HasFinishedParsing)
             {
                 // potentially unfinished syntax: there still might be an RuleState that finished last iteration -> Text is fine as-is
-                if (!endOfInputIsValidNext && !CurrentCanRuleStatesFinishWithoutAdditionalInput())
+                if (ruleStatesThatFinishedLastIteration.Count != 0 && !CurrentCanRuleStatesFinishWithoutAdditionalInput())
                 {
                     var possibleContinuationsStrings = possibleContinuations
                         .Select(pc => pc.Kind == CompletionItemKind.Keyword ? pc.Label : pc.Kind.ToString())
@@ -249,14 +251,13 @@ namespace autosupport_lsp_server.Parsing.Impl
             else if (!parseState.IsAtEndOfDocument && parseState.HasFinishedParsing)
             {
                 // too much text or wrong text
-                if (endOfInputIsValidNext)
-                    invalidExpectedLastInput.Add("end of input");
-
                 return new Error(
                         parseState.Uri,
                         new Range(parseState.Position, GetLastPosition()),
                         DiagnosticSeverity.Error,
-                        GetErrorMessage(invalidExpectedLastInput)
+                        ruleStatesThatFinishedLastIteration.Count != 0
+                            ? GetErrorMessage(new[] { "end of input" })
+                            : GetErrorMessage(new string[0])
                     );
             }
             else

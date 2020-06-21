@@ -1,12 +1,14 @@
-﻿using System;
+﻿using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using static autosupport_lsp_server.Parsing.RuleStateValueStoreKey;
+using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace autosupport_lsp_server.Parsing
 {
-    internal class RuleStateValueStore: IEnumerable<KeyValuePair<IRuleStateValueStoreKey, object>>, IEnumerable
+    internal class RuleStateValueStore : IEnumerable<KeyValuePair<IRuleStateValueStoreKey, object>>, IEnumerable
     {
         private readonly IDictionary<IRuleStateValueStoreKey, object> values = new Dictionary<IRuleStateValueStoreKey, object>();
 
@@ -27,6 +29,11 @@ namespace autosupport_lsp_server.Parsing
         public void Add<T>(RuleStateValueStoreKey<T> key, T value) where T : class
         {
             values.Add(key, value);
+        }
+
+        public void Update<T>(RuleStateValueStoreKey<T> key, T value) where T : class
+        {
+            values[key] = value;
         }
 
         public void Clear()
@@ -84,8 +91,10 @@ namespace autosupport_lsp_server.Parsing
 
     internal interface IRuleStateValueStoreKey { }
 
-    internal static class RuleStateValueStoreKey {
-        public struct NoValue {
+    internal static class RuleStateValueStoreKey
+    {
+        public struct NoValue
+        {
             public static NoValue Instance = new NoValue();
         }
 
@@ -94,10 +103,12 @@ namespace autosupport_lsp_server.Parsing
         public static readonly RuleStateValueStoreKey<string> NextKind = new RuleStateValueStoreKey<string>(1, nameof(NextKind));
         public static readonly RuleStateValueStoreKey<NoValue> IsDeclaration = new RuleStateValueStoreKey<NoValue>(2, nameof(IsDeclaration));
         public static readonly RuleStateValueStoreKey<NoValue> IsImplementation = new RuleStateValueStoreKey<NoValue>(3, nameof(IsImplementation));
+        public static readonly RuleStateValueStoreKey<Stack<Position>> FoldingStarts = new RuleStateValueStoreKey<Stack<Position>>(4, nameof(FoldingStarts));
+        public static readonly RuleStateValueStoreKey<IList<Range>> FoldingRanges = new RuleStateValueStoreKey<IList<Range>>(5, nameof(FoldingRanges));
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 
-    internal readonly struct RuleStateValueStoreKey<T>: IRuleStateValueStoreKey
+    internal readonly struct RuleStateValueStoreKey<T> : IRuleStateValueStoreKey
     {
         private readonly byte id;
         private readonly string name;

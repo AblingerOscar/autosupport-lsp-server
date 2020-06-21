@@ -53,6 +53,8 @@ namespace autosupport_lsp_server.Parsing.Impl
                     return ParseDeclaration(ruleState);
                 case IAction.IMPLEMENTATION:
                     return ParseImplementation(ruleState);
+                case IAction.FOLDING:
+                    return ParseFolding(parseInfo, ruleState, action);
             }
 
             throw new ArgumentException("Given action is not supported: " + action.ToString());
@@ -201,5 +203,87 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private static IRuleStateBuilder ParseImplementation(RuleState ruleState)
             => ruleState.Clone().WithValue(RuleStateValueStoreKey.IsImplementation);
+
+        private static IRuleStateBuilder ParseFolding(ParserInformation parseInfo, RuleState ruleState, IAction action)
+        {
+            if (action.GetArguments()[0] == IAction.FOLDING_START)
+            {
+                return ParseFoldingStart(parseInfo, ruleState);
+            }
+            else if (action.GetArguments()[0] == IAction.FOLDING_END)
+            {
+                return ParseFoldingEnd(parseInfo, ruleState, action);
+            }
+
+            throw new ArgumentException($"Given action only supports '{IAction.FOLDING_START}' and '{IAction.FOLDING_END}': {action}");
+        }
+
+        private static IRuleStateBuilder ParseFoldingStart(ParserInformation parseInfo, RuleState ruleState)
+        {
+            if (ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.FoldingStarts, out var positions))
+            {
+                var newPositions = positions.Clone();
+                newPositions.Push(parseInfo.Position.Clone());
+
+                return ruleState.Clone().WithUpdatedValue(RuleStateValueStoreKey.FoldingStarts, newPositions);
+            }
+            else
+            {
+                var newPositions = new Stack<Position>();
+                newPositions.Push(parseInfo.Position.Clone());
+
+                return ruleState.Clone().WithValue(RuleStateValueStoreKey.FoldingStarts, newPositions);
+            }
+        }
+
+        private static IRuleStateBuilder ParseFoldingEnd(ParserInformation parseInfo, RuleState ruleState, IAction action)
+        {
+            if (!ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.FoldingStarts, out var positions))
+                throw new InvalidOperationException($"Folding end found without matching start: {action}");
+
+            var start = positions.Peek();
+            var nextRuleState = ruleState.Clone();
+
+            nextRuleState = RemoveTopPosition(positions, nextRuleState);
+
+            return AddRangeToRuleState(parseInfo, ruleState, start, nextRuleState);
+        }
+
+        private static IRuleStateBuilder RemoveTopPosition(Stack<Position> positions, IRuleStateBuilder nextRuleState)
+        {
+            if (positions.Count == 1)
+            {
+                nextRuleState = nextRuleState.WithoutValue(RuleStateValueStoreKey.FoldingStarts);
+            }
+            else
+            {
+                var newPositions = positions.Clone();
+                newPositions.Pop();
+
+                nextRuleState = nextRuleState.WithUpdatedValue(
+                    RuleStateValueStoreKey.FoldingStarts,
+                    newPositions
+                    );
+            }
+
+            return nextRuleState;
+        }
+
+        private static IRuleStateBuilder AddRangeToRuleState(ParserInformation parseInfo, RuleState ruleState, Position start, IRuleStateBuilder nextRuleState)
+        {
+            if (ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.FoldingRanges, out var ranges))
+            {
+                var newRanges = new List<Range>(ranges)
+                    {
+                        new Range(start.Clone(), parseInfo.Position.Clone())
+                    };
+                return nextRuleState.WithUpdatedValue(RuleStateValueStoreKey.FoldingRanges, newRanges);
+            }
+            else
+                return nextRuleState.WithValue(RuleStateValueStoreKey.FoldingRanges, new List<Range>()
+                    {
+                        new Range(start.Clone(), parseInfo.Position.Clone())
+                    });
+        }
     }
 }

@@ -18,7 +18,11 @@
         public const string IDENTIFIER_KIND_ARG_SET = "set";
 
         public const string DECLARATION = "declaration";
-        
+
         public const string IMPLEMENTATION = "implementation";
+
+        public const string FOLDING = "folding";
+        public const string FOLDING_START = "start";
+        public const string FOLDING_END = "end";
     }
 }
