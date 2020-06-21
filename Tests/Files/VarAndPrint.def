@@ -7,6 +7,8 @@
     <rule name="S">
       <string>Program</string>
       <nonTerminal referencedRule="Ws"/>
+      <action>declaration</action>
+      <action>implementation</action>
       <action>identifierKind set Module</action>
       <action>identifierType set Program</action>
       <nonTerminal referencedRule="Identifier"/>
