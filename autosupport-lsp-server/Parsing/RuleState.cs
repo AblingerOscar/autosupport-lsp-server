@@ -11,10 +11,20 @@ namespace autosupport_lsp_server.Parsing
         private readonly Stack<Tuple<IRule, int>> ruleStates;
         private readonly Dictionary<string, Position> markers;
 
-        public IRule CurrentRule => ruleStates.Peek().Item1;
-        public ISymbol? CurrentSymbol => ruleStates.Peek().Item2 >= CurrentRule.Symbols.Count
-            ? null
-            : CurrentRule.Symbols[ruleStates.Peek().Item2];
+        private IRule? CurrentRule
+            => ruleStates.TryPeek(out var tuple) ? tuple.Item1 : null;
+        public ISymbol? CurrentSymbol {
+            get {
+                if (!ruleStates.TryPeek(out var tuple))
+                    return null;
+
+                var (rule, idx) = tuple;
+
+                return idx >= rule.Symbols.Count
+                    ? null
+                    : rule.Symbols[idx];
+            }
+        }
 
         public bool IsFinished {
             get {
@@ -66,14 +76,14 @@ namespace autosupport_lsp_server.Parsing
             ValueStore = new RuleStateValueStore(ruleState.ValueStore);
         }
 
-        public IConcreteRuleStateBuilder Clone() => new RuleStateBuilder(this);
+        public IRuleStateBuilder Clone() => new RuleStateBuilder(this);
 
         public override string? ToString()
         {
             if (IsFinished)
-                return $"finished with {ruleStates.Count} rulestates";
+                return $"finished";
             else
-                return $"{CurrentSymbol?.ToString() ?? "<no symbol>"} in rule {CurrentRule}";
+                return $"{CurrentSymbol?.ToString() ?? "<no symbol>"} in rule {CurrentRule?.ToString() ?? "<no rule>"}";
         }
 
         public override bool Equals(object? obj)
@@ -90,39 +100,32 @@ namespace autosupport_lsp_server.Parsing
             return HashCode.Combine(ruleStates, markers, ValueStore, Identifiers);
         }
 
-        internal interface IRuleStateBuilder<T>
+        internal interface IRuleStateBuilder
         {
-            INullableRuleStateBuilder WithNextSymbol();
-            T WithNewRule(IRule rule);
-            T WithMarker(string markerName, Position position);
-            T WithoutMarker(string markerName, Position? position = null);
-            IConcreteRuleStateBuilder WithValue<V>(RuleStateValueStoreKey<V> key, V value) where V : class;
-            IConcreteRuleStateBuilder WithValue(RuleStateValueStoreKey<NoValue> key);
-            IConcreteRuleStateBuilder WithoutValue(IRuleStateValueStoreKey key);
-        }
-
-        internal interface IConcreteRuleStateBuilder : IRuleStateBuilder<IConcreteRuleStateBuilder>
-        {
+            IRuleStateBuilder WithNextSymbol();
+            IRuleStateBuilder WithNewRule(IRule rule);
+            IRuleStateBuilder WithMarker(string markerName, Position position);
+            IRuleStateBuilder WithoutMarker(string markerName);
+            IRuleStateBuilder WithValue<V>(RuleStateValueStoreKey<V> key, V value) where V : class;
+            IRuleStateBuilder WithValue(RuleStateValueStoreKey<NoValue> key);
+            IRuleStateBuilder WithoutValue(IRuleStateValueStoreKey key);
+            IRuleStateBuilder WithAdditionalErrors(IEnumerable<Error> errors);
+            
             RuleState Build();
         }
 
-        internal interface INullableRuleStateBuilder : IRuleStateBuilder<INullableRuleStateBuilder>
+        private class RuleStateBuilder : IRuleStateBuilder
         {
-            RuleState? TryBuild();
-        }
-
-        private class RuleStateBuilder : IConcreteRuleStateBuilder, INullableRuleStateBuilder
-        {
-            private RuleState? ruleState;
+            private readonly RuleState ruleState;
 
             public RuleStateBuilder(RuleState ruleState)
             {
                 this.ruleState = new RuleState(ruleState);
             }
 
-            public INullableRuleStateBuilder WithNextSymbol()
+            public IRuleStateBuilder WithNextSymbol()
             {
-                if (ruleState == null)
+                if (ruleState.IsFinished)
                     return this;
 
                 Tuple<IRule, int>? current;
@@ -139,9 +142,7 @@ namespace autosupport_lsp_server.Parsing
                     // instead move up a level
                 } while (!isEmpty && newIndex >= current!.Item1.Symbols.Count);
 
-                if (isEmpty)
-                    ruleState = null;
-                else
+                if (!isEmpty)
                     ruleState.ruleStates.Push(new Tuple<IRule, int>(current!.Item1, newIndex));
 
                 return this;
@@ -149,85 +150,63 @@ namespace autosupport_lsp_server.Parsing
 
             public RuleState Build()
             {
-                if (ruleState == null)
-                    throw new ArgumentException("When using Build() ruleState may never be null… use TryBuild instead");
-
                 return ruleState;
             }
 
-            public RuleState? TryBuild()
+            public IRuleStateBuilder WithNewRule(IRule rule)
             {
-                return ruleState;
-            }
+                if (!ruleState.IsFinished)
+                    ruleState.ruleStates.Push(new Tuple<IRule, int>(rule, 0));
 
-            RuleStateBuilder WithNewRule(IRule rule)
-            {
-                if (ruleState == null)
-                    return this;
-
-                ruleState.ruleStates.Push(new Tuple<IRule, int>(rule, 0));
                 return this;
             }
 
-            IConcreteRuleStateBuilder IRuleStateBuilder<IConcreteRuleStateBuilder>.WithNewRule(IRule rule) => WithNewRule(rule);
-            INullableRuleStateBuilder IRuleStateBuilder<INullableRuleStateBuilder>.WithNewRule(IRule rule) => WithNewRule(rule);
-
-            private RuleStateBuilder WithMarker(string markerName, Position position)
+            public  IRuleStateBuilder WithMarker(string markerName, Position position)
             {
-                if (ruleState != null)
+                if (!ruleState.IsFinished)
                     ruleState.markers.Add(markerName, new Position(position.Line, position.Character));
 
                 return this;
             }
 
-            IConcreteRuleStateBuilder IRuleStateBuilder<IConcreteRuleStateBuilder>.WithMarker(string markerName, Position position) => WithMarker(markerName, position);
-            INullableRuleStateBuilder IRuleStateBuilder<INullableRuleStateBuilder>.WithMarker(string markerName, Position position) => WithMarker(markerName, position);
-
-            private RuleStateBuilder WithoutMarker(string markerName, Position? position)
+            public IRuleStateBuilder WithoutMarker(string markerName)
             {
-                if (ruleState != null
-                    && (position == null
-                        || (ruleState.markers.TryGetValue(markerName, out var actualPosition) && actualPosition == position)))
+                if (!ruleState.IsFinished)
                     ruleState.markers.Remove(markerName);
 
                 return this;
             }
 
-            IConcreteRuleStateBuilder IRuleStateBuilder<IConcreteRuleStateBuilder>.WithoutMarker(string markerName, Position? position) => WithoutMarker(markerName, position);
-            INullableRuleStateBuilder IRuleStateBuilder<INullableRuleStateBuilder>.WithoutMarker(string markerName, Position? position) => WithoutMarker(markerName, position);
-
-            private RuleStateBuilder WithValue<T>(RuleStateValueStoreKey<T> key, T value) where T : class
+            public IRuleStateBuilder WithValue<T>(RuleStateValueStoreKey<T> key, T value) where T : class
             {
-                if (ruleState != null)
-                    ruleState.ValueStore.Add<T>(key, value);
+                if (!ruleState.IsFinished)
+                    ruleState.ValueStore.Add(key, value);
 
                 return this;
             }
 
-            IConcreteRuleStateBuilder IRuleStateBuilder<IConcreteRuleStateBuilder>.WithValue<T>(RuleStateValueStoreKey<T> key, T value) => WithValue(key, value);
-            IConcreteRuleStateBuilder IRuleStateBuilder<INullableRuleStateBuilder>.WithValue<T>(RuleStateValueStoreKey<T> key, T value) => WithValue(key, value);
-
-            private RuleStateBuilder WithValue(RuleStateValueStoreKey<NoValue> key)
+            public IRuleStateBuilder WithValue(RuleStateValueStoreKey<NoValue> key)
             {
-                if (ruleState != null)
+                if (!ruleState.IsFinished)
                     ruleState.ValueStore.Add(key);
 
                 return this;
             }
 
-            IConcreteRuleStateBuilder IRuleStateBuilder<IConcreteRuleStateBuilder>.WithValue(RuleStateValueStoreKey<NoValue> key) => WithValue(key);
-            IConcreteRuleStateBuilder IRuleStateBuilder<INullableRuleStateBuilder>.WithValue(RuleStateValueStoreKey<NoValue> key) => WithValue(key);
-
-            private RuleStateBuilder WithoutValue(IRuleStateValueStoreKey key)
+            public IRuleStateBuilder WithoutValue(IRuleStateValueStoreKey key)
             {
-                if (ruleState != null)
+                if (!ruleState.IsFinished)
                     ruleState.ValueStore.Remove(key);
 
                 return this;
             }
 
-            IConcreteRuleStateBuilder IRuleStateBuilder<IConcreteRuleStateBuilder>.WithoutValue(IRuleStateValueStoreKey key) => WithoutValue(key);
-            IConcreteRuleStateBuilder IRuleStateBuilder<INullableRuleStateBuilder>.WithoutValue(IRuleStateValueStoreKey key) => WithoutValue(key);
+            public IRuleStateBuilder WithAdditionalErrors(IEnumerable<Error> errors)
+            {
+                ruleState.errors.AddRange(errors);
+
+                return this;
+            }
         }
     }
 }

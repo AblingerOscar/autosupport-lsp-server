@@ -31,9 +31,9 @@ namespace autosupport_lsp_server.Parsing.Impl
         }
 
 
-        private delegate IConcreteRuleStateBuilder SpecificPostActionParser(ParserInformation parseInfo, RuleState ruleState, IAction action, Position startOfMarkings);
+        private delegate IRuleStateBuilder SpecificPostActionParser(ParserInformation parseInfo, RuleState ruleState, IAction action, Position startOfMarkings);
 
-        internal static IConcreteRuleStateBuilder ParseAction(ParserInformation parseInfo, RuleState ruleState, IAction action)
+        internal static IRuleStateBuilder ParseAction(ParserInformation parseInfo, RuleState ruleState, IAction action)
         {
             switch (action.GetBaseCommand())
             {
@@ -58,7 +58,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             throw new ArgumentException("Given action is not supported: " + action.ToString());
         }
 
-        private static IConcreteRuleStateBuilder ParsePostAction(
+        private static IRuleStateBuilder ParsePostAction(
             ParserInformation parseInfo,
             RuleState ruleState,
             IAction action,
@@ -75,7 +75,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             }
         }
 
-        private static IConcreteRuleStateBuilder ParseIdentifierAction(ParserInformation parseInfo, RuleState ruleState, IAction action, Position startOfMarkings)
+        private static IRuleStateBuilder ParseIdentifierAction(ParserInformation parseInfo, RuleState ruleState, IAction action, Position startOfMarkings)
         {
             var textBetweenMarkers = parseInfo.GetTextUpToPosition(startOfMarkings);
 
@@ -156,13 +156,13 @@ namespace autosupport_lsp_server.Parsing.Impl
             return null;
         }
 
-        private static IConcreteRuleStateBuilder ParseIdentifierTypeAction(ParserInformation parseInfo, RuleState ruleState, IAction action, Position startOfMarkings)
+        private static IRuleStateBuilder ParseIdentifierTypeAction(ParserInformation parseInfo, RuleState ruleState, IAction action, Position startOfMarkings)
             => ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, parseInfo.GetTextUpToPosition(startOfMarkings));
 
-        private static IConcreteRuleStateBuilder ParseDeclaration(RuleState ruleState)
+        private static IRuleStateBuilder ParseDeclaration(RuleState ruleState)
             => ruleState.Clone().WithValue(RuleStateValueStoreKey.IsDeclaration);
 
-        private static IConcreteRuleStateBuilder ParseImplementation(RuleState ruleState)
+        private static IRuleStateBuilder ParseImplementation(RuleState ruleState)
             => ruleState.Clone().WithValue(RuleStateValueStoreKey.IsImplementation);
     }
 }

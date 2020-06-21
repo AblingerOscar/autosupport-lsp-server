@@ -62,13 +62,13 @@ namespace autosupport_lsp_server.LSP
             public IDictionary<string, IRule> Rules;
 
             public Func<RuleState, ITerminal, T> OnTerminal;
-            public Func<RuleState, IAction, IConcreteRuleStateBuilder> OnAction;
+            public Func<RuleState, IAction, IRuleStateBuilder> OnAction;
 
             public FollowUntilNextTerminalOrActionArgs(
                 RuleState ruleState,
                 IDictionary<string, IRule> rules,
                 Func<RuleState, ITerminal, T> onTerminal,
-                Func<RuleState, IAction, IConcreteRuleStateBuilder> onAction)
+                Func<RuleState, IAction, IRuleStateBuilder> onAction)
             {
                 RuleState = ruleState;
                 Rules = rules;
@@ -109,7 +109,7 @@ namespace autosupport_lsp_server.LSP
                 var ruleStateBuilder = args.OnAction.Invoke(args.RuleState, action);
                 return FollowUntilNextTerminalOrAction(
                     new FollowUntilNextTerminalOrActionArgs<T>(
-                        ruleStateBuilder.WithNextSymbol().TryBuild() ?? RuleState.FinishedRuleState,
+                        ruleStateBuilder.WithNextSymbol().Build(),
                         args.Rules,
                         args.OnTerminal,
                         args.OnAction));
@@ -129,8 +129,7 @@ namespace autosupport_lsp_server.LSP
                 {
                     newRuleStates = newRuleStates.Append(args.RuleState.Clone()
                             .WithNextSymbol()
-                            .TryBuild()
-                            ?? RuleState.FinishedRuleState);
+                            .Build());
                 }
 
                 return newRuleStates

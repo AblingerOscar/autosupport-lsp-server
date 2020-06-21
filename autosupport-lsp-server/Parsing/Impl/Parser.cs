@@ -147,10 +147,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                 {
                     {
                         terminal.MinimumNumberOfCharactersToParse,
-                        new RuleState[1]
-                        {
-                            ruleState.Clone().WithNextSymbol().TryBuild() ?? RuleState.FinishedRuleState
-                        }
+                        new RuleState[1] { ruleState.Clone().WithNextSymbol().Build() }
                     }
                 };
             }
@@ -168,7 +165,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             }
         }
 
-        private IConcreteRuleStateBuilder InterpretAction(RuleState ruleState, IAction action)
+        private IRuleStateBuilder InterpretAction(RuleState ruleState, IAction action)
         {
             return ActionParser.ParseAction(parseState, ruleState, action);
         }
@@ -425,7 +422,12 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IEnumerable<NextRule> GetNextRules()
         {
-            var nextRules = GetNextRulesWithLeadup(parseState.RuleStates.Select(rs => rs.Clone().WithNextSymbol().TryBuild()).WhereNotNull(), "").ToList();
+            var nextRules = GetNextRulesWithLeadup(
+                    parseState.RuleStates
+                        .Select(rs => rs.Clone().WithNextSymbol().Build())
+                        .Where(rs => !rs.IsFinished)
+                    , "")
+                .ToList();
 
             nextRules.Sort((nr1, nr2) => nr1.LeadupString.Length - nr2.LeadupString.Length);
             return nextRules;
@@ -468,9 +470,9 @@ namespace autosupport_lsp_server.Parsing.Impl
                 }
                 else
                 {
-                    var nextRuleState = nextRule.RuleState.Clone().WithNextSymbol().TryBuild();
+                    var nextRuleState = nextRule.RuleState.Clone().WithNextSymbol().Build();
 
-                    if (nextRuleState != null)
+                    if (!nextRuleState.IsFinished)
                         foreach (var newNextRule in GetNextRulesWithLeadup(new[] { nextRuleState }, leadup + nextRule.PossibleContent[0]))
                             yield return newNextRule;
                 }
