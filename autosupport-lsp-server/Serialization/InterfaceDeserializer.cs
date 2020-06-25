@@ -75,5 +75,15 @@ namespace autosupport_lsp_server.Serialization
         {
             return Rule.FromXLinq(element, this);
         }
+
+        public CommentRule DeserializeCommentRule(XElement commentRule)
+        {
+            return CommentRule.FromXLinq(commentRule, this);
+        }
+
+        public CommentRules DeserializeCommentRules(XElement commentRules)
+        {
+            return CommentRules.FromXLinq(commentRules, this);
+        }
     }
 }

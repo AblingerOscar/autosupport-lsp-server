@@ -24,7 +24,7 @@ namespace Tests.LSP
             autosupport_lsp_server.AutosupportLanguageDefinition.FromXLinq(XElement.Parse(Helpers.ReadFile("Files.VarAndPrint.def")), InterfaceDeserializer.Instance);
 
         [Theory]
-        [InlineData(true)]
+        //[InlineData(true)] not yet supported
         [InlineData(false)]
         public async void FindImplementationInSameDocument(bool linkSupport)
         {
@@ -72,7 +72,7 @@ variable print;
         }
 
         [Theory]
-        [InlineData(true)]
+        //[InlineData(true)] not yet supported
         [InlineData(false)]
         public async void FindImplementationAfterUsage(bool linkSupport)
         {
@@ -120,7 +120,7 @@ variable print;
         }
 
         [Theory]
-        [InlineData(true)]
+        //[InlineData(true)] not yet supported
         [InlineData(false)]
         public async void FindImplementationInDifferentDocument(bool linkSupport)
         {

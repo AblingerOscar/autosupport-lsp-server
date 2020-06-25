@@ -105,6 +105,7 @@ namespace autosupport_lsp_server.Parsing
         public static readonly RuleStateValueStoreKey<NoValue> IsImplementation = new RuleStateValueStoreKey<NoValue>(3, nameof(IsImplementation));
         public static readonly RuleStateValueStoreKey<Stack<Position>> FoldingStarts = new RuleStateValueStoreKey<Stack<Position>>(4, nameof(FoldingStarts));
         public static readonly RuleStateValueStoreKey<IList<Range>> FoldingRanges = new RuleStateValueStoreKey<IList<Range>>(5, nameof(FoldingRanges));
+        public static readonly RuleStateValueStoreKey<string> NextDocumentation = new RuleStateValueStoreKey<string>(6, nameof(NextDocumentation));
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 

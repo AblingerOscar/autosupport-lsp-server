@@ -12,5 +12,7 @@ namespace autosupport_lsp_server.Serialization
 
         IAutosupportLanguageDefinition DeserializeAutosupportLanguageDefinition(XElement element);
         IRule DeserializeRule(XElement element);
+        CommentRule DeserializeCommentRule(XElement commentRule);
+        CommentRules DeserializeCommentRules(XElement commentRules);
     }
 }

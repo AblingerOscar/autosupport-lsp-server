@@ -70,6 +70,15 @@ namespace autosupport_lsp_server.Serialization.Annotation
                     $"{nameof(XLinqValueAttribute)} not found on '{type.FullName}'");
 
             }
+            
+            internal string ClassName(Type clazz)
+            {
+                return ThrowIfNull(
+                    clazz.GetCustomAttribute<XLinqNameAttribute>()
+                        ?.Name,
+                    $"{nameof(XLinqValueAttribute)} not found on '{clazz.FullName}'");
+
+            }
 
             internal string RuntimeClassName(Type t)
             {

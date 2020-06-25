@@ -109,20 +109,22 @@ namespace Tests
 
         protected Mock<IAutosupportLanguageDefinition> AutosupportLanguageDefinition(
                 string[]? startRules = null,
-                IDictionary<string, IRule>? rules = null
+                IDictionary<string, IRule>? rules = null,
+                CommentRules? commentRules = null
             )
         {
             var mock = new Mock<IAutosupportLanguageDefinition>();
 
             if (startRules != null)
-            {
                 mock.SetupGet(el => el.StartRules).Returns(startRules);
-            }
 
             if (rules != null)
-            {
                 mock.SetupGet(el => el.Rules).Returns(rules);
-            }
+
+            if (commentRules.HasValue)
+                mock.SetupGet(el => el.CommentRules).Returns(commentRules.Value);
+            else
+                mock.SetupGet(el => el.CommentRules).Returns(new CommentRules(new CommentRule[0], new CommentRule[0]));
 
             return mock;
         }

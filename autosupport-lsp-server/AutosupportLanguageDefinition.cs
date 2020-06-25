@@ -14,6 +14,7 @@ namespace autosupport_lsp_server
         {
             LanguageId = "";
             LanguageFilePattern = "";
+            CommentRules = new CommentRules();
             StartRules = new string[0];
             Rules = new Dictionary<string, IRule>();
         }
@@ -22,6 +23,8 @@ namespace autosupport_lsp_server
         public string LanguageId { get; private set; }
         [XLinqName("filePattern")]
         public string LanguageFilePattern { get; private set; }
+
+        public CommentRules CommentRules { get; private set; }
 
         [XLinqName("startRules")]
         [XLinqValue("startRule")]
@@ -35,6 +38,7 @@ namespace autosupport_lsp_server
             return new XElement(annotation.ClassName(),
                 new XAttribute(annotation.PropertyName(nameof(LanguageId)), LanguageId),
                 new XAttribute(annotation.PropertyName(nameof(LanguageFilePattern)), LanguageFilePattern),
+                CommentRules.SerializeToXLinq(),
                 new XElement(annotation.PropertyName(nameof(StartRules)),
                     from node in StartRules
                     select new XElement(annotation.ValuesName(nameof(StartRules)), node)),
@@ -55,6 +59,8 @@ namespace autosupport_lsp_server
             {
                 LanguageId = element.Attribute(annotation.PropertyName(nameof(LanguageId))).Value,
                 LanguageFilePattern = element.Attribute(annotation.PropertyName(nameof(LanguageFilePattern))).Value,
+                CommentRules = interfaceDeserializer
+                    .DeserializeCommentRules(element.Element(annotation.ClassName(typeof(CommentRules)))),
                 StartRules = (from startRuleElement in element
                                         .Element(annotation.PropertyName(nameof(StartRules)))
                                         .Elements(annotation.ValuesName(nameof(StartRules)))

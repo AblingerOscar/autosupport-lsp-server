@@ -1,20 +1,23 @@
 ﻿using autosupport_lsp_server.LSP;
+using autosupport_lsp_server.Parsing.Impl;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace autosupport_lsp_server.Parsing
 {
     internal class ParseState
     {
-        internal ParseState(Uri uri, string[] text, Position position, IList<RuleState> ruleStates)
+        internal ParseState(Uri uri, string[] text, Position position, IList<RuleState> ruleStates, CommentRules commentRules)
         {
             Uri = uri;
             Text = text;
             Position = position;
             RuleStates = ruleStates;
+            commentParser = new CommentParser(commentRules);
 
             currentCharacterCount = 0;
             scheduledRuleStates = new Dictionary<long, List<RuleState>>();
@@ -24,6 +27,7 @@ namespace autosupport_lsp_server.Parsing
         }
 
         private long currentCharacterCount;
+        private readonly CommentParser commentParser;
         private readonly IDictionary<long, List<RuleState>> scheduledRuleStates;
 
         internal Uri Uri { get; }
@@ -98,6 +102,7 @@ namespace autosupport_lsp_server.Parsing
             scheduledRuleStates.Remove(nextRulesCharCount);
 
             OffsetPositionBy(nextRulesCharCount - currentCharacterCount);
+            SkipCommentsIfTheyAreNext();
         }
 
         internal void ScheduleNewRuleStatesIn(int numberOfCharacters, IEnumerable<RuleState> ruleStates)
@@ -129,6 +134,35 @@ namespace autosupport_lsp_server.Parsing
             }
 
             IsAtEndOfDocument = PositionIsAfterEndOfDocument();
+        }
+
+        private void SkipCommentsIfTheyAreNext()
+        {
+            CommentParser.CommentParseResult? comment = null;
+            do
+            {
+                var text = Text.Skip((int)Position.Line).JoinToString(Constants.NewLine.ToString()).Substring((int)Position.Character);
+
+                comment = commentParser.GetNextComment(text);
+
+                if (comment.HasValue)
+                {
+                    if (comment.Value.Documentation != null)
+                    {
+                        RuleStates = RuleStates
+                            .Select(rs =>
+                                rs.Clone()
+                                .WithValue(RuleStateValueStoreKey.NextDocumentation, comment.Value.Documentation)
+                                .Build())
+                            .ToList();
+                    }
+
+                    OffsetPositionBy(comment.Value.CommentLength);
+
+                    prependText += comment.Value.Replacement;
+                }
+                // TODO: use replacement
+            } while (comment.HasValue);
         }
 
         private bool PositionIsAfterEndOfDocument() =>
