@@ -4,6 +4,7 @@ using autosupport_lsp_server.Parsing.Impl;
 using autosupport_lsp_server.Symbols;
 using Moq;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Server;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,15 @@ namespace Tests
 
             return parser.Object;
         }
+
+        protected CommentRules CommentRules(
+                params (string Start, string End, string Replacement)[] docComment
+            ) => new CommentRules(
+                  new CommentRule[0],
+                  docComment.Select(com
+                        => new CommentRule(com.Start, com.End, com.Replacement))
+                      .ToArray()
+                );
 
         protected Mock<IAutosupportLanguageDefinition> LanguageDefinition(
                 IRule rule,
@@ -41,30 +51,26 @@ namespace Tests
                 string? languageId = null,
                 string? languageFilePattern = null,
                 string[]? startRules = null,
-                IDictionary<string, IRule>? rules = null
+                IDictionary<string, IRule>? rules = null,
+                CommentRules? commentRules = null
             )
         {
             var langDef = new Mock<IAutosupportLanguageDefinition>();
 
             if (languageId != null)
-            {
                 langDef.SetupGet(ld => ld.LanguageId).Returns(languageId);
-            }
 
             if (languageFilePattern != null)
-            {
                 langDef.SetupGet(ld => ld.LanguageFilePattern).Returns(languageFilePattern);
-            }
 
             if (startRules != null)
-            {
                 langDef.SetupGet(ld => ld.StartRules).Returns(startRules);
-            }
 
             if (rules != null)
-            {
                 langDef.SetupGet(ld => ld.Rules).Returns(rules);
-            }
+
+            if (commentRules.HasValue)
+                langDef.SetupGet(ld => ld.CommentRules).Returns(commentRules.Value);
 
             return langDef;
         }
