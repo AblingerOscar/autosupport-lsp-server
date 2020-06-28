@@ -1,4 +1,5 @@
 ﻿using autosupport_lsp_server.Parsing.Impl;
+using autosupport_lsp_server.Shared;
 using autosupport_lsp_server.Symbols;
 using autosupport_lsp_server.Symbols.Impl.Terminals;
 using Moq;
@@ -7,11 +8,10 @@ using Sprache;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Xunit;
 using Position = OmniSharp.Extensions.LanguageServer.Protocol.Models.Position;
+using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2, PublicKey=0024000004800000940000000602000000240000525341310004000001000100c547cac37abd99c8db225ef2f6c8a3602f3b3606cc9891605d02baa56104f4cfc0734aa39b93bf7852f7d9266654753cc297e7d2edfe0bac1cdcf9f717241550e0a7b191195b7667bb4f64bcb8e2121380fd1d9d46ad2d92d2d15605093924cceaf74c4861eff62abf69b9291ed0a340e113be11e6a7d3113e92484cf7045cc7")]
 namespace Tests.Parsing.Impl
 {
     public class ParserTest : BaseTest
@@ -58,7 +58,7 @@ namespace Tests.Parsing.Impl
                 );
 
             var rule = Rule(
-                    symbols: terminal.Object
+                    symbols: new Either<string, ISymbol>(terminal)
                 );
 
             var languageDefinition = AutosupportLanguageDefinition(
@@ -192,7 +192,7 @@ namespace Tests.Parsing.Impl
                 );
 
             var baseRule = Rule(
-                    symbols: new ISymbol[] { oneOf.Object, successfulTerminal.Object }
+                    symbols: new Either<string, ISymbol>[] { oneOf.Object, successfulTerminal.Object }
                 );
             var terminalRule = Rule(
                     symbols: failingTerminal.Object
@@ -253,5 +253,67 @@ namespace Tests.Parsing.Impl
                 Assert.Single(parseResult.PossibleContinuations, ci => ci.Label == kw && ci.Kind == CompletionItemKind.Keyword);
         }
 
+        public static IEnumerable<object[]> data_IdentifiersHaveCorrectRangeEvenWithComments = new[]
+        {
+            new object[] { "var myIdentifier;", " ", new[] { "myIdentifier" }, new[] { new[] { 0L, 4L, 0L, 16L } } },
+            new object[] { "var myIdentifier/*comment*/;", " ", new[] { "myIdentifier" }, new[] { new[] { 0L, 4L, 0L, 16L } } },
+            new object[] { "var /*comment*/myIdentifier;", " ", new[] { "myIdentifier" }, new[] { new[] { 0L, 15L, 0L, 27L } } },
+            new object[] { "var myIdentifier/*comment*/;", "", new[] { "myIdentifier" }, new[] { new[] { 0L, 4L, 0L, 16L } } },
+            new object[] { "var /*comment*/myIdentifier;", "", new[] { "myIdentifier" }, new[] { new[] { 0L, 15L, 0L, 27L } } },
+            new object[] { "var my/*comment*/Identifier;", "", new[] { "myIdentifier" }, new[] { new[] { 0L, 14L, 0L, 27L } } },
+            new object[] { "var my/*comment*/Identifier;", "Commented", new[] { "myCommentedIdentifier" }, new[] { new[] { 0L, 14L, 0L, 27L } } },
+        };
+
+        [Theory]
+        [MemberData(nameof(data_IdentifiersHaveCorrectRangeEvenWithComments))]
+        public void IdentifiersHaveCorrectRangeEvenWithComments(string text, string commentReplacement, string[] identifiers, long[][] identifierRanges)
+        {
+            // given
+            var startRule = Rule("S",
+                    new[] {
+                        new Either<string, ISymbol>(StringTerminal("var")),
+                        new Either<string, ISymbol>(OneOf(true, "Ws").Object),
+                        IAction.IDENTIFIER,
+                        new Either<string, ISymbol>(NonTerminal("Identifier").Object),
+                        IAction.IDENTIFIER,
+                        new Either<string, ISymbol>(OneOf(true, "Ws").Object),
+                        new Either<string, ISymbol>(StringTerminal(";"))
+                    }).Object;
+            var optionalWSRule = Rule("Ws",
+                    new[] {
+                        new Either<string, ISymbol>(new AnyWhitespaceTerminal()),
+                        new Either<string, ISymbol>(OneOf(true, "Ws").Object),
+                    }).Object;
+            var identifierRule = Rule("Identifier",
+                    new[] {
+                        new Either<string, ISymbol>(new AnyLetterTerminal()),
+                        new Either<string, ISymbol>(OneOf(true, "Identifier").Object),
+                    }).Object;
+
+            var langDef = LanguageDefinition(
+                null,
+                null,
+                new[] { startRule.Name },
+                new Dictionary<string, IRule>()
+                {
+                    { startRule.Name, startRule },
+                    { optionalWSRule.Name, optionalWSRule },
+                    { identifierRule.Name, identifierRule }
+                },
+                CommentRules(("/*", "*/", commentReplacement)));
+
+            var parser = new Parser(langDef.Object);
+            var uri = new Uri("unused:///");
+
+            // when
+            var result = parser.Parse(uri, new[] { text });
+
+            // then
+
+            Assert.Equal(identifiers, result.Identifiers.Select(i => i.Name));
+            Assert.Equal(identifierRanges, result.Identifiers
+                    .Select(i => i.References.First().Range)
+                    .Select(r => new[] { r.Start.Line, r.Start.Character, r.End.Line, r.End.Character }));
+        }
     }
 }

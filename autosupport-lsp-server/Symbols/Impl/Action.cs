@@ -11,6 +11,13 @@ namespace autosupport_lsp_server.Symbols.Impl
     {
         public string Command { get; private set; } = "";
 
+        public Action() { }
+
+        public Action(string command)
+        {
+            Command = command;
+        }
+
         public string GetBaseCommand()
         {
             int idx = Command.IndexOf(' ');
@@ -43,10 +50,7 @@ namespace autosupport_lsp_server.Symbols.Impl
 
         public static IAction FromXLinq(XElement element, IInterfaceDeserializer interfaceDeserializer)
         {
-            return new Action()
-            {
-                Command = element.Value
-            };
+            return new Action(element.Value);
         }
 
         private static readonly XLinqClassAnnotationUtil annotation = XLinqOf(typeof(Action));

@@ -1,10 +1,12 @@
 ﻿using autosupport_lsp_server;
+using autosupport_lsp_server.Shared;
 using autosupport_lsp_server.Symbols;
 using autosupport_lsp_server.Symbols.Impl;
 using autosupport_lsp_server.Symbols.Impl.Terminals;
 using Moq;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using Tests.Mocks.Symbols;
 
 namespace Tests
@@ -98,22 +100,35 @@ namespace Tests
 
             return mock;
         }
+        
+        protected Mock<IRule> Rule(
+                string? name = null,
+                IEnumerable<ISymbol>? symbols = null
+            )
+        {
+            return Rule(
+                    name,
+                    symbols?.Select(s => new Either<string, ISymbol>(s)).ToArray() ?? new Either<string, ISymbol>[0]
+                );
+        }
 
         protected Mock<IRule> Rule(
                 string? name = null,
-                params ISymbol[] symbols
+                params Either<string, ISymbol>[] symbols
             )
         {
             var mock = new Mock<IRule>();
 
             if (name != null)
-            {
                 mock.SetupGet(r => r.Name).Returns(name);
-            }
 
             if (symbols.Length > 0)
             {
-                mock.SetupGet(r => r.Symbols).Returns(new List<ISymbol>(symbols).ToImmutableList());
+                mock.SetupGet(r => r.Symbols).Returns(symbols.Select(either =>
+                    either.Match(
+                        str => new Action(str),
+                        sym => sym
+                        )).ToImmutableList());
             }
 
             return mock;
