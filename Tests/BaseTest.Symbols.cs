@@ -1,5 +1,7 @@
 ﻿using autosupport_lsp_server;
 using autosupport_lsp_server.Symbols;
+using autosupport_lsp_server.Symbols.Impl;
+using autosupport_lsp_server.Symbols.Impl.Terminals;
 using Moq;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -45,6 +47,16 @@ namespace Tests
             }
 
             return mock;
+        }
+
+        protected ITerminal StringTerminal(string content, bool? shouldParse = null)
+        {
+            var mock = new Mock<MockStringTerminal>(content, shouldParse)
+            {
+                CallBase = true
+            };
+
+            return mock.Object;
         }
 
         protected Mock<MockNonTerminal> NonTerminal(

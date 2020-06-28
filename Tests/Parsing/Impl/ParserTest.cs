@@ -253,35 +253,5 @@ namespace Tests.Parsing.Impl
                 Assert.Single(parseResult.PossibleContinuations, ci => ci.Label == kw && ci.Kind == CompletionItemKind.Keyword);
         }
 
-        private Mock<MockStringTerminal> StringTerminal(string content, bool? shouldParse = null)
-        {
-            var mock = new Mock<MockStringTerminal>(content, shouldParse)
-            {
-                CallBase = true
-            };
-
-            return mock;
-        }
-
-
-        internal class MockStringTerminal : StringTerminal
-        {
-            private bool? shouldParse;
-
-            public MockStringTerminal(string str, bool? shouldParse) : base(str)
-            {
-                this.shouldParse = shouldParse;
-            }
-
-            protected override Parser<string> Parser {
-                get {
-                    if (shouldParse.HasValue)
-                        return shouldParse.Value
-                            ? Parser.Return(String)
-                            : (Parser<string>)Parser.Return(String).Not();
-                    return base.Parser;
-                }
-            }
-        }
     }
 }
