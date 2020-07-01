@@ -88,6 +88,15 @@ namespace autosupport_lsp_server.Parsing.Impl
                 throw new ArgumentException(nameof(parseState) + " may not be null when running " + nameof(ParseRuleState));
 
             var newParseStates = GetPossibleNextStatesOfSymbol(ruleState);
+
+            if (newParseStates != null)
+            {
+                foreach (var kvp in newParseStates)
+                {
+                    logger.AppendLine($"{kvp.Key}: {kvp.Value.JoinToString(",\n\t\t")}");
+                }
+            }
+
             ScheduleNextParseStates(newParseStates);
         }
 
@@ -110,14 +119,6 @@ namespace autosupport_lsp_server.Parsing.Impl
                     ))
                 .WhereNotNull()
                 .ToList();
-
-            foreach (var dict in nextStates)
-            {
-                foreach (var kvp in dict)
-                {
-                    logger.AppendLine($"{kvp.Key}: {kvp.Value.JoinToString(",\n\t\t")}");
-                }
-            }
 
             return nextStates.Aggregate<IDictionary<int, IEnumerable<RuleState>>?, IDictionary<int, IEnumerable<RuleState>>>(
                 new Dictionary<int, IEnumerable<RuleState>>(), MergeDictionaries
