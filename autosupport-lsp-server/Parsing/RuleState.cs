@@ -41,7 +41,7 @@ namespace autosupport_lsp_server.Parsing
 
         public ISet<Identifier> Identifiers { get; private set; }
 
-        public Range[]? FoldingRanges
+        public Range[]? ExplicitFoldingRanges
             => ValueStore.TryGetValue(RuleStateValueStoreKey.FoldingRanges, out var ranges)
                 ? ranges.ToArray()
                 : null;

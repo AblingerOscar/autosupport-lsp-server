@@ -219,12 +219,18 @@ namespace autosupport_lsp_server.Parsing.Impl
                     possibleContinuations: possibleContinuations,
                     errors: errors.ToArray(),
                     identifiers: allIdentifiers,
-                    foldingRanges: parseState.RuleStates
-                        .Union(ruleStatesThatFinishedLastIteration)
-                        .SelectMany(rs => rs.FoldingRanges ?? Enumerable.Empty<Range>())
-                        .WhereNotNull()
-                        .ToArray()
+                    foldingRanges: GetFoldingRanges(),
+                    comments: parseState.AppliedComments.Select(c => c.Range).ToArray()
                 );
+        }
+
+        private Range[] GetFoldingRanges()
+        {
+            return parseState.RuleStates
+                .Union(ruleStatesThatFinishedLastIteration)
+                .SelectMany(rs => rs.ExplicitFoldingRanges ?? Enumerable.Empty<Range>())
+                .WhereNotNull()
+                .ToArray();
         }
 
         private Error? GetStructuralParseError(CompletionItem[] possibleContinuations)
@@ -232,7 +238,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             if (parseState.IsAtEndOfDocument && !parseState.HasFinishedParsing)
             {
                 // potentially unfinished syntax: there still might be an RuleState that finished last iteration -> Text is fine as-is
-                if (ruleStatesThatFinishedLastIteration.Count != 0 && !CurrentCanRuleStatesFinishWithoutAdditionalInput())
+                if (ruleStatesThatFinishedLastIteration.Count != 0 && !CurrentRuleStatesCanFinishWithoutAdditionalInput())
                 {
                     var possibleContinuationsStrings = possibleContinuations
                         .Select(pc => pc.Kind == CompletionItemKind.Keyword ? pc.Label : pc.Kind.ToString())
@@ -265,7 +271,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                 return null;
         }
 
-        private bool CurrentCanRuleStatesFinishWithoutAdditionalInput()
+        private bool CurrentRuleStatesCanFinishWithoutAdditionalInput()
             => parseState.RuleStates.Any(rs =>
                 LSPUtils.FollowUntilNextTerminalOrAction(new LSPUtils.FollowUntilNextTerminalOrActionArgs<bool>(
                     ruleState: rs,
