@@ -344,6 +344,8 @@ namespace autosupport_lsp_server.Parsing.Impl
                 .ToArray();
 
             AddFilterTextToContinuations(continations);
+            if (continations.Length > 0)
+                continations[0].Preselect = true;
 
             return continations;
         }
