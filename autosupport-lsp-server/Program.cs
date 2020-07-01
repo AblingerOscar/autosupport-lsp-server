@@ -56,7 +56,7 @@ namespace autosupport_lsp_server
             try
             {
                 string xml = File.ReadAllText(args[0]);
-                XElement element = XElement.Parse(xml);
+                XElement element = XElement.Parse(xml, LoadOptions.PreserveWhitespace);
                 documentStore = new DocumentStore(AutosupportLanguageDefinition.FromXLinq(element, InterfaceDeserializer.Instance));
                 return true;
             }
