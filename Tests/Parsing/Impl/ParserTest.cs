@@ -257,11 +257,10 @@ namespace Tests.Parsing.Impl
         {
             new object[] { "var myIdentifier;", " ", new[] { "myIdentifier" }, new[] { new[] { 0L, 4L, 0L, 16L } } },
             new object[] { "var myIdentifier/*comment*/;", " ", new[] { "myIdentifier" }, new[] { new[] { 0L, 4L, 0L, 16L } } },
-            new object[] { "var /*comment*/myIdentifier;", " ", new[] { "myIdentifier" }, new[] { new[] { 0L, 15L, 0L, 27L } } },
             new object[] { "var myIdentifier/*comment*/;", "", new[] { "myIdentifier" }, new[] { new[] { 0L, 4L, 0L, 16L } } },
+            new object[] { "var /*comment*/myIdentifier;", " ", new[] { "myIdentifier" }, new[] { new[] { 0L, 15L, 0L, 27L } } },
             new object[] { "var /*comment*/myIdentifier;", "", new[] { "myIdentifier" }, new[] { new[] { 0L, 15L, 0L, 27L } } },
-            new object[] { "var my/*comment*/Identifier;", "", new[] { "myIdentifier" }, new[] { new[] { 0L, 14L, 0L, 27L } } },
-            new object[] { "var my/*comment*/Identifier;", "Commented", new[] { "myCommentedIdentifier" }, new[] { new[] { 0L, 14L, 0L, 27L } } },
+            new object[] { "var my/*comment*/Identifier;", "", new[] { "myIdentifier" }, new[] { new[] { 0L, 4L, 0L, 27L } } },
         };
 
         [Theory]
@@ -309,8 +308,7 @@ namespace Tests.Parsing.Impl
             var result = parser.Parse(uri, new[] { text });
 
             // then
-
-            Assert.Equal(identifiers, result.Identifiers.Select(i => i.Name));
+            Assert.Equal(identifiers, result.Identifiers.Select(i => i.Name).ToArray());
             Assert.Equal(identifierRanges, result.Identifiers
                     .Select(i => i.References.First().Range)
                     .Select(r => new[] { r.Start.Line, r.Start.Character, r.End.Line, r.End.Character }));
