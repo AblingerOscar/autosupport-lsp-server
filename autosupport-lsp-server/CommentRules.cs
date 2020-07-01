@@ -11,24 +11,24 @@ namespace autosupport_lsp_server
     public readonly struct CommentRules
     {
         [XLinqName("normalComments")]
-        public readonly CommentRule[] normalComments;
+        public readonly CommentRule[] NormalComments { get; }
         [XLinqName("documentationComments")]
-        public readonly CommentRule[] documentationComments;
+        public readonly CommentRule[] DocumentationComments { get; }
 
         public CommentRules(CommentRule[] normalComments, CommentRule[] documentationComments)
-            => (this.normalComments, this.documentationComments) = (normalComments, documentationComments);
+            => (NormalComments, DocumentationComments) = (normalComments, documentationComments);
 
         public override bool Equals(object? obj)
             => obj is CommentRules rules &&
-                   EqualityComparer<CommentRule[]>.Default.Equals(normalComments, rules.normalComments) &&
-                   EqualityComparer<CommentRule[]>.Default.Equals(documentationComments, rules.documentationComments);
+                   EqualityComparer<CommentRule[]>.Default.Equals(NormalComments, rules.NormalComments) &&
+                   EqualityComparer<CommentRule[]>.Default.Equals(DocumentationComments, rules.DocumentationComments);
 
         public override int GetHashCode()
-            => HashCode.Combine(normalComments, documentationComments);
+            => HashCode.Combine(NormalComments, DocumentationComments);
 
         public override string? ToString()
-            => $"normal comments: {normalComments.JoinToString(", ")}\n" +
-               $"documentation comments: {documentationComments.JoinToString(", ")}";
+            => $"normal comments: {NormalComments.JoinToString(", ")}\n" +
+               $"documentation comments: {DocumentationComments.JoinToString(", ")}";
 
         private readonly static AnnotationUtils.XLinqClassAnnotationUtil annotation = AnnotationUtils.XLinqOf(typeof(CommentRules));
 
@@ -36,11 +36,11 @@ namespace autosupport_lsp_server
         {
             return new XElement(annotation.ClassName(),
                     new XElement(
-                        annotation.PropertyName(nameof(normalComments)),
-                        normalComments.Select(nc => nc.SerializeToXLinq())),
+                        annotation.PropertyName(nameof(NormalComments)),
+                        NormalComments.Select(nc => nc.SerializeToXLinq())),
                     new XElement(
-                        annotation.PropertyName(nameof(documentationComments)),
-                        documentationComments.Select(nc => nc.SerializeToXLinq()))
+                        annotation.PropertyName(nameof(DocumentationComments)),
+                        DocumentationComments.Select(nc => nc.SerializeToXLinq()))
                 );
         }
 
@@ -51,11 +51,11 @@ namespace autosupport_lsp_server
 
             return new CommentRules(
                                (from rule in element
-                                               .Element(annotation.PropertyName(nameof(normalComments)))
+                                               .Element(annotation.PropertyName(nameof(NormalComments)))
                                                .Elements()
                                 select interfaceDeserializer.DeserializeCommentRule(rule)).ToArray(),
                                (from rule in element
-                                               .Element(annotation.PropertyName(nameof(documentationComments)))
+                                               .Element(annotation.PropertyName(nameof(DocumentationComments)))
                                                .Elements()
                                 select interfaceDeserializer.DeserializeCommentRule(rule)).ToArray()
                            );

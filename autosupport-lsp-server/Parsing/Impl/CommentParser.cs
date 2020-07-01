@@ -54,12 +54,12 @@ namespace autosupport_lsp_server.Parsing.Impl
         /// </returns>
         internal CommentParseResult? GetNextComment(string text)
         {
-            var result = GetCommentFromRules(text, commentRules.documentationComments);
+            var result = GetCommentFromRules(text, commentRules.DocumentationComments);
 
             if (result.HasValue)
                 return result;
             
-            result = GetCommentFromRules(text, commentRules.normalComments);
+            result = GetCommentFromRules(text, commentRules.NormalComments);
 
             if (result.HasValue)
                 return new CommentParseResult(result.Value.CommentLength, null, result.Value.Replacement);
