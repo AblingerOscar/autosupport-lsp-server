@@ -9,5 +9,6 @@ namespace autosupport_lsp_server.Parsing
         Error[] Errors { get; }
         Identifier[] Identifiers { get; }
         Range[] FoldingRanges { get; }
+        Range[] Comments { get; }
     }
 }

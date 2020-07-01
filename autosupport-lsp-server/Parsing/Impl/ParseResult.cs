@@ -4,13 +4,14 @@ namespace autosupport_lsp_server.Parsing.Impl
 {
     internal class ParseResult : IParseResult
     {
-        public ParseResult(bool finished, CompletionItem[] possibleContinuations, Error[] errors, Identifier[] identifiers, Range[] foldingRanges)
+        public ParseResult(bool finished, CompletionItem[] possibleContinuations, Error[] errors, Identifier[] identifiers, Range[] foldingRanges, Range[] comments)
         {
             Finished = finished;
             PossibleContinuations = possibleContinuations;
             Errors = errors;
             Identifiers = identifiers;
             FoldingRanges = foldingRanges;
+            Comments = comments;
         }
 
         public bool Finished { get; }
@@ -22,5 +23,7 @@ namespace autosupport_lsp_server.Parsing.Impl
         public Identifier[] Identifiers { get; }
 
         public Range[] FoldingRanges { get; }
+
+        public Range[] Comments { get; }
     }
 }
