@@ -41,7 +41,7 @@ namespace autosupport_lsp_server
         
         private readonly static AnnotationUtils.XLinqClassAnnotationUtil annotation = AnnotationUtils.XLinqOf(typeof(CommentRule));
 
-        internal object SerializeToXLinq()
+        internal XElement SerializeToXLinq()
         {
             return new XElement(annotation.ClassName(),
                     new XElement(annotation.PropertyName(nameof(Start)), Start),
