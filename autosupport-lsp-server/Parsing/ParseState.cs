@@ -211,16 +211,6 @@ namespace autosupport_lsp_server.Parsing
 
             IsAtEndOfDocument = PositionIsAfterEndOfDocument();
         }
-        
-        // TODO: evaluate whether comments should get special treatments
-        //       shouldn't they simply be part of the grammar?
-        //       -> i can't know where they are okay and where not
-        //       usually they are allowed in between token, but I do not
-        //       have the knowledge about tokens anymore (since they could
-        //       be compiled to multiple terminals using OneOf
-        //       e.g. rule -> a+
-        //       becomes rule -> a OneOf(rule$1)?. rule$1 -> a OneOf(rule$1)?.)
-        //       maybe some languages even allow comments in identifiers?
 
         private void SkipCommentsIfTheyAreNext()
         {
@@ -242,7 +232,6 @@ namespace autosupport_lsp_server.Parsing
                                 .Build())
                             .ToList();
                     }
-
 
                     var startPosition = Position.Clone();
 
