@@ -17,19 +17,20 @@ namespace autosupport_lsp_server.Parsing.Impl
         {
             public readonly Uri Uri;
             public readonly Position Position;
+            public readonly Position PreCommitPosition;
             public readonly Func<Position, string> GetTextUpToPosition;
 
-            public ParserInformation(Uri uri, Position position, Func<Position, string> getTextUpToPosition)
+            public ParserInformation(Uri uri, Position position, Position preCommentPosition, Func<Position, string> getTextUpToPosition)
             {
                 Uri = uri;
                 Position = position;
+                PreCommitPosition = preCommentPosition;
                 GetTextUpToPosition = getTextUpToPosition;
             }
 
             public static implicit operator ParserInformation(ParseState parseState)
-                => new ParserInformation(parseState.Uri, parseState.Position, start => parseState.GetTextBetweenPositions(start));
+                => new ParserInformation(parseState.Uri, parseState.Position, parseState.PreCommentPosition, start => parseState.GetTextBetweenPositions(start));
         }
-
 
         private delegate IRuleStateBuilder SpecificPostActionParser(ParserInformation parseInfo, RuleState ruleState, IAction action, Position startOfMarkings);
 
@@ -102,8 +103,8 @@ namespace autosupport_lsp_server.Parsing.Impl
                     {
                         Name = textBetweenMarkers,
                         References = new List<IReference>() {
-                            new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone()))
-                       },
+                            new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone()))
+                        },
                         Types = new IdentifierType(type),
                         Kind = kind,
                         Declaration = declaration,
@@ -113,7 +114,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                 else
                 {
                     identifier.References.Add(
-                        new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone())));
+                        new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone())));
 
                     if (kind != null)
                     {
@@ -122,7 +123,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                         else if (kind != identifier.Kind)
                             errors.Add(new Error(
                                     parseInfo.Uri,
-                                    new Range(startOfMarkings, parseInfo.Position.Clone()),
+                                    new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone()),
                                     DiagnosticSeverity.Error,
                                     $"Expected {kind}, but found {identifier.Kind}"
                                 ));
@@ -136,7 +137,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                         else if (identifier.Declaration != null)
                             errors.Add(new Error(
                                     parseInfo.Uri,
-                                    new Range(startOfMarkings, parseInfo.Position.Clone()),
+                                    new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone()),
                                     DiagnosticSeverity.Error,
                                     $"{identifier.Name} is already declared",
                                     new ConnectedError(
@@ -154,7 +155,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                         else if (identifier.Implementation != null)
                             errors.Add(new Error(
                                     parseInfo.Uri,
-                                    new Range(startOfMarkings, parseInfo.Position.Clone()),
+                                    new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone()),
                                     DiagnosticSeverity.Error,
                                     $"{identifier.Name} is already implemented"
                                 ));
@@ -182,7 +183,7 @@ namespace autosupport_lsp_server.Parsing.Impl
         private static IReferenceWithEnclosingRange? GetIdentifierDeclaration(ParserInformation parseInfo, RuleState ruleState, Position startOfMarkings)
         {
             if (ruleState.ValueStore.ContainsKey(RuleStateValueStoreKey.IsDeclaration))
-                return new ReferenceWithEnclosingRange(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone()), null);
+                return new ReferenceWithEnclosingRange(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone()), null);
 
             return null;
         }
@@ -190,7 +191,7 @@ namespace autosupport_lsp_server.Parsing.Impl
         private static IReferenceWithEnclosingRange? GetIdentifierImplementation(ParserInformation parseInfo, RuleState ruleState, Position startOfMarkings)
         {
             if (ruleState.ValueStore.ContainsKey(RuleStateValueStoreKey.IsImplementation))
-                return new ReferenceWithEnclosingRange(parseInfo.Uri, new Range(startOfMarkings, parseInfo.Position.Clone()), null);
+                return new ReferenceWithEnclosingRange(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone()), null);
 
             return null;
         }
@@ -246,7 +247,7 @@ namespace autosupport_lsp_server.Parsing.Impl
 
             nextRuleState = RemoveTopPosition(positions, nextRuleState);
 
-            return AddRangeToRuleState(parseInfo, ruleState, start, nextRuleState);
+            return AddFoldingRangeToRuleState(parseInfo, ruleState, start, nextRuleState);
         }
 
         private static IRuleStateBuilder RemoveTopPosition(Stack<Position> positions, IRuleStateBuilder nextRuleState)
@@ -269,7 +270,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             return nextRuleState;
         }
 
-        private static IRuleStateBuilder AddRangeToRuleState(ParserInformation parseInfo, RuleState ruleState, Position start, IRuleStateBuilder nextRuleState)
+        private static IRuleStateBuilder AddFoldingRangeToRuleState(ParserInformation parseInfo, RuleState ruleState, Position start, IRuleStateBuilder nextRuleState)
         {
             if (ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.FoldingRanges, out var ranges))
             {

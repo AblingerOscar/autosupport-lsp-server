@@ -3,7 +3,10 @@ using autosupport_lsp_server.Parsing.Impl;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
@@ -15,12 +18,15 @@ namespace autosupport_lsp_server.Parsing
         {
             Uri = uri;
             Text = text;
+            PreCommentPosition = position;
             Position = position;
             RuleStates = ruleStates;
             commentParser = new CommentParser(commentRules);
 
             currentCharacterCount = 0;
             scheduledRuleStates = new Dictionary<long, List<RuleState>>();
+            prependText = "";
+            appliedComments = new List<(Range Range, string Replacement)>();
 
             IsAtEndOfDocument = Text.Length == 0
                 || PositionIsAfterEndOfDocument();
@@ -29,10 +35,32 @@ namespace autosupport_lsp_server.Parsing
         private long currentCharacterCount;
         private readonly CommentParser commentParser;
         private readonly IDictionary<long, List<RuleState>> scheduledRuleStates;
+        /// <summary>
+        /// string that is not in the actual text, but to the outside should be
+        /// the next text at the Position, before the actual text continues
+        /// Currently only used with comments that can then be treated as other
+        /// strings
+        /// 
+        /// e.g.
+        /// Text:        "Hello world"
+        /// prependText: "foo"
+        /// should be treated as if the Text was:
+        ///              "fooHello world"
+        /// 
+        /// Note that the position should not change when traversing through this
+        /// text.
+        /// aka moving 4 characters in the previous example would make the
+        /// Position (0, 1), but should remove the prependText so that the Text
+        /// is treated as "ello world" again
+        /// </summary>
+        private string prependText;
+        private IList<(Range Range, string Replacement)> appliedComments;
 
         internal Uri Uri { get; }
 
+        internal ImmutableArray<(Range Range, string Replacement)> AppliedComments => appliedComments.ToImmutableArray();
         internal string[] Text { get; }
+        internal Position PreCommentPosition { get; private set; }
         internal Position Position { get; }
         internal IList<RuleState> RuleStates { get; private set; }
         internal bool Failed { get; private set; } = false;
@@ -45,9 +73,9 @@ namespace autosupport_lsp_server.Parsing
             if (Position.Line >= Text.Length || Position.Character < 0 || Position.Character > Text[Position.Line].Length)
                 throw new ArgumentOutOfRangeException($"Position ({Position.Line}, {Position.Character}) not in text");
 
-            StringBuilder text = new StringBuilder();
+            StringBuilder text = new StringBuilder(prependText);
 
-            if (Position.Character == Text[Position.Line].Length) // Cursor after line
+            if (Position.Character == Text[Position.Line].Length) // Position after line
                 text.Append(Constants.NewLine);
             else
                 text.Append(Text[Position.Line].Substring((int)Position.Character));
@@ -76,16 +104,47 @@ namespace autosupport_lsp_server.Parsing
             if (start == end)
                 return "";
 
-            var sb = Text
+            var textWithComments = Text
                 .Skip((int)start.Line)
                 .Take((int)(end.Line - start.Line) + 1)
-                .Aggregate(new StringBuilder(), (sb, str) => sb.Append(str));
+                .ToArray();
 
-            int hangingCharNumber = Text[(int)end.Line].Length - (int)end.Character;
+            textWithComments[^1] = textWithComments[^1].Substring(0, (int)end.Character);
+            textWithComments[0] = textWithComments[0].Substring((int)start.Character);
 
-            return sb.Remove(sb.Length - hangingCharNumber, hangingCharNumber)
-                .Remove(0, (int)start.Character)
-                .ToString();
+            return RemoveComments(new Range(start, end), textWithComments);
+        }
+
+        private string RemoveComments(Range textRange, string[] textWithComments)
+        {
+            var relevantComments = AppliedComments.Where(tuple => HasOverlap(tuple.Range, textRange))
+                .ToList();
+
+            // sort from later to earlier (ranges should never be overlapping)
+            relevantComments.Sort((t1, t2) => t2.Range.Start.CompareTo(t1.Range.Start));
+
+            var textList = textWithComments.ToList();
+
+            foreach (var comment in relevantComments)
+            {
+                var relativeStartPos = comment.Range.Start.Minus(textRange.Start);
+                if (relativeStartPos.Line < 0) relativeStartPos.Line = 0;
+                if (relativeStartPos.Character < 0) relativeStartPos.Character = 0;
+                
+                var relativeEndPos = comment.Range.End.Minus(textRange.Start);
+
+                LSPUtils.RemoveTextInRange(textList, relativeStartPos, relativeEndPos);
+            }
+
+            return textList.JoinToString(Constants.NewLine.ToString());
+        }
+
+        private bool HasOverlap(Range r1, Range r2)
+        {
+            // - r1 starts in r2 and ends either in it or after
+            // - r1 starts before r2 and ends in r2
+            // - r1 starts before r2 and ends after r2 (hence r1 is fully in r2)
+            return r1.Start.IsIn(r2) || r1.End.IsIn(r2) || r2.Start.IsIn(r1);
         }
 
         internal void NextStep()
@@ -102,6 +161,7 @@ namespace autosupport_lsp_server.Parsing
             scheduledRuleStates.Remove(nextRulesCharCount);
 
             OffsetPositionBy(nextRulesCharCount - currentCharacterCount);
+            PreCommentPosition = Position.Clone();
             SkipCommentsIfTheyAreNext();
         }
 
@@ -116,6 +176,22 @@ namespace autosupport_lsp_server.Parsing
 
         private void OffsetPositionBy(long numberOfCharacters)
         {
+            if (numberOfCharacters <= 0)
+                throw new ArgumentException(nameof(numberOfCharacters) + " must be above 0");
+
+            if (prependText.Length > 0)
+            {
+                int prependTextLength = prependText.Length;
+                prependText = prependText.Remove(0, Math.Max((int)numberOfCharacters, prependTextLength));
+                numberOfCharacters -= prependTextLength;
+
+                if (numberOfCharacters <= 0)
+                {
+                    IsAtEndOfDocument = PositionIsAfterEndOfDocument();
+                    return;
+                }
+            }
+
             currentCharacterCount += numberOfCharacters;
             Position.Character += numberOfCharacters;
 
@@ -135,6 +211,16 @@ namespace autosupport_lsp_server.Parsing
 
             IsAtEndOfDocument = PositionIsAfterEndOfDocument();
         }
+        
+        // TODO: evaluate whether comments should get special treatments
+        //       shouldn't they simply be part of the grammar?
+        //       -> i can't know where they are okay and where not
+        //       usually they are allowed in between token, but I do not
+        //       have the knowledge about tokens anymore (since they could
+        //       be compiled to multiple terminals using OneOf
+        //       e.g. rule -> a+
+        //       becomes rule -> a OneOf(rule$1)?. rule$1 -> a OneOf(rule$1)?.)
+        //       maybe some languages even allow comments in identifiers?
 
         private void SkipCommentsIfTheyAreNext()
         {
@@ -157,16 +243,20 @@ namespace autosupport_lsp_server.Parsing
                             .ToList();
                     }
 
+
+                    var startPosition = Position.Clone();
+
                     OffsetPositionBy(comment.Value.CommentLength);
 
                     prependText += comment.Value.Replacement;
+                    appliedComments.Add((new Range(startPosition, Position.Clone()), comment.Value.Replacement));
                 }
-                // TODO: use replacement
             } while (comment.HasValue);
         }
 
         private bool PositionIsAfterEndOfDocument() =>
-            (Position.Line >= Text.Length
+            prependText.Length == 0
+            && (Position.Line >= Text.Length
                 || (Position.Line == Text.Length - 1
                     && Position.Character >= Text[^1].Length));
 

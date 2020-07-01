@@ -24,9 +24,29 @@ namespace autosupport_lsp_server.LSP
             return new Position(position.Line, position.Character);
         }
 
+        public static int CompareTo(this Position p1, Position p2)
+        {
+            var lineResult = p1.Line.CompareTo(p2.Line);
+
+            if (lineResult == 0)
+                return p1.Character.CompareTo(p2.Character);
+            else
+                return lineResult;
+        }
+
         public static string ToNiceString(this Position position)
         {
             return $"({position.Line}, {position.Character})";
+        }
+
+        public static Position Minus(this Position p1, Position p2)
+        {
+            return new Position(
+                    p1.Line - p2.Line,
+                    p1.Line == p2.Line
+                        ? p1.Character - p2.Character
+                        : p1.Character
+                );
         }
 
         public static Range Clone(this Range range)
