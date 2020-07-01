@@ -8,7 +8,7 @@ using System.Xml.Linq;
 namespace autosupport_lsp_server
 {
     [XLinqName("languageDefinition")]
-    internal class AutosupportLanguageDefinition : IAutosupportLanguageDefinition
+    public class AutosupportLanguageDefinition : IAutosupportLanguageDefinition
     {
         private AutosupportLanguageDefinition()
         {

@@ -6,7 +6,7 @@ using System.Linq;
 namespace autosupport_lsp_server.Symbols.Impl.Terminals
 {
     [XLinqName("string")]
-    internal class StringTerminal : Terminal
+    public class StringTerminal : Terminal
     {
         public StringTerminal(string str)
         {
@@ -29,7 +29,7 @@ namespace autosupport_lsp_server.Symbols.Impl.Terminals
         }
     }
 
-    internal abstract class CharTerminal : Terminal
+    public abstract class CharTerminal : Terminal
     {
         public override int MinimumNumberOfCharactersToParse => 1;
 
@@ -41,7 +41,7 @@ namespace autosupport_lsp_server.Symbols.Impl.Terminals
     }
 
     [XLinqName("lineEnd")]
-    internal class AnyLineEndTerminal : CharTerminal
+    public class AnyLineEndTerminal : CharTerminal
     {
         public override string[] PossibleContent { get; } = new string[] { Constants.NewLine.ToString() };
 
@@ -51,43 +51,43 @@ namespace autosupport_lsp_server.Symbols.Impl.Terminals
     }
 
     [XLinqName("letter")]
-    internal class AnyLetterTerminal : CharTerminal
+    public class AnyLetterTerminal : CharTerminal
     {
         protected override Parser<char> CharParser => Parse.Letter;
     }
 
     [XLinqName("letterOrDigit")]
-    internal class AnyLetterOrDigitTerminal : CharTerminal
+    public class AnyLetterOrDigitTerminal : CharTerminal
     {
         protected override Parser<char> CharParser => Parse.LetterOrDigit;
     }
 
     [XLinqName("lowercaseLetter")]
-    internal class AnyLowercaseLetterTerminal : CharTerminal
+    public class AnyLowercaseLetterTerminal : CharTerminal
     {
         protected override Parser<char> CharParser => Parse.Lower;
     }
 
     [XLinqName("uppercaseLetter")]
-    internal class AnyUppercaseLetterTerminal : CharTerminal
+    public class AnyUppercaseLetterTerminal : CharTerminal
     {
         protected override Parser<char> CharParser => Parse.Upper;
     }
 
     [XLinqName("character")]
-    internal class AnyCharacterTerminal : CharTerminal
+    public class AnyCharacterTerminal : CharTerminal
     {
         protected override Parser<char> CharParser => Parse.AnyChar;
     }
 
     [XLinqName("digit")]
-    internal class AnyDigitTerminal : CharTerminal
+    public class AnyDigitTerminal : CharTerminal
     {
         protected override Parser<char> CharParser => Parse.Digit;
     }
 
     [XLinqName("whitespace")]
-    internal class AnyWhitespaceTerminal : CharTerminal
+    public class AnyWhitespaceTerminal : CharTerminal
     {
         public override string[] PossibleContent { get; } = new string[] { " " };
 

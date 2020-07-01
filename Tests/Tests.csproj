@@ -35,6 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\autosupport-definition\autosupport-definition.csproj" />
     <ProjectReference Include="..\autosupport-lsp-server\autosupport-lsp-server.csproj" />
   </ItemGroup>
 

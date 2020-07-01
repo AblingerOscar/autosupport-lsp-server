@@ -5,7 +5,7 @@ using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Serialization
 {
-    internal class InterfaceDeserializer : IInterfaceDeserializer
+    public class InterfaceDeserializer : IInterfaceDeserializer
     {
         private InterfaceDeserializer() { }
 

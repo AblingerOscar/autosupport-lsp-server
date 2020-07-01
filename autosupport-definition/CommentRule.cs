@@ -38,7 +38,7 @@ namespace autosupport_lsp_server
         {
             return $"{Start} until {End}";
         }
-        
+
         private readonly static AnnotationUtils.XLinqClassAnnotationUtil annotation = AnnotationUtils.XLinqOf(typeof(CommentRule));
 
         internal XElement SerializeToXLinq()

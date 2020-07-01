@@ -6,7 +6,7 @@ using System.Xml.Linq;
 namespace autosupport_lsp_server.Symbols.Impl
 {
     [XLinqName("nonTerminal")]
-    internal class NonTerminal : Symbol, INonTerminal
+    public class NonTerminal : Symbol, INonTerminal
     {
         [XLinqName("referencedRule")]
         public string ReferencedRule { get; private set; } = "";

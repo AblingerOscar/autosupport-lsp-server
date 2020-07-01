@@ -7,7 +7,7 @@ using System.Xml.Linq;
 
 namespace autosupport_lsp_server.Symbols.Impl
 {
-    internal abstract class Terminal : Symbol, ITerminal
+    public abstract class Terminal : Symbol, ITerminal
     {
         protected Terminal() { /* do nothing */ }
 
