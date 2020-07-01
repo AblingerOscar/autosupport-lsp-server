@@ -9,7 +9,7 @@ using static autosupport_lsp_server.Parsing.RuleState;
 
 namespace autosupport_lsp_server.LSP
 {
-    internal class LSPUtils
+    internal static class LSPUtils
     {
         private static DocumentSelector? documentSelector;
 
@@ -239,6 +239,58 @@ namespace autosupport_lsp_server.LSP
                 CompletionItemKind.TypeParameter => "TypeParameter",
                 _ => throw new System.ArgumentException($"Could not convert supposed {nameof(CompletionItemKind)} {kind} into a string"),
             };
+        }
+        
+        public static void ReplaceInText(IList<string> text, Position start, Position end, IList<string> replacementText)
+        {
+            RemoveTextInRange(text, start, end);
+            InsertText(text, start, replacementText);
+        }
+
+        public static void RemoveTextInRange(IList<string> text, Position start, Position end)
+        {
+            // Merge first and last line
+            string restStrOnEndLine = 
+                text.Count > end.Line
+                ? text[(int)end.Line].Substring((int)end.Character)
+                : "";
+            text[(int)start.Line] = text[(int)start.Line].Substring(0, (int)start.Character) + restStrOnEndLine;
+
+            // Remove all lines in between and the last line
+            for (int i = (int)end.Line; i > (int)start.Line; --i)
+            {
+                text.RemoveAt(i);
+            }
+        }
+
+        private static void InsertText(IList<string> baseText, Position pos, IList<string> insertionText)
+        {
+            if (insertionText.Count == 0)
+            {
+                return;
+            }
+
+            string restStrOnEndLine = baseText[(int)pos.Line].Substring((int)pos.Character);
+
+            if (insertionText.Count == 1)
+            {
+                baseText[(int)pos.Line] = baseText[(int)pos.Line].Substring(0, (int)pos.Character) + insertionText[0] + restStrOnEndLine;
+            }
+            else
+            {
+                baseText.Insert((int)pos.Line + 1, insertionText[insertionText.Count - 1] + baseText[(int)pos.Line].Substring((int)pos.Character));
+                baseText[(int)pos.Line] = baseText[(int)pos.Line].Substring(0, (int)pos.Character) + insertionText[0];
+
+                for (int i = insertionText.Count - 2; i > 0; ++i)
+                {
+                    baseText.Insert((int)pos.Line + 1, insertionText[i]);
+                }
+            }
+        }
+
+        public static IList<string> ConvertTextToList(string text)
+        {
+            return new List<string>(text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None));
         }
     }
 }
