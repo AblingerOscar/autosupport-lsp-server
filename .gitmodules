@@ -1,0 +1,4 @@
+[submodule "autosupport-definition"]
+	path = autosupport-definition
+	url = git@github.com:AblingerOscar/autosupport-definition.git
+	branch = release-v1.0.0
