@@ -14,10 +14,10 @@ namespace autosupport_lsp_server
     {
         static async Task Main(string[] args)
         {
-            if (!TrySetupDocumentStore(args, out IDocumentStore? documentStore))
+            if (!TrySetupDocumentStore(args, out IDocumentStore? documentStore, out string? error))
             {
-                Console.WriteLine("[ERROR]: The server could not be set up: There seems to be something wrong with your languageDefinition file");
-                return; // TODO: somehow tell client that it failed and will always fail (e.g. starting a server that only sends an error over window/showMessage)
+                FailWithError("[ERROR]: Your language definition file is invalid: " + error ?? "unknown error");
+                return;
             }
 
             if (documentStore == null)
@@ -51,8 +51,9 @@ namespace autosupport_lsp_server
             serviceCollection.AddSingleton<ValidationHandler>();
         }
 
-        private static bool TrySetupDocumentStore(string[] args, out IDocumentStore? documentStore)
+        private static bool TrySetupDocumentStore(string[] args, out IDocumentStore? documentStore, out string? error)
         {
+            error = null;
             try
             {
                 string xml = File.ReadAllText(args[0]);
@@ -60,11 +61,25 @@ namespace autosupport_lsp_server
                 documentStore = new DocumentStore(AutosupportLanguageDefinition.FromXLinq(element, InterfaceDeserializer.Instance));
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                error = ex.Message;
                 documentStore = null;
                 return false;
             }
+        }
+
+        private static async void FailWithError(string errorMsg)
+        {
+            var server = await LanguageServer.From(options =>
+            {
+                options.OnStarted((server, result) => {
+                    server.SendNotification(errorMsg);
+                    return Task.CompletedTask;
+                });
+            });
+
+            await server.WaitForExit;
         }
     }
 }

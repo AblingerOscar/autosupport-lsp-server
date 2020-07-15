@@ -42,8 +42,11 @@ namespace autosupport_lsp_server.Parsing.Impl
                     return ParsePostAction(parseInfo, ruleState, action, ParseIdentifierAction);
                 case IAction.IDENTIFIER_TYPE:
                     if (action.GetArguments()[0] == IAction.IDENTIFIER_TYPE_ARG_SET)
-                        // do immediate action
-                        return ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, action.GetArguments()[1]);
+                    {   // do immediate action
+                        var types = ruleState.ValueStore.Get(RuleStateValueStoreKey.NextType) ?? new HashSet<string>();
+                        types.Add(action.GetArguments()[1]);
+                        return ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, types);
+                    }
 
                     return ParsePostAction(parseInfo, ruleState, action, ParseIdentifierTypeAction);
                 case IAction.IDENTIFIER_KIND:
@@ -88,7 +91,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             if (ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextKind, out string? kindStr))
                 kind = LSPUtils.String2Kind(kindStr);
 
-            ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out string? type);
+            ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out ISet<string>? types);
 
             var declaration = GetIdentifierDeclaration(parseInfo, ruleState, startOfMarkings);
             var implementation = GetIdentifierImplementation(parseInfo, ruleState, startOfMarkings);
@@ -105,7 +108,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                         References = new List<IReference>() {
                             new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone()))
                         },
-                        Types = new IdentifierType(type),
+                        Types = new IdentifierType(types ?? Enumerable.Empty<string>()),
                         Kind = kind,
                         Declaration = declaration,
                         Implementation = implementation
@@ -168,7 +171,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             if (kind != null)
                 nextRuleState = nextRuleState.WithoutValue(RuleStateValueStoreKey.NextKind);
 
-            if (type != null)
+            if (types != null)
                 nextRuleState = nextRuleState.WithoutValue(RuleStateValueStoreKey.NextType);
 
             if (declaration != null)
@@ -197,7 +200,11 @@ namespace autosupport_lsp_server.Parsing.Impl
         }
 
         private static IRuleStateBuilder ParseIdentifierTypeAction(ParserInformation parseInfo, RuleState ruleState, IAction action, Position startOfMarkings)
-            => ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, parseInfo.GetTextUpToPosition(startOfMarkings));
+        {
+            var types = ruleState.ValueStore.Get(RuleStateValueStoreKey.NextType) ?? new HashSet<string>();
+            types.Add(parseInfo.GetTextUpToPosition(startOfMarkings));
+            return ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, types);
+        }
 
         private static IRuleStateBuilder ParseDeclaration(RuleState ruleState)
             => ruleState.Clone().WithValue(RuleStateValueStoreKey.IsDeclaration);

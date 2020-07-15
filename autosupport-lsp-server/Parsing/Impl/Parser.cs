@@ -1,4 +1,10 @@
-﻿using autosupport_lsp_server.LSP;
+﻿/*#define LOG
+
+#if !DEBUG
+#undef LOG
+#endif
+*/
+using autosupport_lsp_server.LSP;
 using autosupport_lsp_server.Symbols;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
@@ -10,6 +16,8 @@ using System.Text;
 using static autosupport_lsp_server.Parsing.RuleState;
 
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
+
+
 
 namespace autosupport_lsp_server.Parsing.Impl
 {
@@ -27,7 +35,9 @@ namespace autosupport_lsp_server.Parsing.Impl
         /// </summary>
         private IList<RuleState> ruleStatesThatFinishedLastIteration;
 
+#if LOG
         private readonly StringBuilder logger = new StringBuilder();
+#endif
 
         public Parser(IAutosupportLanguageDefinition autosupportLanguageDefinition)
         {
@@ -40,6 +50,10 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         public IParseResult Parse(Uri uri, string[] text)
         {
+#if LOG
+            logger.Clear();
+#endif
+
             SetupDefaultValues(uri, text);
             ParseUntilEndOrFailed();
             return MakeParseResult();
@@ -75,11 +89,15 @@ namespace autosupport_lsp_server.Parsing.Impl
                     ParseRuleState(ruleState);
                 }
 
+#if LOG
                 logger.AppendLine("===== Next step");
+#endif
                 parseState.NextStep();
             }
 
+#if LOG
             logger.AppendLine("Done.");
+#endif
         }
 
         private void ParseRuleState(RuleState ruleState)
@@ -89,6 +107,7 @@ namespace autosupport_lsp_server.Parsing.Impl
 
             var newParseStates = GetPossibleNextStatesOfSymbol(ruleState);
 
+#if LOG
             if (newParseStates != null)
             {
                 foreach (var kvp in newParseStates)
@@ -96,6 +115,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                     logger.AppendLine($"{kvp.Key}: {kvp.Value.JoinToString(",\n\t\t")}");
                 }
             }
+#endif
 
             ScheduleNextParseStates(newParseStates);
         }
@@ -147,13 +167,17 @@ namespace autosupport_lsp_server.Parsing.Impl
             }
             else if (!terminal.TryParse(actualText))
             {
+#if LOG
                 logger.AppendLine($"{terminal} failed to parse <{actualText}>");
+#endif
 
                 return null;
             }
             else
             {
+#if LOG
                 logger.AppendLine($"{terminal} successfully parsed (at least the start of) <{actualText}>");
+#endif
 
                 return new Dictionary<int, IEnumerable<RuleState>>(1)
                 {
@@ -167,11 +191,15 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private void SaveUnfinishedRuleStateIfContinuationIsPossible(RuleState ruleState, ITerminal terminal, string textUntilNow)
         {
+#if LOG
             logger.AppendLine($"<{textUntilNow}> too short for {terminal} (needs at least {terminal.MinimumNumberOfCharactersToParse}, has {textUntilNow.Length})");
+#endif
 
             if (terminal.PossibleContent.Any(possibleContent => possibleContent.StartsWith(textUntilNow)))
             {
+#if LOG
                 logger.AppendLine($"Added {terminal} to {nameof(unfinishedRuleStates)}");
+#endif
 
                 unfinishedRuleStates.Add((parseState.Position.Clone(), ruleState));
             }
@@ -548,7 +576,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                                         string[]? possibleTypes = null;
 
                                         if (rs.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out var nextType))
-                                            possibleTypes = new[] { nextType };
+                                            possibleTypes = nextType.ToArray();
 
                                         return new NextRule(rs, leadup, terminal.PossibleContent, possibleTypes);
                                     },
