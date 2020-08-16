@@ -37,6 +37,7 @@ namespace autosupport_lsp_server
                     .WithHandler<AutocompletionHandler>()
                     .WithHandler<ReferencesHandler>()
                     .WithHandler<DeclarationHandler>()
+                    .WithHandler<DefinitionHandler>()
                     .WithHandler<ImplementationHandler>()
                     .WithHandler<FoldingHandler>()
                     ;

@@ -55,6 +55,8 @@ namespace autosupport_lsp_server.Parsing.Impl
                     throw new ArgumentException($"Given action is not supported without parameter '{IAction.IDENTIFIER_KIND_ARG_SET}': {action}");
                 case IAction.DECLARATION:
                     return ParseDeclaration(ruleState);
+                case IAction.DEFINITION:
+                    return ParseDefinition(ruleState);
                 case IAction.IMPLEMENTATION:
                     return ParseImplementation(ruleState);
                 case IAction.FOLDING:
@@ -94,6 +96,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out ISet<string>? types);
 
             var declaration = GetIdentifierDeclaration(parseInfo, ruleState, startOfMarkings);
+            var definition = GetIdentifierDefinition(parseInfo, ruleState, startOfMarkings);
             var implementation = GetIdentifierImplementation(parseInfo, ruleState, startOfMarkings);
 
             if (textBetweenMarkers.Trim() != "")
@@ -111,6 +114,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                         Types = new IdentifierType(types ?? Enumerable.Empty<string>()),
                         Kind = kind,
                         Declaration = declaration,
+                        Definition = definition,
                         Implementation = implementation
                     });
                 }
@@ -147,6 +151,24 @@ namespace autosupport_lsp_server.Parsing.Impl
                                         identifier.Declaration.Uri,
                                         identifier.Declaration.Range,
                                         $"Declaration of {identifier.Name}"
+                                        )
+                                ));
+                    }
+
+                    if (definition != null)
+                    {
+                        if (identifier.Definition == null)
+                            identifier.Definition = definition;
+                        else
+                            errors.Add(new Error(
+                                    parseInfo.Uri,
+                                    new Range(startOfMarkings, parseInfo.PreCommentPosition.Clone()),
+                                    DiagnosticSeverity.Error,
+                                    $"{identifier.Name} is already defined",
+                                    new ConnectedError(
+                                        identifier.Definition.Uri,
+                                        identifier.Definition.Range,
+                                        $"Definition of {identifier.Name}"
                                         )
                                 ));
                     }
@@ -196,6 +218,9 @@ namespace autosupport_lsp_server.Parsing.Impl
             if (declaration != null)
                 nextRuleState = nextRuleState.WithoutValue(RuleStateValueStoreKey.IsDeclaration);
 
+            if (definition != null)
+                nextRuleState = nextRuleState.WithoutValue(RuleStateValueStoreKey.IsDefinition);
+
             if (implementation != null)
                 nextRuleState = nextRuleState.WithoutValue(RuleStateValueStoreKey.IsImplementation);
 
@@ -205,6 +230,14 @@ namespace autosupport_lsp_server.Parsing.Impl
         private static IReferenceWithEnclosingRange? GetIdentifierDeclaration(ParserInformation parseInfo, RuleState ruleState, Position startOfMarkings)
         {
             if (ruleState.ValueStore.ContainsKey(RuleStateValueStoreKey.IsDeclaration))
+                return new ReferenceWithEnclosingRange(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommentPosition.Clone()), null);
+
+            return null;
+        }
+
+        private static IReferenceWithEnclosingRange? GetIdentifierDefinition(ParserInformation parseInfo, RuleState ruleState, Position startOfMarkings)
+        {
+            if (ruleState.ValueStore.ContainsKey(RuleStateValueStoreKey.IsDefinition))
                 return new ReferenceWithEnclosingRange(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommentPosition.Clone()), null);
 
             return null;
@@ -227,6 +260,9 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private static IRuleStateBuilder ParseDeclaration(RuleState ruleState)
             => ruleState.Clone().WithValue(RuleStateValueStoreKey.IsDeclaration);
+
+        private static IRuleStateBuilder ParseDefinition(RuleState ruleState)
+            => ruleState.Clone().WithValue(RuleStateValueStoreKey.IsDefinition);
 
         private static IRuleStateBuilder ParseImplementation(RuleState ruleState)
             => ruleState.Clone().WithValue(RuleStateValueStoreKey.IsImplementation);

@@ -21,6 +21,7 @@ namespace autosupport_lsp_server.Parsing
         public IdentifierType Types { get; set; } = new IdentifierType();
 
         public IReferenceWithEnclosingRange? Declaration { get; set; }
+        public IReferenceWithEnclosingRange? Definition { get; set; }
         public IReferenceWithEnclosingRange? Implementation { get; set; }
         public List<IReference> References { get; set; } = new List<IReference>();
 
@@ -36,6 +37,8 @@ namespace autosupport_lsp_server.Parsing
             Types = new IdentifierType(other.Types);
             if (other.Declaration != null)
                 Declaration = new ReferenceWithEnclosingRange(other.Declaration);
+            if (other.Definition != null)
+                Definition = new ReferenceWithEnclosingRange(other.Definition);
             if (other.Implementation != null)
                 Implementation = new ReferenceWithEnclosingRange(other.Implementation);
             References = new List<IReference>(other.References);
@@ -64,6 +67,9 @@ namespace autosupport_lsp_server.Parsing
                     {
                         if (existingIdentifier.Declaration == null)
                             existingIdentifier.Declaration = identifier.Declaration;
+
+                        if (existingIdentifier.Definition == null)
+                            existingIdentifier.Definition = identifier.Definition;
 
                         if (existingIdentifier.References == null)
                             existingIdentifier.References = new List<IReference>(identifier.References);

@@ -102,10 +102,11 @@ namespace autosupport_lsp_server.Parsing
         public static readonly RuleStateValueStoreKey<ISet<string>> NextType = new RuleStateValueStoreKey<ISet<string>>(0, nameof(NextType));
         public static readonly RuleStateValueStoreKey<string> NextKind = new RuleStateValueStoreKey<string>(1, nameof(NextKind));
         public static readonly RuleStateValueStoreKey<NoValue> IsDeclaration = new RuleStateValueStoreKey<NoValue>(2, nameof(IsDeclaration));
-        public static readonly RuleStateValueStoreKey<NoValue> IsImplementation = new RuleStateValueStoreKey<NoValue>(3, nameof(IsImplementation));
-        public static readonly RuleStateValueStoreKey<Stack<Position>> FoldingStarts = new RuleStateValueStoreKey<Stack<Position>>(4, nameof(FoldingStarts));
-        public static readonly RuleStateValueStoreKey<IList<Range>> FoldingRanges = new RuleStateValueStoreKey<IList<Range>>(5, nameof(FoldingRanges));
-        public static readonly RuleStateValueStoreKey<string> NextDocumentation = new RuleStateValueStoreKey<string>(6, nameof(NextDocumentation));
+        public static readonly RuleStateValueStoreKey<NoValue> IsDefinition = new RuleStateValueStoreKey<NoValue>(3, nameof(IsImplementation));
+        public static readonly RuleStateValueStoreKey<NoValue> IsImplementation = new RuleStateValueStoreKey<NoValue>(4, nameof(IsImplementation));
+        public static readonly RuleStateValueStoreKey<Stack<Position>> FoldingStarts = new RuleStateValueStoreKey<Stack<Position>>(5, nameof(FoldingStarts));
+        public static readonly RuleStateValueStoreKey<IList<Range>> FoldingRanges = new RuleStateValueStoreKey<IList<Range>>(6, nameof(FoldingRanges));
+        public static readonly RuleStateValueStoreKey<string> NextDocumentation = new RuleStateValueStoreKey<string>(7, nameof(NextDocumentation));
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 
