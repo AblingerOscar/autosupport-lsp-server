@@ -436,7 +436,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                 .FirstOrDefault((rule) => rule.HasValue
                             && rule.Value.RuleState.Markers.TryGetValue(IAction.IDENTIFIER, out var position)
                             && ident.Name.StartsWith(parseState.GetTextBetweenPositions(position))
-                            && ident.Types.IsCompatibleWithAnyOf(rule.Value.PossibleTypes));
+                            && ident.Types.IsCompatibleWithAllOf(rule.Value.ExpectedTypes));
 
             leadupWhitespace = nextRule.HasValue ? nextRule.Value.LeadupString : "";
             return nextRule.HasValue;
@@ -537,18 +537,18 @@ namespace autosupport_lsp_server.Parsing.Impl
             /// <summary>
             /// null means any type is valid if identifiers are syntactically valid
             /// </summary>
-            public readonly string[]? PossibleTypes;
+            public readonly string[]? ExpectedTypes;
 
-            public NextRule(RuleState ruleState, string leadupString, string[] possibleContent, string[]? possibleTypes)
+            public NextRule(RuleState ruleState, string leadupString, string[] possibleContent, string[]? expectedTypes)
             {
                 RuleState = ruleState;
                 LeadupString = leadupString;
                 PossibleContent = possibleContent;
-                PossibleTypes = possibleTypes;
+                ExpectedTypes = expectedTypes;
             }
 
             public NextRule WithoutEmptyPossibleContent()
-                => new NextRule(RuleState, LeadupString, PossibleContent.Where(content => content.Trim() != "").ToArray(), PossibleTypes);
+                => new NextRule(RuleState, LeadupString, PossibleContent.Where(content => content.Trim() != "").ToArray(), ExpectedTypes);
         }
 
         private IEnumerable<NextRule> GetNextRules()
@@ -573,12 +573,12 @@ namespace autosupport_lsp_server.Parsing.Impl
                                     rules: languageDefinition.Rules,
                                     onTerminal: (rs, terminal) =>
                                     {
-                                        string[]? possibleTypes = null;
+                                        string[]? expectedTypes = null;
 
                                         if (rs.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out var nextType))
-                                            possibleTypes = nextType.ToArray();
+                                            expectedTypes = nextType.ToArray();
 
-                                        return new NextRule(rs, leadup, terminal.PossibleContent, possibleTypes);
+                                        return new NextRule(rs, leadup, terminal.PossibleContent, expectedTypes);
                                     },
                                     onAction: (rs, action) => ActionParser.ParseAction(parseState, rs, action),
                                     onFinishedRuleState: rs => null

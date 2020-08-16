@@ -8,10 +8,10 @@ namespace autosupport_lsp_server.Parsing
     {
         public ISet<string> RawTypes;
 
-        public bool IsCompatibleWithAnyOf(IEnumerable<string>? types) =>
-            RawTypes.Count == 0
-            || types == null
-            || types.Any(type => RawTypes.Contains(type));
+        public bool IsCompatibleWithAllOf(IEnumerable<string>? types) =>
+            types == null
+            || RawTypes.Count == 0
+            || types.All(RawTypes.Contains);
 
         public IdentifierType()
         {
@@ -20,7 +20,7 @@ namespace autosupport_lsp_server.Parsing
 
         public IdentifierType(string? type)
         {
-            RawTypes = new HashSet<string>();
+            RawTypes = new HashSet<string>(1);
 
             if (type != null)
                 RawTypes.Add(type);

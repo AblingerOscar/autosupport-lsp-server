@@ -163,6 +163,25 @@ namespace autosupport_lsp_server.Parsing.Impl
                                     $"{identifier.Name} is already implemented"
                                 ));
                     }
+
+                    if (types != null)
+                    {
+                        if (declaration != null)
+                        {
+                            // define the types of this identifier
+                            types.ForEach(identifier.Types.RawTypes.Add);
+                        }
+                        else
+                        {
+                            if (!identifier.Types.IsCompatibleWithAllOf(types))
+                                errors.Add(new Error(
+                                        parseInfo.Uri,
+                                        new Range(startOfMarkings, parseInfo.PreCommentPosition.Clone()),
+                                        DiagnosticSeverity.Error,
+                                        $"Identifier with types {types.JoinToString(", ")} expected, but {identifier.Name} has types {identifier.Types.RawTypes.JoinToString(", ")}"
+                                    ));
+                        }
+                    }
                 }
             }
 
