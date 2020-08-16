@@ -17,14 +17,14 @@ namespace autosupport_lsp_server.Parsing.Impl
         {
             public readonly Uri Uri;
             public readonly Position Position;
-            public readonly Position PreCommitPosition;
+            public readonly Position PreCommentPosition;
             public readonly Func<Position, string> GetTextUpToPosition;
 
             public ParserInformation(Uri uri, Position position, Position preCommentPosition, Func<Position, string> getTextUpToPosition)
             {
                 Uri = uri;
                 Position = position;
-                PreCommitPosition = preCommentPosition;
+                PreCommentPosition = preCommentPosition;
                 GetTextUpToPosition = getTextUpToPosition;
             }
 
@@ -106,7 +106,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                     {
                         Name = textBetweenMarkers,
                         References = new List<IReference>() {
-                            new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone()))
+                            new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommentPosition.Clone()))
                         },
                         Types = new IdentifierType(types ?? Enumerable.Empty<string>()),
                         Kind = kind,
@@ -117,7 +117,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                 else
                 {
                     identifier.References.Add(
-                        new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone())));
+                        new Reference(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommentPosition.Clone())));
 
                     if (kind != null)
                     {
@@ -126,7 +126,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                         else if (kind != identifier.Kind)
                             errors.Add(new Error(
                                     parseInfo.Uri,
-                                    new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone()),
+                                    new Range(startOfMarkings, parseInfo.PreCommentPosition.Clone()),
                                     DiagnosticSeverity.Error,
                                     $"Expected {kind}, but found {identifier.Kind}"
                                 ));
@@ -137,10 +137,10 @@ namespace autosupport_lsp_server.Parsing.Impl
                     {
                         if (identifier.Declaration == null)
                             identifier.Declaration = declaration;
-                        else if (identifier.Declaration != null)
+                        else
                             errors.Add(new Error(
                                     parseInfo.Uri,
-                                    new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone()),
+                                    new Range(startOfMarkings, parseInfo.PreCommentPosition.Clone()),
                                     DiagnosticSeverity.Error,
                                     $"{identifier.Name} is already declared",
                                     new ConnectedError(
@@ -155,10 +155,10 @@ namespace autosupport_lsp_server.Parsing.Impl
                     {
                         if (identifier.Implementation == null)
                             identifier.Implementation = implementation;
-                        else if (identifier.Implementation != null)
+                        else
                             errors.Add(new Error(
                                     parseInfo.Uri,
-                                    new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone()),
+                                    new Range(startOfMarkings, parseInfo.PreCommentPosition.Clone()),
                                     DiagnosticSeverity.Error,
                                     $"{identifier.Name} is already implemented"
                                 ));
@@ -205,7 +205,7 @@ namespace autosupport_lsp_server.Parsing.Impl
         private static IReferenceWithEnclosingRange? GetIdentifierDeclaration(ParserInformation parseInfo, RuleState ruleState, Position startOfMarkings)
         {
             if (ruleState.ValueStore.ContainsKey(RuleStateValueStoreKey.IsDeclaration))
-                return new ReferenceWithEnclosingRange(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone()), null);
+                return new ReferenceWithEnclosingRange(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommentPosition.Clone()), null);
 
             return null;
         }
@@ -213,7 +213,7 @@ namespace autosupport_lsp_server.Parsing.Impl
         private static IReferenceWithEnclosingRange? GetIdentifierImplementation(ParserInformation parseInfo, RuleState ruleState, Position startOfMarkings)
         {
             if (ruleState.ValueStore.ContainsKey(RuleStateValueStoreKey.IsImplementation))
-                return new ReferenceWithEnclosingRange(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommitPosition.Clone()), null);
+                return new ReferenceWithEnclosingRange(parseInfo.Uri, new Range(startOfMarkings, parseInfo.PreCommentPosition.Clone()), null);
 
             return null;
         }
