@@ -12,40 +12,6 @@ namespace autosupport_lsp_server.Parsing.Impl
         public CommentParser(CommentRules commentRules)
             => this.commentRules = commentRules;
 
-        /*
-        internal string FindAndReplaceComments(string text)
-        {
-            int currIdx = 0;
-
-            foreach(var comment in commentRules.documentationComments.Union(commentRules.normalComments))
-            {
-                var start = text.Substring(currIdx).IndexOf(comment.Start);
-
-                if (start != -1)
-                {
-                    var end = text.Substring(start + comment.Start.Length).IndexOf(comment.End);
-
-                    if (end != -1)
-                    {
-                        text = text
-                            .Remove(start, end + comment.End.Length + comment.Start.Length)
-                            .Insert(start, comment.TreatAs);
-                        currIdx = start + comment.TreatAs.Length;
-                    }
-                }
-            }
-            return text;
-        }
-        */
-        /*          10        20        30
-         * 0123456789012345678901234567890
-         * before(* comment *)after
-         * 
-         * start : 6
-         * end : 
-         * 
-         * */
-
         /// <summary>
         /// Analyses whether the text starts with an comment and finds the matching end
         /// </summary>

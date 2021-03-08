@@ -43,7 +43,8 @@ namespace autosupport_lsp_server.Parsing.Impl
                 case IAction.IDENTIFIER_TYPE:
                     if (action.GetArguments()[0] == IAction.IDENTIFIER_TYPE_ARG_SET)
                     {   // do immediate action
-                        var types = ruleState.ValueStore.Get(RuleStateValueStoreKey.NextType) ?? new HashSet<string>();
+                        if (!ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out var types))
+                            types = new HashSet<string>();
                         types.Add(action.GetArguments()[1]);
                         return ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, types);
                     }
@@ -253,7 +254,8 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private static IRuleStateBuilder ParseIdentifierTypeAction(ParserInformation parseInfo, RuleState ruleState, IAction action, Position startOfMarkings)
         {
-            var types = ruleState.ValueStore.Get(RuleStateValueStoreKey.NextType) ?? new HashSet<string>();
+            if (!ruleState.ValueStore.TryGetValue(RuleStateValueStoreKey.NextType, out var types))
+                types = new HashSet<string>();
             types.Add(parseInfo.GetTextUpToPosition(startOfMarkings));
             return ruleState.Clone().WithValue(RuleStateValueStoreKey.NextType, types);
         }

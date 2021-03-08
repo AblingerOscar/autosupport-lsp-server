@@ -125,8 +125,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             if (ruleState.IsFinished)
                 return null;
 
-            var currentSymbol = ruleState.CurrentSymbol;
-            if (currentSymbol == null)
+            if (ruleState.CurrentSymbol == null)
                 throw new Exception("Current Symbol is null");
 
             var nextStates = LSPUtils.FollowUntilNextTerminalOrAction(

@@ -142,9 +142,7 @@ namespace autosupport_lsp_server.Parsing
                 do
                 {
                     isEmpty = !ruleState.ruleStates.TryPop(out current);
-                    newIndex = current == null
-                        ? 0
-                        : current.Item2 + 1;
+                    newIndex = current?.Item2 + 1 ?? 0;
                     // if new index is OOB do not push this state again, but
                     // instead move up a level
                 } while (!isEmpty && newIndex >= current!.Item1.Symbols.Count);
