@@ -12,7 +12,7 @@ namespace autosupport_lsp_server.LSP
 {
     internal class TextDocumentSyncHandler : ITextDocumentSyncHandler
     {
-        private readonly TextDocumentSyncKind syncKind = TextDocumentSyncKind.Incremental;
+        private readonly TextDocumentSyncKind syncKind = TextDocumentSyncKind.Full;
         private SynchronizationCapability? capability;
         private readonly IDocumentStore documentStore;
         private readonly ValidationHandler validationHandler;
