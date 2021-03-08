@@ -20,8 +20,8 @@ namespace Tests.LSP
             "Program", "var", "=", ";", "print"
         };
 
-        public static readonly IAutosupportLanguageDefinition VarAndPrintLanguageDefintion =
-            autosupport_lsp_server.AutosupportLanguageDefinition.FromXLinq(XElement.Parse(Helpers.ReadFile("Files.VarAndPrint.def")), InterfaceDeserializer.Instance);
+        public static readonly ILanguageDefinition VarAndPrintLanguageDefintion =
+            autosupport_lsp_server.LanguageDefinition.FromXLinq(XElement.Parse(Helpers.ReadFile("Files.VarAndPrint.def")), InterfaceDeserializer.Instance);
         
         [Fact]
         public async void When_Handling_NeverReturnDuplicateEntries()

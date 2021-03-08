@@ -6,7 +6,7 @@ namespace autosupport_lsp_server
     public interface IDocumentStore
     {
         IDictionary<string, Document> Documents { get; }
-        IAutosupportLanguageDefinition LanguageDefinition { get; }
+        ILanguageDefinition LanguageDefinition { get; }
         IParser CreateDefaultParser();
     }
 }

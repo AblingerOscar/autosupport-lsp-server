@@ -13,7 +13,7 @@ namespace autosupport_lsp_server.LSP
     {
         private static DocumentSelector? documentSelector;
 
-        public static DocumentSelector GetDocumentSelector(IAutosupportLanguageDefinition languageDefinition)
+        public static DocumentSelector GetDocumentSelector(ILanguageDefinition languageDefinition)
         {
             if (documentSelector == null)
             {
@@ -26,7 +26,7 @@ namespace autosupport_lsp_server.LSP
             return documentSelector;
         }
 
-        public static IEnumerable<CompletionItem> GetAllKeywordsAsCompletionItems(IAutosupportLanguageDefinition languageDefinition)
+        public static IEnumerable<CompletionItem> GetAllKeywordsAsCompletionItems(ILanguageDefinition languageDefinition)
         {
             return GetAllKeywords(languageDefinition)
                 .Select(str =>
@@ -39,7 +39,7 @@ namespace autosupport_lsp_server.LSP
                 });
         }
 
-        public static IEnumerable<string> GetAllKeywords(IAutosupportLanguageDefinition languageDefinition)
+        public static IEnumerable<string> GetAllKeywords(ILanguageDefinition languageDefinition)
         {
             return languageDefinition.Rules
                 .SelectMany(rule => rule.Value.Symbols)

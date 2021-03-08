@@ -23,7 +23,7 @@ namespace autosupport_lsp_server.Parsing.Impl
 {
     internal class Parser : IParser
     {
-        private readonly IAutosupportLanguageDefinition languageDefinition;
+        private readonly ILanguageDefinition languageDefinition;
         /// <summary>
         /// List of rule states that didn't continue, because the Input stopped, not because it was invalid
         /// </summary>
@@ -39,7 +39,7 @@ namespace autosupport_lsp_server.Parsing.Impl
         private readonly StringBuilder logger = new StringBuilder();
 #endif
 
-        public Parser(IAutosupportLanguageDefinition autosupportLanguageDefinition)
+        public Parser(ILanguageDefinition autosupportLanguageDefinition)
         {
             languageDefinition = autosupportLanguageDefinition;
 

@@ -15,8 +15,8 @@ namespace Tests.LSP
 {
     public class ReferencesHandlerTest : BaseTest
     {
-        public static readonly IAutosupportLanguageDefinition VarAndPrintLanguageDefintion =
-            autosupport_lsp_server.AutosupportLanguageDefinition.FromXLinq(XElement.Parse(Helpers.ReadFile("Files.VarAndPrint.def")), InterfaceDeserializer.Instance);
+        public static readonly ILanguageDefinition VarAndPrintLanguageDefintion =
+            autosupport_lsp_server.LanguageDefinition.FromXLinq(XElement.Parse(Helpers.ReadFile("Files.VarAndPrint.def")), InterfaceDeserializer.Instance);
         
         [Theory]
         [InlineData(@"Program a

@@ -6,7 +6,7 @@ namespace autosupport_lsp_server
 {
     internal class DocumentStore : IDocumentStore
     {
-        public DocumentStore(IAutosupportLanguageDefinition languageDefinition)
+        public DocumentStore(ILanguageDefinition languageDefinition)
         {
             Documents = new ConcurrentDictionary<string, Document>();
             LanguageDefinition = languageDefinition;
@@ -14,7 +14,7 @@ namespace autosupport_lsp_server
 
         public IDictionary<string, Document> Documents { get; }
 
-        public IAutosupportLanguageDefinition LanguageDefinition { get; }
+        public ILanguageDefinition LanguageDefinition { get; }
 
         public IParser CreateDefaultParser() => new Parser(LanguageDefinition);
     }

@@ -31,7 +31,7 @@ namespace Tests
                       .ToArray()
                 );
 
-        protected Mock<IAutosupportLanguageDefinition> LanguageDefinition(
+        protected Mock<ILanguageDefinition> LanguageDefinition(
                 IRule rule,
                 string? languageId = null,
                 string? languageFilePattern = null
@@ -47,7 +47,7 @@ namespace Tests
                 });
         }
 
-        protected Mock<IAutosupportLanguageDefinition> LanguageDefinition(
+        protected Mock<ILanguageDefinition> LanguageDefinition(
                 string? languageId = null,
                 string? languageFilePattern = null,
                 string[]? startRules = null,
@@ -55,7 +55,7 @@ namespace Tests
                 CommentRules? commentRules = null
             )
         {
-            var langDef = new Mock<IAutosupportLanguageDefinition>();
+            var langDef = new Mock<ILanguageDefinition>();
 
             if (languageId != null)
                 langDef.SetupGet(ld => ld.LanguageId).Returns(languageId);
@@ -77,7 +77,7 @@ namespace Tests
 
         protected Mock<IDocumentStore> DocumentStore(
             IDictionary<string, Document>? documents = null,
-            IAutosupportLanguageDefinition? languageDefinition = null,
+            ILanguageDefinition? languageDefinition = null,
             IParser? defaultParser = null
             )
         {
@@ -116,7 +116,7 @@ namespace Tests
 
         protected Mock<IDocumentStore> DocumentStore(
             string documentUri, string text,
-            IAutosupportLanguageDefinition? languageDefinition = null,
+            ILanguageDefinition? languageDefinition = null,
             IParser? defaultParser = null
             )
         {

@@ -134,13 +134,13 @@ namespace Tests
             return mock;
         }
 
-        protected Mock<IAutosupportLanguageDefinition> AutosupportLanguageDefinition(
+        protected Mock<ILanguageDefinition> LanguageDefinition(
                 string[]? startRules = null,
                 IDictionary<string, IRule>? rules = null,
                 CommentRules? commentRules = null
             )
         {
-            var mock = new Mock<IAutosupportLanguageDefinition>();
+            var mock = new Mock<ILanguageDefinition>();
 
             if (startRules != null)
                 mock.SetupGet(el => el.StartRules).Returns(startRules);
@@ -156,34 +156,34 @@ namespace Tests
             return mock;
         }
 
-        protected Mock<IAutosupportLanguageDefinition> AutosupportLanguageDefinition(
+        protected Mock<ILanguageDefinition> AutosupportLanguageDefinition(
                 string? startRule = null,
                 IDictionary<string, IRule>? rules = null
             )
         {
-            return AutosupportLanguageDefinition(
+            return LanguageDefinition(
                     startRule == null ? null : new string[1] { startRule },
                     rules
                 );
         }
 
-        protected Mock<IAutosupportLanguageDefinition> AutosupportLanguageDefinition(
+        protected Mock<ILanguageDefinition> AutosupportLanguageDefinition(
                 string[]? startRules = null,
                 params KeyValuePair<string, IRule>[] rules
             )
         {
-            return AutosupportLanguageDefinition(
+            return LanguageDefinition(
                     startRules,
                     rules == null ? null : new Dictionary<string, IRule>(rules)
                 );
         }
 
-        protected Mock<IAutosupportLanguageDefinition> AutosupportLanguageDefinition(
+        protected Mock<ILanguageDefinition> LanguageDefinition(
                 string? startRule = null,
                 params KeyValuePair<string, IRule>[] rules
             )
         {
-            return AutosupportLanguageDefinition(
+            return LanguageDefinition(
                     startRule == null ? null : new string[1] { startRule },
                     rules == null ? null : new Dictionary<string, IRule>(rules)
                 );

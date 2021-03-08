@@ -33,7 +33,7 @@ namespace Tests.Parsing.Impl
                 symbols: terminal.Object
                 );
 
-            var languageDefinition = AutosupportLanguageDefinition(
+            var languageDefinition = LanguageDefinition(
                 startRule: "S",
                 rules: new KeyValuePair<string, IRule>("S", rule.Object)
                 );
