@@ -44,7 +44,7 @@ namespace autosupport_lsp_server.Parsing.Impl
             languageDefinition = autosupportLanguageDefinition;
 
             unfinishedRuleStates = new List<(Position Position, RuleState RuleState)>();
-            parseState = new ParseState(new Uri("nothing://"), new string[0], new Position(), new List<RuleState>(0), languageDefinition.CommentRules);
+            parseState = new ParseState(new Uri("nothing://"), new string[0], new Position(), new List<RuleState>(0), new CommentParser(languageDefinition.CommentRules));
             ruleStatesThatFinishedLastIteration = new List<RuleState>();
         }
 
@@ -72,7 +72,7 @@ namespace autosupport_lsp_server.Parsing.Impl
                  select new RuleState(languageDefinition.Rules[startRuleName]))
                  .ToList();
 
-            return new ParseState(uri, text, new Position(0, 0), ruleStates, languageDefinition.CommentRules);
+            return new ParseState(uri, text, new Position(0, 0), ruleStates, new CommentParser(languageDefinition.CommentRules));
         }
 
         private void ParseUntilEndOrFailed()
