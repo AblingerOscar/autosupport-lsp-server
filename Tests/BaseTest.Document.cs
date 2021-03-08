@@ -1,13 +1,14 @@
-﻿using autosupport_lsp_server;
-using autosupport_lsp_server.Parsing;
-using autosupport_lsp_server.Parsing.Impl;
-using autosupport_lsp_server.Symbols;
+﻿using uld.server;
+using uld.server.Parsing;
+using uld.server.Parsing.Impl;
 using Moq;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Server;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using uld.definition.Symbols;
+using uld.definition;
 
 namespace Tests
 {

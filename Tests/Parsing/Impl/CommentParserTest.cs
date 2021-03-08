@@ -1,5 +1,5 @@
-﻿using autosupport_lsp_server;
-using autosupport_lsp_server.Parsing.Impl;
+﻿using uld.definition;
+using uld.server.Parsing.Impl;
 using Xunit;
 
 namespace Tests.Parsing.Impl

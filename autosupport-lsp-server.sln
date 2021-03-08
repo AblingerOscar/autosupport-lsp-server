@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30002.166
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "autosupport-lsp-server", "autosupport-lsp-server\autosupport-lsp-server.csproj", "{E87C13CC-73B8-4CDD-8281-5772C3C15301}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "uld-lsp-server", "uld-lsp-server\uld-lsp-server.csproj", "{E87C13CC-73B8-4CDD-8281-5772C3C15301}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{9E2AB163-C114-4CBD-A5CB-FC54863EC276}"
 EndProject
@@ -12,7 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "autosupport-definition", "autosupport-definition\autosupport-definition.csproj", "{7E0F2302-CF67-440D-AADC-11A5407F3FC3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "uld-definition", "uld-definition\uld-definition.csproj", "{7E0F2302-CF67-440D-AADC-11A5407F3FC3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

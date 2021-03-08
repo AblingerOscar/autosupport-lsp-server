@@ -1,7 +1,4 @@
-﻿using autosupport_lsp_server.Parsing.Impl;
-using autosupport_lsp_server.Shared;
-using autosupport_lsp_server.Symbols;
-using autosupport_lsp_server.Symbols.Impl.Terminals;
+﻿using uld.server.Parsing.Impl;
 using Moq;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Sprache;
@@ -10,7 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 using Position = OmniSharp.Extensions.LanguageServer.Protocol.Models.Position;
-using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
+using uld.definition.Symbols.Impl.Terminals;
+using uld.definition.Shared;
+using uld.definition.Symbols;
 
 namespace Tests.Parsing.Impl
 {

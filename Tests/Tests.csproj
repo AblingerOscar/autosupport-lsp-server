@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -35,8 +35,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\autosupport-definition\autosupport-definition.csproj" />
-    <ProjectReference Include="..\autosupport-lsp-server\autosupport-lsp-server.csproj" />
+    <ProjectReference Include="..\uld-definition\uld-definition.csproj" />
+    <ProjectReference Include="..\uld-lsp-server\uld-lsp-server.csproj" />
   </ItemGroup>
 
 </Project>

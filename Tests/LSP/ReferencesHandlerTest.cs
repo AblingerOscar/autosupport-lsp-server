@@ -1,7 +1,6 @@
-﻿using autosupport_lsp_server;
-using autosupport_lsp_server.LSP;
-using autosupport_lsp_server.Parsing.Impl;
-using autosupport_lsp_server.Serialization;
+﻿using uld.server;
+using uld.server.LSP;
+using uld.server.Parsing.Impl;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
@@ -10,13 +9,15 @@ using System.Threading;
 using System.Xml.Linq;
 using Xunit;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
+using uld.definition;
+using uld.definition.Serialization;
 
 namespace Tests.LSP
 {
     public class ReferencesHandlerTest : BaseTest
     {
         public static readonly ILanguageDefinition VarAndPrintLanguageDefintion =
-            autosupport_lsp_server.LanguageDefinition.FromXLinq(XElement.Parse(Helpers.ReadFile("Files.VarAndPrint.def")), InterfaceDeserializer.Instance);
+            uld.definition.LanguageDefinition.FromXLinq(XElement.Parse(Helpers.ReadFile("Files.VarAndPrint.def")), InterfaceDeserializer.Instance);
         
         [Theory]
         [InlineData(@"Program a

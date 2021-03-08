@@ -1,7 +1,6 @@
-﻿using autosupport_lsp_server;
-using autosupport_lsp_server.LSP;
-using autosupport_lsp_server.Parsing.Impl;
-using autosupport_lsp_server.Serialization;
+﻿using uld.server;
+using uld.server.LSP;
+using uld.server.Parsing.Impl;
 using System;
 using System.Xml.Linq;
 using System.Linq;
@@ -15,13 +14,15 @@ using Position = OmniSharp.Extensions.LanguageServer.Protocol.Models.Position;
 using ImplementationCapability = OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities.ImplementationCapability;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 using System.Collections.Generic;
+using uld.definition;
+using uld.definition.Serialization;
 
 namespace Tests.LSP
 {
     public class ImplementationHandlerTest : BaseTest
     {
         public static readonly ILanguageDefinition VarAndPrintLanguageDefintion =
-            autosupport_lsp_server.LanguageDefinition.FromXLinq(XElement.Parse(Helpers.ReadFile("Files.VarAndPrint.def")), InterfaceDeserializer.Instance);
+            uld.definition.LanguageDefinition.FromXLinq(XElement.Parse(Helpers.ReadFile("Files.VarAndPrint.def")), InterfaceDeserializer.Instance);
 
         [Theory]
         //[InlineData(true)] not yet supported

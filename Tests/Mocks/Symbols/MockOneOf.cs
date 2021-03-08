@@ -1,6 +1,6 @@
-﻿using autosupport_lsp_server.Symbols;
-using System;
+﻿using System;
 using System.Xml.Linq;
+using uld.definition.Symbols;
 
 namespace Tests.Mocks.Symbols
 {

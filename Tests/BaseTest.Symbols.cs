@@ -1,13 +1,12 @@
-﻿using autosupport_lsp_server;
-using autosupport_lsp_server.Shared;
-using autosupport_lsp_server.Symbols;
-using autosupport_lsp_server.Symbols.Impl;
-using autosupport_lsp_server.Symbols.Impl.Terminals;
-using Moq;
+﻿using Moq;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Tests.Mocks.Symbols;
+using uld.definition;
+using uld.definition.Shared;
+using uld.definition.Symbols;
+using uld.definition.Symbols.Impl;
 
 namespace Tests
 {
