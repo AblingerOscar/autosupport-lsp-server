@@ -231,11 +231,17 @@ namespace autosupport_lsp_server.Parsing.Impl
 
         private IParseResult MakeParseResult()
         {
-            var allIdentifiers = GetAllIdentifiers();
+            //var allIdentifiers = GetAllIdentifiers();
+            //var possibleContinuations = GetPossibleContinuations(allIdentifiers);
+
+            RuleState? bestRuleState = parseState.RuleStates
+                .OrderBy(rs => rs.Errors.Count)
+                .FirstOrDefault();
+            var allIdentifiers = bestRuleState?.Identifiers.ToArray() ?? new Identifier[0];
+
             var possibleContinuations = GetPossibleContinuations(allIdentifiers);
 
-            var errors = parseState.RuleStates
-                .SelectMany(rs => rs.Errors);
+            IEnumerable<Error> errors = bestRuleState?.Errors ?? new List<Error>(0);
             var structuralError = GetStructuralParseError(possibleContinuations);
 
             if (structuralError.HasValue)
